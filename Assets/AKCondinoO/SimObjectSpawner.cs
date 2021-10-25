@@ -12,7 +12,46 @@ void Awake(){if(Singleton==null){Singleton=this;}else{DestroyImmediate(this);}
   Type t=sO.GetType();
   Prefabs.Add(t,gO);
  }
+ Core.Singleton.OnDestroyingCoreEvent+=OnDestroyingCoreEvent;
+ persistUniqueIdsBG=new PersistentUniqueIdsBackgroundContainer();
+ PersistentUniqueIdsMultithreaded.Stop=false;
+ persistUniqueIdsBGThread=new PersistentUniqueIdsMultithreaded();
  StartCoroutine(SpawnCoroutine());
+}
+
+void OnDestroyingCoreEvent(object sender,EventArgs e){
+ Debug.Log("OnDestroyingCoreEvent");
+ OnExitSave();
+ PersistentUniqueIdsMultithreaded.Stop=true;
+ persistUniqueIdsBGThread.Wait();
+}
+
+void OnExitSave(){
+ Debug.Log("OnExitSave");
+ persistUniqueIdsBG.IsCompleted(persistUniqueIdsBGThread.IsRunning,-1);
+ PersistentUniqueIdsMultithreaded.Schedule(persistUniqueIdsBG);
+ persistUniqueIdsBG.IsCompleted(persistUniqueIdsBGThread.IsRunning,-1);
+ if(PersistentUniqueIdsMultithreaded.Clear()==0){
+  Debug.Log("ids exit save was successful");
+ }else{
+  Debug.LogError("ids exit save failed");
+ }
+}
+        
+internal PersistentUniqueIdsBackgroundContainer persistUniqueIdsBG;
+internal class PersistentUniqueIdsBackgroundContainer:BackgroundContainer{
+}
+internal PersistentUniqueIdsMultithreaded persistUniqueIdsBGThread;
+internal class PersistentUniqueIdsMultithreaded:BaseMultithreaded<PersistentUniqueIdsBackgroundContainer>{
+ protected override void Execute(){
+  Debug.Log("PersistentUniqueIdsMultithreaded:Execute");
+ }
+}
+        
+void Update(){
+ foreach(var a in active){var sO=a.Value;
+  Debug.Log("Update:active sO.id:"+sO.id);
+ }
 }
 
 internal readonly Queue<SpawnData>SpawnQueue=new Queue<SpawnData>();
