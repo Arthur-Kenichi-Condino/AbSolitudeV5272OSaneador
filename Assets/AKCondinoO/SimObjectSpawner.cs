@@ -21,6 +21,9 @@ void Awake(){if(Singleton==null){Singleton=this;}else{DestroyImmediate(this);}
 
 void OnDestroyingCoreEvent(object sender,EventArgs e){
  Debug.Log("OnDestroyingCoreEvent");
+ foreach(var a in active){var sO=a.Value;
+  Debug.Log("OnDestroyingCoreEvent:active sO.id:"+sO.id);
+ }
  OnExitSave();
  PersistentUniqueIdsMultithreaded.Stop=true;
  persistUniqueIdsBGThread.Wait();
@@ -45,12 +48,14 @@ internal PersistentUniqueIdsMultithreaded persistUniqueIdsBGThread;
 internal class PersistentUniqueIdsMultithreaded:BaseMultithreaded<PersistentUniqueIdsBackgroundContainer>{
  protected override void Execute(){
   Debug.Log("PersistentUniqueIdsMultithreaded:Execute");
+  string uniqueIdsFile=string.Format("{0}{1}",Core.savePath,"uniqueIds.JsonSerializer");
+  Debug.Log("uniqueIdsFile: "+uniqueIdsFile);
  }
 }
         
 void Update(){
  foreach(var a in active){var sO=a.Value;
-  Debug.Log("Update:active sO.id:"+sO.id);
+  //Debug.Log("Update:active sO.id:"+sO.id);
  }
 }
 
