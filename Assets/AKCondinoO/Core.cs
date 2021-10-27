@@ -16,6 +16,9 @@ internal static string sObjectsSavePath=string.Format("{0}{1}/",savePath,"sObjPD
 internal static int ActiveThreads;
 
 void Awake(){if(Singleton==null){Singleton=this;}else{DestroyImmediate(this);}
+Directory.CreateDirectory(savePath);
+Directory.CreateDirectory(perChunkSavePath);
+Directory.CreateDirectory(sObjectsSavePath);
 }
 
 void OnDestroy(){
@@ -26,7 +29,7 @@ void OnDestroy(){
   Debug.LogError(e?.Message+"\n"+e?.StackTrace+"\n"+e?.Source);
  }
  if(ActiveThreads>0){
-  Debug.LogError("ActiveThreads>0:one or more threads weren't stopped nor waited for termination");
+  Debug.LogError("ActiveThreads>0(ActiveThreads=="+ActiveThreads+"):one or more threads weren't stopped nor waited for termination");
  }
 }
 internal event EventHandler OnDestroyingCoreEvent;
