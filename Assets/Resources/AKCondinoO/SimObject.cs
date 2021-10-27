@@ -16,6 +16,11 @@ internal class PersistentDataBackgroundContainer:BackgroundContainer{
  internal PersistentDataBackgroundContainer(object syn){
   syn_bg=syn;
  }
+ internal ExecutionMode executionMode_bg=ExecutionMode.Save;
+ internal enum ExecutionMode{
+  Save,
+  Load,
+ }
 
  internal(Type simType,ulong number)id_bg;
 
@@ -39,19 +44,22 @@ internal class PersistentDataMultithreaded:BaseMultithreaded<PersistentDataBackg
  readonly JsonSerializer jsonSerializer=new JsonSerializer();
  protected override void Execute(){
   lock(current.syn_bg){
-   Debug.Log("PersistentDataMultithreaded:Execute:...\ncurrent.transform_bg.position:"+current.transform_bg.position+"\ncurrent.transform_bg.rotation:"+current.transform_bg.rotation+"\ncurrent.transform_bg.localScale:"+current.transform_bg.localScale);
-   Vector2Int cnkRgn1=vecPosTocnkRgn(current.transform_bg.position);
-   Vector2Int cCoord1=cnkRgnTocCoord(cnkRgn1);
-          int cnkIdx1=GetcnkIdx(cCoord1.x,cCoord1.y);
-   string transformPath=string.Format("{0}{1}/",Core.perChunkSavePath,cnkIdx1);
-   Directory.CreateDirectory(transformPath);
-   string transformFile=string.Format("{0}({1},{2}).JsonSerializer",transformPath,current.id_bg.simType,current.id_bg.number);
-   using(var file=new FileStream(transformFile,FileMode.OpenOrCreate,FileAccess.ReadWrite,FileShare.None)){
-    file.SetLength(0);
-    file.Flush(true);
-    using(var writer=new StreamWriter(file)){using(var json=new JsonTextWriter(writer)){
-     jsonSerializer.Serialize(json,current.transform_bg,current.transform_bg.GetType());
-    }}
+   if      (current.executionMode_bg==PersistentDataBackgroundContainer.ExecutionMode.Load){
+   }else if(current.executionMode_bg==PersistentDataBackgroundContainer.ExecutionMode.Save){
+    Debug.Log("PersistentDataMultithreaded:Execute:...\ncurrent.transform_bg.position:"+current.transform_bg.position+"\ncurrent.transform_bg.rotation:"+current.transform_bg.rotation+"\ncurrent.transform_bg.localScale:"+current.transform_bg.localScale);
+    Vector2Int cnkRgn1=vecPosTocnkRgn(current.transform_bg.position);
+    Vector2Int cCoord1=cnkRgnTocCoord(cnkRgn1);
+           int cnkIdx1=GetcnkIdx(cCoord1.x,cCoord1.y);
+    string transformPath=string.Format("{0}{1}/",Core.perChunkSavePath,cnkIdx1);
+    Directory.CreateDirectory(transformPath);
+    string transformFile=string.Format("{0}({1},{2}).JsonSerializer",transformPath,current.id_bg.simType,current.id_bg.number);
+    using(var file=new FileStream(transformFile,FileMode.OpenOrCreate,FileAccess.ReadWrite,FileShare.None)){
+     file.SetLength(0);
+     file.Flush(true);
+     using(var writer=new StreamWriter(file)){using(var json=new JsonTextWriter(writer)){
+      jsonSerializer.Serialize(json,current.transform_bg,current.transform_bg.GetType());
+     }}
+    }
    }
   }
  }

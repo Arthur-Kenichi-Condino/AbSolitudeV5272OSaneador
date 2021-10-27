@@ -23,6 +23,7 @@ internal class PersistentUniqueIdsMultithreaded:BaseMultithreaded<PersistentUniq
  readonly JsonSerializer jsonSerializer=new JsonSerializer();
  protected override void Execute(){
   string uniqueIdsFile=string.Format("{0}{1}",Core.savePath,"uniqueIds.JsonSerializer");
+
   if      (current.executionMode_bg==PersistentUniqueIdsBackgroundContainer.ExecutionMode.Load){
    Debug.Log("PersistentUniqueIdsMultithreaded:Execute:Load:uniqueIdsFile: "+uniqueIdsFile);
    using(var file=new FileStream(uniqueIdsFile,FileMode.OpenOrCreate,FileAccess.ReadWrite,FileShare.None)){
@@ -34,6 +35,7 @@ internal class PersistentUniqueIdsMultithreaded:BaseMultithreaded<PersistentUniq
      current.ids_bg=new Dictionary<Type,ulong>();
     }
    }
+
   }else if(current.executionMode_bg==PersistentUniqueIdsBackgroundContainer.ExecutionMode.Save){
    Debug.Log("PersistentUniqueIdsMultithreaded:Execute:Save:uniqueIdsFile: "+uniqueIdsFile);
    using(var file=new FileStream(uniqueIdsFile,FileMode.OpenOrCreate,FileAccess.ReadWrite,FileShare.None)){
@@ -44,6 +46,7 @@ internal class PersistentUniqueIdsMultithreaded:BaseMultithreaded<PersistentUniq
     }}
    }
   }
+
  }
 }
         
