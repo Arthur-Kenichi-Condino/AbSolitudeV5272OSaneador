@@ -170,6 +170,7 @@ IEnumerator SpawnCoroutine(){
     active.Add(id,sO);
      syn.Add(sO,sO.syn);
     sO.id=id;
+    sO.OnActivated();
    }
    toSpawn.dequeued=true;
   }

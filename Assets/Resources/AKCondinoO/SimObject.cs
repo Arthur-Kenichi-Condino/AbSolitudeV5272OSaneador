@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using static AKCondinoO.Voxels.VoxelTerrain;
 using static Utils;
 
 namespace AKCondinoO.Sims{internal class SimObject:MonoBehaviour{
@@ -36,6 +37,9 @@ internal class PersistentDataMultithreaded:BaseMultithreaded<PersistentDataBackg
  protected override void Execute(){
   lock(current.syn_bg){
    Debug.Log("PersistentDataMultithreaded:Execute:...\ncurrent.transform_bg.position:"+current.transform_bg.position+"\ncurrent.transform_bg.rotation:"+current.transform_bg.rotation+"\ncurrent.transform_bg.localScale:"+current.transform_bg.localScale);
+   Vector2Int cnkRgn1=vecPosTocnkRgn(current.transform_bg.position);
+   Vector2Int cCoord1=cnkRgnTocCoord(cnkRgn1);
+          int cnkIdx1=GetcnkIdx(cCoord1.x,cCoord1.y);
   }
  }
 }
@@ -44,6 +48,11 @@ protected virtual void Awake(){
  if(container==null){container=new PersistentDataBackgroundContainer(syn);}
  if(container.specsData_bg==null){container.specsData_bg=new PersistentDataBackgroundContainer.SerializableSpecsData();}
  if(container.transform_bg==null){container.transform_bg=new PersistentDataBackgroundContainer.SerializableTransform();}
+}
+
+internal void OnActivated(){
+ container.id_bg=id.Value;
+ container.SetSerializable(transform);
 }
 
 internal void OnExitSave(){
@@ -56,13 +65,13 @@ internal void OnExitSave(){
 bool saveRequired;
 internal void ManualUpdate(){
  if(transform.hasChanged){
+  transform.hasChanged=false;
   Debug.Log("ManualUpdate:save required:transform.hasChanged:"+id,transform);
   saveRequired=true;
-  transform.hasChanged=false;
  }
  if(saveRequired&&OnUpdateSave()){
-  Debug.Log("ManualUpdate:saving started:"+id,transform);
   saveRequired=false;
+  Debug.Log("ManualUpdate:saving started:"+id,transform);
  }
 }
 bool OnUpdateSave(){
