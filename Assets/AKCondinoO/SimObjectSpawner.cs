@@ -8,7 +8,7 @@ using UnityEngine;
 namespace AKCondinoO.Sims{internal class SimObjectSpawner:MonoBehaviour{internal static SimObjectSpawner Singleton;
 internal readonly Dictionary<(Type simType,ulong number),SimObject>active=new Dictionary<(Type,ulong),SimObject>();
  readonly Dictionary<SimObject,object>syn=new Dictionary<SimObject,object>();
-        
+
 internal PersistentUniqueIdsBackgroundContainer persistUniqueIdsBG;
 internal class PersistentUniqueIdsBackgroundContainer:BackgroundContainer{
  internal ExecutionMode executionMode_bg=ExecutionMode.Save;

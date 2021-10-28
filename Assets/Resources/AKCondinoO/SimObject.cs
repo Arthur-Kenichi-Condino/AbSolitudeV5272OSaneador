@@ -44,20 +44,45 @@ internal class PersistentDataMultithreaded:BaseMultithreaded<PersistentDataBackg
  readonly JsonSerializer jsonSerializer=new JsonSerializer();
  protected override void Execute(){
   lock(current.syn_bg){
+   Debug.Log("PersistentDataMultithreaded:Execute:...\ncurrent.transform_bg.position:"+current.transform_bg.position+"\ncurrent.transform_bg.rotation:"+current.transform_bg.rotation+"\ncurrent.transform_bg.localScale:"+current.transform_bg.localScale);
+   string specsDataFile=string.Format("{0}({1},{2}).JsonSerializer",Core.sObjectsSavePath,current.id_bg.simType,current.id_bg.number);
+   Vector2Int cnkRgn1=vecPosTocnkRgn(current.transform_bg.position);
+   Vector2Int cCoord1=cnkRgnTocCoord(cnkRgn1);
+          int cnkIdx1=GetcnkIdx(cCoord1.x,cCoord1.y);
+   string transformPath=string.Format("{0}{1}/",Core.perChunkSavePath,cnkIdx1);
+   Directory.CreateDirectory(transformPath);
+   string transformFile=string.Format("{0}({1},{2}).JsonSerializer",transformPath,current.id_bg.simType,current.id_bg.number);
    if      (current.executionMode_bg==PersistentDataBackgroundContainer.ExecutionMode.Load){
    }else if(current.executionMode_bg==PersistentDataBackgroundContainer.ExecutionMode.Save){
-    Debug.Log("PersistentDataMultithreaded:Execute:...\ncurrent.transform_bg.position:"+current.transform_bg.position+"\ncurrent.transform_bg.rotation:"+current.transform_bg.rotation+"\ncurrent.transform_bg.localScale:"+current.transform_bg.localScale);
-    Vector2Int cnkRgn1=vecPosTocnkRgn(current.transform_bg.position);
-    Vector2Int cCoord1=cnkRgnTocCoord(cnkRgn1);
-           int cnkIdx1=GetcnkIdx(cCoord1.x,cCoord1.y);
-    string transformPath=string.Format("{0}{1}/",Core.perChunkSavePath,cnkIdx1);
-    Directory.CreateDirectory(transformPath);
-    string transformFile=string.Format("{0}({1},{2}).JsonSerializer",transformPath,current.id_bg.simType,current.id_bg.number);
+
+    PersistentDataBackgroundContainer.SerializableSpecsData specsData_old=null;
+    using(var file=new FileStream(specsDataFile,FileMode.OpenOrCreate,FileAccess.ReadWrite,FileShare.None)){
+     if(file.Length>0){
+      using(var reader=new StreamReader(file)){using(var json=new JsonTextReader(reader)){
+       specsData_old=(PersistentDataBackgroundContainer.SerializableSpecsData)jsonSerializer.Deserialize(json,current.specsData_bg.GetType());
+      }}
+     }
+    }
+    if(specsData_old!=null){
+     if(File.Exists(specsData_old.transformFile)){
+      File.Delete(specsData_old.transformFile);
+     }
+    }
+
     using(var file=new FileStream(transformFile,FileMode.OpenOrCreate,FileAccess.ReadWrite,FileShare.None)){
      file.SetLength(0);
      file.Flush(true);
      using(var writer=new StreamWriter(file)){using(var json=new JsonTextWriter(writer)){
       jsonSerializer.Serialize(json,current.transform_bg,current.transform_bg.GetType());
+     }}
+    }
+    
+    current.specsData_bg.transformFile=transformFile;
+    using(var file=new FileStream(specsDataFile,FileMode.OpenOrCreate,FileAccess.ReadWrite,FileShare.None)){
+     file.SetLength(0);
+     file.Flush(true);
+     using(var writer=new StreamWriter(file)){using(var json=new JsonTextWriter(writer)){
+      jsonSerializer.Serialize(json,current.specsData_bg,current.specsData_bg.GetType());
      }}
     }
    }
