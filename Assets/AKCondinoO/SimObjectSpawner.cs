@@ -4,6 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
+using static AKCondinoO.Voxels.VoxelTerrain;
 
 namespace AKCondinoO.Sims{internal class SimObjectSpawner:MonoBehaviour{internal static SimObjectSpawner Singleton;
 internal readonly Dictionary<(Type simType,ulong number),SimObject>active=new Dictionary<(Type,ulong),SimObject>();
@@ -55,10 +56,40 @@ internal class PersistentUniqueIdsMultithreaded:BaseMultithreaded<PersistentUniq
 internal GetPersistentDataFilesBackgroundContainer getPersistentDataFilesBG;
 internal class GetPersistentDataFilesBackgroundContainer:BackgroundContainer{
  internal HashSet<Vector2Int>playersMovement_bg;
+ internal SpawnData toSpawn_bg;
 }
 internal GetPersistentDataFilesMultithreaded getPersistentDataFilesBGThread;
 internal class GetPersistentDataFilesMultithreaded:BaseMultithreaded<GetPersistentDataFilesBackgroundContainer>{
  protected override void Execute(){
+  Debug.Log("GetPersistentDataFilesMultithreaded:Execute:current.playersMovement_bg.Count:"+current.playersMovement_bg.Count);
+  current.toSpawn_bg=new SpawnData();
+  foreach(Vector2Int pCoord in current.playersMovement_bg){
+   for(Vector2Int iCoord=new Vector2Int(),cCoord1=new Vector2Int();iCoord.y<=instantiationDistance.y-1;iCoord.y++){for(cCoord1.y=-iCoord.y+pCoord.y;cCoord1.y<=iCoord.y+pCoord.y;cCoord1.y+=iCoord.y*2){
+   for(           iCoord.x=0                                      ;iCoord.x<=instantiationDistance.x-1;iCoord.x++){for(cCoord1.x=-iCoord.x+pCoord.x;cCoord1.x<=iCoord.x+pCoord.x;cCoord1.x+=iCoord.x*2){
+    if(Math.Abs(cCoord1.x)>=MaxcCoordx||
+       Math.Abs(cCoord1.y)>=MaxcCoordy){
+     goto _skip;
+    }
+    int cnkIdx1=GetcnkIdx(cCoord1.x,cCoord1.y);
+    //Debug.Log("load files for cnkIdx1:"+cnkIdx1);
+    string transformPath=string.Format("{0}{1}/",Core.perChunkSavePath,cnkIdx1);
+    if(Directory.Exists(transformPath)){
+     foreach(var transformFile in Directory.GetFiles(transformPath,"(*,*)*")){
+      string transformFileName=Path.GetFileName(transformFile);
+      Debug.Log("got load file:"+transformFileName);
+      string typeAndId=transformFileName.Split('(',')')[1];
+       string[]typeAndIdSplit=typeAndId.Split(',');
+        string typeString=typeAndIdSplit[0];
+         string idString=typeAndIdSplit[1];
+      Type simType=Type.GetType(typeString);
+      ulong number=ulong.Parse(idString);
+      current.toSpawn_bg.at.Add((Vector3.zero,Vector3.zero,Vector3.one,simType,number));
+     }
+    }
+    _skip:{}
+   if(iCoord.x==0){break;}}}
+   if(iCoord.y==0){break;}}}
+  }
  }
 }
         
@@ -136,15 +167,30 @@ void OnExitSave(){
  }
 }
                 
+bool gettingFiles;
 void Update(){
- if(playersMovement.Count>0){
+ if(gettingFiles&&getPersistentDataFilesBG.IsCompleted(getPersistentDataFilesBGThread.IsRunning)){
+  gettingFiles=false;
+  Debug.Log("SimObjectSpawner:Update:player movement:got files to load");
+  SpawnQueue.Enqueue(getPersistentDataFilesBG.toSpawn_bg);
+  getPersistentDataFilesBG.toSpawn_bg=null;
+ }else if(playersMovement.Count>0&&OnBeginGetFiles()){
+  playersMovement.Clear();
   Debug.Log("SimObjectSpawner:Update:player movement:loading required");
-  getPersistentDataFilesBG.playersMovement_bg=new HashSet<Vector2Int>(playersMovement);
+  gettingFiles=true;
  }
  foreach(var a in active){var sO=a.Value;
   //Debug.Log("Update:active sO.id:"+sO.id);
   sO.ManualUpdate();
  }
+}
+bool OnBeginGetFiles(){
+ if(getPersistentDataFilesBG.IsCompleted(getPersistentDataFilesBGThread.IsRunning)){
+  getPersistentDataFilesBG.playersMovement_bg=new HashSet<Vector2Int>(playersMovement,playersMovement.Comparer);
+  GetPersistentDataFilesMultithreaded.Schedule(getPersistentDataFilesBG);
+  return true;
+ }
+ return false;
 }
 
 internal readonly Queue<SpawnData>SpawnQueue=new Queue<SpawnData>();
