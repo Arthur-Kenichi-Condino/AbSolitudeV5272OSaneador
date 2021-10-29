@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using static AKCondinoO.Voxels.VoxelTerrainChunk;
 
@@ -63,5 +64,7 @@ internal static Vector2Int expropriationDistance{get;}=new Vector2Int(5,5);
  }
 
 #endregion
+        
+internal readonly Dictionary<NetcodePlayerPrefab,(Vector2Int,Vector2Int)?>playersMovement=new Dictionary<NetcodePlayerPrefab,(Vector2Int,Vector2Int)?>();
 
 }}

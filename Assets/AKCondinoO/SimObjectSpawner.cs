@@ -8,6 +8,8 @@ using UnityEngine;
 namespace AKCondinoO.Sims{internal class SimObjectSpawner:MonoBehaviour{internal static SimObjectSpawner Singleton;
 internal readonly Dictionary<(Type simType,ulong number),SimObject>active=new Dictionary<(Type,ulong),SimObject>();
  readonly Dictionary<SimObject,object>syn=new Dictionary<SimObject,object>();
+        
+internal readonly HashSet<Vector2Int>playersMovement=new HashSet<Vector2Int>();
 
 internal PersistentUniqueIdsBackgroundContainer persistUniqueIdsBG;
 internal class PersistentUniqueIdsBackgroundContainer:BackgroundContainer{
@@ -50,32 +52,56 @@ internal class PersistentUniqueIdsMultithreaded:BaseMultithreaded<PersistentUniq
  }
 }
         
+internal GetPersistentDataFilesBackgroundContainer getPersistentDataFilesBG;
+internal class GetPersistentDataFilesBackgroundContainer:BackgroundContainer{
+ internal HashSet<Vector2Int>playersMovement_bg;
+}
+internal GetPersistentDataFilesMultithreaded getPersistentDataFilesBGThread;
+internal class GetPersistentDataFilesMultithreaded:BaseMultithreaded<GetPersistentDataFilesBackgroundContainer>{
+ protected override void Execute(){
+ }
+}
+        
 internal readonly SimObject.PersistentDataMultithreaded[]persistentDataBGThreads=new SimObject.PersistentDataMultithreaded[Environment.ProcessorCount];
 
 internal readonly Dictionary<Type,GameObject>Prefabs=new Dictionary<Type,GameObject>();
 void Awake(){if(Singleton==null){Singleton=this;}else{DestroyImmediate(this);}
+
  foreach(var o in Resources.LoadAll("AKCondinoO/",typeof(GameObject))){var gO=(GameObject)o;var sO=gO.GetComponent<SimObject>();if(sO==null)continue;
   Type t=sO.GetType();
   Prefabs.Add(t,gO);
  }
+
  Core.Singleton.OnDestroyingCoreEvent+=OnDestroyingCoreEvent;
+
  persistUniqueIdsBG=new PersistentUniqueIdsBackgroundContainer();
  PersistentUniqueIdsMultithreaded.Stop=false;
  persistUniqueIdsBGThread=new PersistentUniqueIdsMultithreaded();
   persistUniqueIdsBG.executionMode_bg=PersistentUniqueIdsBackgroundContainer.ExecutionMode.Load;
  PersistentUniqueIdsMultithreaded.Schedule(persistUniqueIdsBG);
+
+ getPersistentDataFilesBG=new GetPersistentDataFilesBackgroundContainer();
+ GetPersistentDataFilesMultithreaded.Stop=false;
+ getPersistentDataFilesBGThread=new GetPersistentDataFilesMultithreaded();
+
  SimObject.PersistentDataMultithreaded.Stop=false;
  for(int i=0;i<persistentDataBGThreads.Length;++i){
   persistentDataBGThreads[i]=new SimObject.PersistentDataMultithreaded();
  }
+
  StartCoroutine(SpawnCoroutine());
 }
 
 void OnDestroyingCoreEvent(object sender,EventArgs e){
  Debug.Log("OnDestroyingCoreEvent");
  OnExitSave();
+
  PersistentUniqueIdsMultithreaded.Stop=true;
  persistUniqueIdsBGThread.Wait();
+
+ GetPersistentDataFilesMultithreaded.Stop=true;
+ getPersistentDataFilesBGThread.Wait();
+
  SimObject.PersistentDataMultithreaded.Stop=true;
  for(int i=0;i<persistentDataBGThreads.Length;++i){
   persistentDataBGThreads[i].Wait();
@@ -111,6 +137,10 @@ void OnExitSave(){
 }
                 
 void Update(){
+ if(playersMovement.Count>0){
+  Debug.Log("SimObjectSpawner:Update:player movement:loading required");
+  getPersistentDataFilesBG.playersMovement_bg=new HashSet<Vector2Int>(playersMovement);
+ }
  foreach(var a in active){var sO=a.Value;
   //Debug.Log("Update:active sO.id:"+sO.id);
   sO.ManualUpdate();
