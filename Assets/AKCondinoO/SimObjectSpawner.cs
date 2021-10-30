@@ -3,6 +3,8 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Threading;
 using UnityEngine;
 using static AKCondinoO.Voxels.VoxelTerrain;
 
@@ -55,6 +57,7 @@ internal class PersistentUniqueIdsMultithreaded:BaseMultithreaded<PersistentUniq
         
 internal GetPersistentDataFilesBackgroundContainer getPersistentDataFilesBG;
 internal class GetPersistentDataFilesBackgroundContainer:BackgroundContainer{
+ internal object[]syn_bg;
  internal HashSet<Vector2Int>playersMovement_bg;
  internal SpawnData toSpawn_bg;
 }
@@ -62,33 +65,40 @@ internal GetPersistentDataFilesMultithreaded getPersistentDataFilesBGThread;
 internal class GetPersistentDataFilesMultithreaded:BaseMultithreaded<GetPersistentDataFilesBackgroundContainer>{
  protected override void Execute(){
   Debug.Log("GetPersistentDataFilesMultithreaded:Execute:current.playersMovement_bg.Count:"+current.playersMovement_bg.Count);
-  current.toSpawn_bg=new SpawnData();
-  foreach(Vector2Int pCoord in current.playersMovement_bg){
-   for(Vector2Int iCoord=new Vector2Int(),cCoord1=new Vector2Int();iCoord.y<=instantiationDistance.y-1;iCoord.y++){for(cCoord1.y=-iCoord.y+pCoord.y;cCoord1.y<=iCoord.y+pCoord.y;cCoord1.y+=iCoord.y*2){
-   for(           iCoord.x=0                                      ;iCoord.x<=instantiationDistance.x-1;iCoord.x++){for(cCoord1.x=-iCoord.x+pCoord.x;cCoord1.x<=iCoord.x+pCoord.x;cCoord1.x+=iCoord.x*2){
-    if(Math.Abs(cCoord1.x)>=MaxcCoordx||
-       Math.Abs(cCoord1.y)>=MaxcCoordy){
-     goto _skip;
-    }
-    int cnkIdx1=GetcnkIdx(cCoord1.x,cCoord1.y);
-    //Debug.Log("load files for cnkIdx1:"+cnkIdx1);
-    string transformPath=string.Format("{0}{1}/",Core.perChunkSavePath,cnkIdx1);
-    if(Directory.Exists(transformPath)){
-     foreach(var transformFile in Directory.GetFiles(transformPath,"(*,*)*")){
-      string transformFileName=Path.GetFileName(transformFile);
-      Debug.Log("got load file:"+transformFileName);
-      string typeAndId=transformFileName.Split('(',')')[1];
-       string[]typeAndIdSplit=typeAndId.Split(',');
-        string typeString=typeAndIdSplit[0];
-         string idString=typeAndIdSplit[1];
-      Type simType=Type.GetType(typeString);
-      ulong number=ulong.Parse(idString);
-      current.toSpawn_bg.at.Add((Vector3.zero,Vector3.zero,Vector3.one,simType,number));
+  foreach(var syn in current.syn_bg)Monitor.Enter(syn);
+  try{
+   current.toSpawn_bg=new SpawnData();
+   foreach(Vector2Int pCoord in current.playersMovement_bg){
+    for(Vector2Int iCoord=new Vector2Int(),cCoord1=new Vector2Int();iCoord.y<=instantiationDistance.y-1;iCoord.y++){for(cCoord1.y=-iCoord.y+pCoord.y;cCoord1.y<=iCoord.y+pCoord.y;cCoord1.y+=iCoord.y*2){
+    for(           iCoord.x=0                                      ;iCoord.x<=instantiationDistance.x-1;iCoord.x++){for(cCoord1.x=-iCoord.x+pCoord.x;cCoord1.x<=iCoord.x+pCoord.x;cCoord1.x+=iCoord.x*2){
+     if(Math.Abs(cCoord1.x)>=MaxcCoordx||
+        Math.Abs(cCoord1.y)>=MaxcCoordy){
+      goto _skip;
      }
-    }
-    _skip:{}
-   if(iCoord.x==0){break;}}}
-   if(iCoord.y==0){break;}}}
+     int cnkIdx1=GetcnkIdx(cCoord1.x,cCoord1.y);
+     //Debug.Log("load files for cnkIdx1:"+cnkIdx1);
+     string transformPath=string.Format("{0}{1}/",Core.perChunkSavePath,cnkIdx1);
+     if(Directory.Exists(transformPath)){
+      foreach(var transformFile in Directory.GetFiles(transformPath,"(*,*)*")){
+       string transformFileName=Path.GetFileName(transformFile);
+       Debug.Log("got load file:"+transformFileName);
+       string typeAndId=transformFileName.Split('(',')')[1];
+        string[]typeAndIdSplit=typeAndId.Split(',');
+         string typeString=typeAndIdSplit[0];
+          string idString=typeAndIdSplit[1];
+       Type simType=Type.GetType(typeString);
+       ulong number=ulong.Parse(idString);
+       current.toSpawn_bg.at.Add((Vector3.zero,Vector3.zero,Vector3.one,simType,number));
+      }
+     }
+     _skip:{}
+    if(iCoord.x==0){break;}}}
+    if(iCoord.y==0){break;}}}
+   }
+  }catch{
+   throw;
+  }finally{
+   foreach(var syn in current.syn_bg)Monitor.Exit(syn);
   }
  }
 }
@@ -186,6 +196,7 @@ void Update(){
 }
 bool OnBeginGetFiles(){
  if(getPersistentDataFilesBG.IsCompleted(getPersistentDataFilesBGThread.IsRunning)){
+  getPersistentDataFilesBG.syn_bg=syn.Values.ToArray();
   getPersistentDataFilesBG.playersMovement_bg=new HashSet<Vector2Int>(playersMovement,playersMovement.Comparer);
   GetPersistentDataFilesMultithreaded.Schedule(getPersistentDataFilesBG);
   return true;
@@ -228,8 +239,10 @@ IEnumerator SpawnCoroutine(){
     Debug.Log("SpawnCoroutine:at:"+at);
     Type simType=at.type;
     ulong number;
+    bool load=false;
     if(at.id!=null){
      number=at.id.Value;
+     load=true;
     }else{
      number=0;
      if(!ids.ContainsKey(simType)){
@@ -249,7 +262,7 @@ IEnumerator SpawnCoroutine(){
     active.Add(id,sO);
      syn.Add(sO,sO.syn);
     sO.id=id;
-    sO.OnActivated();
+    sO.OnActivated(load);
    }
    toSpawn.dequeued=true;
   }

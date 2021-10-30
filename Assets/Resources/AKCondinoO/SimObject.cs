@@ -46,14 +46,27 @@ internal class PersistentDataMultithreaded:BaseMultithreaded<PersistentDataBackg
   lock(current.syn_bg){
    Debug.Log("PersistentDataMultithreaded:Execute:...\ncurrent.transform_bg.position:"+current.transform_bg.position+"\ncurrent.transform_bg.rotation:"+current.transform_bg.rotation+"\ncurrent.transform_bg.localScale:"+current.transform_bg.localScale);
    string specsDataFile=string.Format("{0}({1},{2}).JsonSerializer",Core.sObjectsSavePath,current.id_bg.simType,current.id_bg.number);
-   Vector2Int cnkRgn1=vecPosTocnkRgn(current.transform_bg.position);
-   Vector2Int cCoord1=cnkRgnTocCoord(cnkRgn1);
-          int cnkIdx1=GetcnkIdx(cCoord1.x,cCoord1.y);
-   string transformPath=string.Format("{0}{1}/",Core.perChunkSavePath,cnkIdx1);
-   Directory.CreateDirectory(transformPath);
-   string transformFile=string.Format("{0}({1},{2}).JsonSerializer",transformPath,current.id_bg.simType,current.id_bg.number);
+
    if      (current.executionMode_bg==PersistentDataBackgroundContainer.ExecutionMode.Load){
+    Debug.Log("PersistentDataMultithreaded:Execute:loading");
+
+    PersistentDataBackgroundContainer.SerializableSpecsData specsData_cur=null;
+    using(var file=new FileStream(specsDataFile,FileMode.OpenOrCreate,FileAccess.ReadWrite,FileShare.None)){
+     if(file.Length>0){
+      using(var reader=new StreamReader(file)){using(var json=new JsonTextReader(reader)){
+      }}
+     }
+    }
+
    }else if(current.executionMode_bg==PersistentDataBackgroundContainer.ExecutionMode.Save){
+    Debug.Log("PersistentDataMultithreaded:Execute:saving");
+
+    Vector2Int cnkRgn1=vecPosTocnkRgn(current.transform_bg.position);
+    Vector2Int cCoord1=cnkRgnTocCoord(cnkRgn1);
+           int cnkIdx1=GetcnkIdx(cCoord1.x,cCoord1.y);
+    string transformPath=string.Format("{0}{1}/",Core.perChunkSavePath,cnkIdx1);
+    Directory.CreateDirectory(transformPath);
+    string transformFile=string.Format("{0}({1},{2}).JsonSerializer",transformPath,current.id_bg.simType,current.id_bg.number);
 
     PersistentDataBackgroundContainer.SerializableSpecsData specsData_old=null;
     using(var file=new FileStream(specsDataFile,FileMode.OpenOrCreate,FileAccess.ReadWrite,FileShare.None)){
@@ -96,32 +109,80 @@ protected virtual void Awake(){
  if(container.transform_bg==null){container.transform_bg=new PersistentDataBackgroundContainer.SerializableTransform();}
 }
 
-internal void OnActivated(){
+internal void OnActivated(bool load){
  container.id_bg=id.Value;
- container.SetSerializable(transform);
+ loading=load;
+ if(!loading){
+  container.SetSerializable(transform);
+ }else{
+  Debug.Log("SimObject:OnActivated:loading:transform has incorrect data");
+  loadRequired=true;
+ }
 }
 
 internal void OnExitSave(){
  Debug.Log("SimObject:OnExitSave");
  container.IsCompleted(SimObjectSpawner.Singleton.persistentDataBGThreads[0].IsRunning,-1);
- PersistentDataMultithreaded.Schedule(container);
- container.IsCompleted(SimObjectSpawner.Singleton.persistentDataBGThreads[0].IsRunning,-1);
+ if(!loading){
+  container.executionMode_bg=PersistentDataBackgroundContainer.ExecutionMode.Save;
+  PersistentDataMultithreaded.Schedule(container);
+  container.IsCompleted(SimObjectSpawner.Singleton.persistentDataBGThreads[0].IsRunning,-1);
+ }else{
+  Debug.Log("SimObject:OnExitSave:data loading was in progress:no need to save");
+ }
 }
-
+       
+bool loading; 
+bool loadRequired;
+bool persistentDataRequested;
 bool saveRequired;
 internal void ManualUpdate(){
  if(transform.hasChanged){
   transform.hasChanged=false;
-  Debug.Log("ManualUpdate:save required:transform.hasChanged:"+id,transform);
-  saveRequired=true;
+  if(!loading){
+   Debug.Log("ManualUpdate:transform.hasChanged:save required:"+id,transform);
+   saveRequired=true;
+  }
  }
- if(saveRequired&&OnUpdateSave()){
-  saveRequired=false;
-  Debug.Log("ManualUpdate:saving started:"+id,transform);
+
+ if(loading){
+  Debug.Log("ManualUpdate:loading:"+id,transform);
+  if(persistentDataRequested&&OnLoadedData()){
+   persistentDataRequested=false;
+   Debug.Log("ManualUpdate:loading finished:"+id,transform);
+   loading=false;
+  }else if(loadRequired&&OnUpdateLoad()){
+   loadRequired=false;
+   Debug.Log("ManualUpdate:loading started:"+id,transform);
+   persistentDataRequested=true;
+  }
+
+ }else{
+  if(saveRequired&&OnUpdateSave()){
+   saveRequired=false;
+   Debug.Log("ManualUpdate:saving started:"+id,transform);
+  }
+
  }
+}
+bool OnUpdateLoad(){
+ if(container.IsCompleted(SimObjectSpawner.Singleton.persistentDataBGThreads[0].IsRunning)){
+  container.executionMode_bg=PersistentDataBackgroundContainer.ExecutionMode.Load;
+  container.id_bg=id.Value;
+  PersistentDataMultithreaded.Schedule(container);
+  return true;
+ }
+ return false;
+}
+bool OnLoadedData(){
+ if(container.IsCompleted(SimObjectSpawner.Singleton.persistentDataBGThreads[0].IsRunning)){
+  return true;
+ }
+ return false;
 }
 bool OnUpdateSave(){
  if(container.IsCompleted(SimObjectSpawner.Singleton.persistentDataBGThreads[0].IsRunning)){
+  container.executionMode_bg=PersistentDataBackgroundContainer.ExecutionMode.Save;
   container.id_bg=id.Value;
   container.SetSerializable(transform);
   PersistentDataMultithreaded.Schedule(container);
