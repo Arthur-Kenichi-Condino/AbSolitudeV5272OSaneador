@@ -39,6 +39,11 @@ internal class PersistentDataBackgroundContainer:BackgroundContainer{
   transform_bg.position=transform.position;
   transform_bg.localScale=transform.localScale;
  }
+ internal void GetDeserialized(Transform transform){
+  transform.rotation=transform_bg.rotation;
+  transform.position=transform_bg.position;
+  transform.localScale=transform_bg.localScale;
+ }
 }
 internal class PersistentDataMultithreaded:BaseMultithreaded<PersistentDataBackgroundContainer>{
  readonly JsonSerializer jsonSerializer=new JsonSerializer();
@@ -54,9 +59,24 @@ internal class PersistentDataMultithreaded:BaseMultithreaded<PersistentDataBackg
     using(var file=new FileStream(specsDataFile,FileMode.OpenOrCreate,FileAccess.ReadWrite,FileShare.None)){
      if(file.Length>0){
       using(var reader=new StreamReader(file)){using(var json=new JsonTextReader(reader)){
+       specsData_cur=(PersistentDataBackgroundContainer.SerializableSpecsData)jsonSerializer.Deserialize(json,current.specsData_bg.GetType());
       }}
      }
     }
+
+    string transformFile=specsData_cur.transformFile;
+                        
+    PersistentDataBackgroundContainer.SerializableTransform transform_cur=null;
+    using(var file=new FileStream(transformFile,FileMode.OpenOrCreate,FileAccess.ReadWrite,FileShare.None)){
+     if(file.Length>0){
+      using(var reader=new StreamReader(file)){using(var json=new JsonTextReader(reader)){
+       transform_cur=(PersistentDataBackgroundContainer.SerializableTransform)jsonSerializer.Deserialize(json,current.transform_bg.GetType());
+      }}
+     }
+    }
+
+    current.specsData_bg=specsData_cur;
+    current.transform_bg=transform_cur;
 
    }else if(current.executionMode_bg==PersistentDataBackgroundContainer.ExecutionMode.Save){
     Debug.Log("PersistentDataMultithreaded:Execute:saving");
@@ -91,6 +111,7 @@ internal class PersistentDataMultithreaded:BaseMultithreaded<PersistentDataBackg
     }
     
     current.specsData_bg.transformFile=transformFile;
+
     using(var file=new FileStream(specsDataFile,FileMode.OpenOrCreate,FileAccess.ReadWrite,FileShare.None)){
      file.SetLength(0);
      file.Flush(true);
@@ -176,6 +197,7 @@ bool OnUpdateLoad(){
 }
 bool OnLoadedData(){
  if(container.IsCompleted(SimObjectSpawner.Singleton.persistentDataBGThreads[0].IsRunning)){
+  container.GetDeserialized(transform);
   return true;
  }
  return false;
