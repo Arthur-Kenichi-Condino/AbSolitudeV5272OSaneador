@@ -48,8 +48,8 @@ internal class PersistentDataBackgroundContainer:BackgroundContainer{
 internal class PersistentDataMultithreaded:BaseMultithreaded<PersistentDataBackgroundContainer>{
  readonly JsonSerializer jsonSerializer=new JsonSerializer();
  protected override void Execute(){
+  Debug.Log("PersistentDataMultithreaded:Execute");
   lock(current.syn_bg){
-   Debug.Log("PersistentDataMultithreaded:Execute:...\ncurrent.transform_bg.position:"+current.transform_bg.position+"\ncurrent.transform_bg.rotation:"+current.transform_bg.rotation+"\ncurrent.transform_bg.localScale:"+current.transform_bg.localScale);
    string specsDataFile=string.Format("{0}({1},{2}).JsonSerializer",Core.sObjectsSavePath,current.id_bg.simType,current.id_bg.number);
 
    if      (current.executionMode_bg==PersistentDataBackgroundContainer.ExecutionMode.Load){
@@ -79,7 +79,7 @@ internal class PersistentDataMultithreaded:BaseMultithreaded<PersistentDataBackg
     current.transform_bg=transform_cur;
 
    }else if(current.executionMode_bg==PersistentDataBackgroundContainer.ExecutionMode.Save){
-    Debug.Log("PersistentDataMultithreaded:Execute:saving");
+    Debug.Log("PersistentDataMultithreaded:Execute:saving...\ncurrent.transform_bg.position:"+current.transform_bg.position+"\ncurrent.transform_bg.rotation:"+current.transform_bg.rotation+"\ncurrent.transform_bg.localScale:"+current.transform_bg.localScale);
 
     Vector2Int cnkRgn1=vecPosTocnkRgn(current.transform_bg.position);
     Vector2Int cCoord1=cnkRgnTocCoord(cnkRgn1);
@@ -153,40 +153,68 @@ internal void OnExitSave(){
  }
 }
        
+[SerializeField]bool DEBUG_UNLOAD=false;
+
+bool unloading;
+bool unloadRequired;
+bool unloadRequested;
 bool loading; 
 bool loadRequired;
-bool persistentDataRequested;
+bool loadRequested;
 bool saveRequired;
 internal void ManualUpdate(){
- if(transform.hasChanged){
-  transform.hasChanged=false;
-  if(!loading){
-   Debug.Log("ManualUpdate:transform.hasChanged:save required:"+id,transform);
-   saveRequired=true;
+ if(DEBUG_UNLOAD){
+  DEBUG_UNLOAD=false;
+  Debug.Log("ManualUpdate:DEBUG_UNLOAD:save and unload:"+id,transform);
+  OnUnload();
+
+ }else{
+  if(transform.hasChanged){
+   transform.hasChanged=false;
+   if(!loading){
+    Debug.Log("ManualUpdate:transform.hasChanged:save required:"+id,transform);
+    saveRequired=true;
+   }
   }
  }
 
- if(loading){
-  Debug.Log("ManualUpdate:loading:"+id,transform);
-  if(persistentDataRequested&&OnLoadedData()){
-   persistentDataRequested=false;
-   Debug.Log("ManualUpdate:loading finished:"+id,transform);
-   loading=false;
-  }else if(loadRequired&&OnUpdateLoad()){
-   loadRequired=false;
-   Debug.Log("ManualUpdate:loading started:"+id,transform);
-   persistentDataRequested=true;
+ if(unloading){
+  Debug.Log("ManualUpdate:unloading:"+id,transform);
+  if(unloadRequested&&OnUnloadedData()){
+   unloadRequested=false;
+   Debug.Log("ManualUpdate:unloading finished:"+id,transform);
+   unloading=false;
+  }else if(unloadRequired&&OnUnloading()){
+   unloadRequired=false;
+   Debug.Log("ManualUpdate:unloading started:"+id,transform);
+   unloadRequested=true;
   }
 
  }else{
-  if(saveRequired&&OnUpdateSave()){
-   saveRequired=false;
-   Debug.Log("ManualUpdate:saving started:"+id,transform);
-  }
+  if(loading){
+   Debug.Log("ManualUpdate:loading:"+id,transform);
+   if(loadRequested&&OnLoadedData()){
+    loadRequested=false;
+    Debug.Log("ManualUpdate:loading finished:"+id,transform);
+    transform.hasChanged=false;
+    loading=false;
+   }else if(loadRequired&&OnLoading()){
+    loadRequired=false;
+    Debug.Log("ManualUpdate:loading started:"+id,transform);
+    loadRequested=true;
+   }
 
+  }else{
+   if(saveRequired&&OnSaving()){
+    saveRequired=false;
+    Debug.Log("ManualUpdate:saving started:"+id,transform);
+   }
+
+  }
  }
 }
-bool OnUpdateLoad(){
+
+bool OnLoading(){
  if(container.IsCompleted(SimObjectSpawner.Singleton.persistentDataBGThreads[0].IsRunning)){
   container.executionMode_bg=PersistentDataBackgroundContainer.ExecutionMode.Load;
   container.id_bg=id.Value;
@@ -202,12 +230,35 @@ bool OnLoadedData(){
  }
  return false;
 }
-bool OnUpdateSave(){
+
+bool OnSaving(){
  if(container.IsCompleted(SimObjectSpawner.Singleton.persistentDataBGThreads[0].IsRunning)){
   container.executionMode_bg=PersistentDataBackgroundContainer.ExecutionMode.Save;
   container.id_bg=id.Value;
   container.SetSerializable(transform);
   PersistentDataMultithreaded.Schedule(container);
+  return true;
+ }
+ return false;
+}
+
+void OnUnload(){
+ unloading=true;
+ Debug.Log("OnUnloading:something caused this sO to be disabled and unloaded");
+ unloadRequired=true;
+}
+bool OnUnloading(){
+ if(container.IsCompleted(SimObjectSpawner.Singleton.persistentDataBGThreads[0].IsRunning)){
+  container.executionMode_bg=PersistentDataBackgroundContainer.ExecutionMode.Save;
+  container.id_bg=id.Value;
+  container.SetSerializable(transform);
+  PersistentDataMultithreaded.Schedule(container);
+  return true;
+ }
+ return false;
+}
+bool OnUnloadedData(){
+ if(container.IsCompleted(SimObjectSpawner.Singleton.persistentDataBGThreads[0].IsRunning)){
   return true;
  }
  return false;
