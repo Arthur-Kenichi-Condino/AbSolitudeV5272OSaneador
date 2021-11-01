@@ -144,7 +144,10 @@ internal void OnActivated(bool load){
 internal void OnExitSave(){
  Debug.Log("SimObject:OnExitSave");
  container.IsCompleted(SimObjectSpawner.Singleton.persistentDataBGThreads[0].IsRunning,-1);
- if(!loading){
+ if(unplacing){
+  Debug.Log("SimObject:OnExitSave:unplacing:"+id);
+
+ }else if(!loading){
   container.executionMode_bg=PersistentDataBackgroundContainer.ExecutionMode.Save;
   PersistentDataMultithreaded.Schedule(container);
   container.IsCompleted(SimObjectSpawner.Singleton.persistentDataBGThreads[0].IsRunning,-1);
@@ -153,8 +156,11 @@ internal void OnExitSave(){
  }
 }
        
+[SerializeField]bool DEBUG_UNPLACE=false;
+
 [SerializeField]bool DEBUG_UNLOAD=false;
 
+bool unplacing;
 bool unloading;
 bool unloadRequired;
 bool unloadRequested;
@@ -163,57 +169,71 @@ bool loadRequired;
 bool loadRequested;
 bool saveRequired;
 internal void ManualUpdate(){
- if(DEBUG_UNLOAD){
-  DEBUG_UNLOAD=false;
-  Debug.Log("ManualUpdate:DEBUG_UNLOAD:save and unload:"+id,transform);
-  OnUnload();
+ if(DEBUG_UNPLACE){
+  DEBUG_UNPLACE=false;
+  Debug.Log("ManualUpdate:DEBUG_UNPLACE:save and UNPLACE:"+id,transform);
+  OnUnplace();
 
  }else{
-  if(transform.hasChanged){
-   transform.hasChanged=false;
-   if(!unloading){
-    if(!loading){
-     Debug.Log("ManualUpdate:transform.hasChanged:save required:"+id,transform);
-     saveRequired=true;
+  if(DEBUG_UNLOAD){
+   DEBUG_UNLOAD=false;
+   Debug.Log("ManualUpdate:DEBUG_UNLOAD:save and unload:"+id,transform);
+   OnUnload();
+                     
+  }else{
+   if(transform.hasChanged){
+    transform.hasChanged=false;
+    if(!unplacing){
+     if(!unloading){
+      if(!loading){
+       Debug.Log("ManualUpdate:transform.hasChanged:save required:"+id,transform);
+       saveRequired=true;
+      }
+     }
     }
    }
   }
  }
-
- if(unloading){
-  Debug.Log("ManualUpdate:unloading:"+id,transform);
-  if(unloadRequested&&OnUnloadedData()){
-   unloadRequested=false;
-   Debug.Log("ManualUpdate:unloading finished:"+id,transform);
-   unloading=false;
-   SimObjectSpawner.Singleton.DespawnQueue.Enqueue(this);
-   return;
-  }else if(unloadRequired&&OnUnloading()){
-   unloadRequired=false;
-   Debug.Log("ManualUpdate:unloading started:"+id,transform);
-   unloadRequested=true;
-  }
+ 
+ if(unplacing){
+  Debug.Log("ManualUpdate:unplacing:"+id,transform);
 
  }else{
-  if(loading){
-   Debug.Log("ManualUpdate:loading:"+id,transform);
-   if(loadRequested&&OnLoadedData()){
-    loadRequested=false;
-    Debug.Log("ManualUpdate:loading finished:"+id,transform);
-    transform.hasChanged=false;
-    loading=false;
-   }else if(loadRequired&&OnLoading()){
-    loadRequired=false;
-    Debug.Log("ManualUpdate:loading started:"+id,transform);
-    loadRequested=true;
+  if(unloading){
+   Debug.Log("ManualUpdate:unloading:"+id,transform);
+   if(unloadRequested&&OnUnloadedData()){
+    unloadRequested=false;
+    Debug.Log("ManualUpdate:unloading finished:"+id,transform);
+    unloading=false;
+    SimObjectSpawner.Singleton.DespawnQueue.Enqueue(this);
+    return;
+   }else if(unloadRequired&&OnUnloading()){
+    unloadRequired=false;
+    Debug.Log("ManualUpdate:unloading started:"+id,transform);
+    unloadRequested=true;
    }
-
+    
   }else{
-   if(saveRequired&&OnSaving()){
-    saveRequired=false;
-    Debug.Log("ManualUpdate:saving started:"+id,transform);
-   }
+   if(loading){
+    Debug.Log("ManualUpdate:loading:"+id,transform);
+    if(loadRequested&&OnLoadedData()){
+     loadRequested=false;
+     Debug.Log("ManualUpdate:loading finished:"+id,transform);
+     transform.hasChanged=false;
+     loading=false;
+    }else if(loadRequired&&OnLoading()){
+     loadRequired=false;
+     Debug.Log("ManualUpdate:loading started:"+id,transform);
+     loadRequested=true;
+    }
+ 
+   }else{
+    if(saveRequired&&OnSaving()){
+     saveRequired=false;
+     Debug.Log("ManualUpdate:saving started:"+id,transform);
+    }
 
+   }
   }
  }
 }
@@ -248,7 +268,7 @@ bool OnSaving(){
 
 void OnUnload(){
  unloading=true;
- Debug.Log("OnUnloading:something caused this sO to be disabled and unloaded");
+ Debug.Log("OnUnload:something caused this sO to be disabled and unloaded");
  unloadRequired=true;
 }
 bool OnUnloading(){
@@ -266,6 +286,11 @@ bool OnUnloadedData(){
   return true;
  }
  return false;
+}
+
+void OnUnplace(){
+ unplacing=true;
+ Debug.Log("OnUnplace:something caused this sO to be disabled and removed from the world");
 }
 
 }}
