@@ -171,9 +171,11 @@ internal void ManualUpdate(){
  }else{
   if(transform.hasChanged){
    transform.hasChanged=false;
-   if(!loading){
-    Debug.Log("ManualUpdate:transform.hasChanged:save required:"+id,transform);
-    saveRequired=true;
+   if(!unloading){
+    if(!loading){
+     Debug.Log("ManualUpdate:transform.hasChanged:save required:"+id,transform);
+     saveRequired=true;
+    }
    }
   }
  }
@@ -184,6 +186,8 @@ internal void ManualUpdate(){
    unloadRequested=false;
    Debug.Log("ManualUpdate:unloading finished:"+id,transform);
    unloading=false;
+   SimObjectSpawner.Singleton.DespawnQueue.Enqueue(this);
+   return;
   }else if(unloadRequired&&OnUnloading()){
    unloadRequired=false;
    Debug.Log("ManualUpdate:unloading started:"+id,transform);

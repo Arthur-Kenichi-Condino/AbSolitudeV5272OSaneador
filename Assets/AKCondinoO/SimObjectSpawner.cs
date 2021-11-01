@@ -9,11 +9,14 @@ using UnityEngine;
 using static AKCondinoO.Voxels.VoxelTerrain;
 
 namespace AKCondinoO.Sims{internal class SimObjectSpawner:MonoBehaviour{internal static SimObjectSpawner Singleton;
+
+internal readonly HashSet<Vector2Int>playersMovement=new HashSet<Vector2Int>();
+        
+internal Dictionary<Type,ulong>ids;
+
 internal readonly Dictionary<(Type simType,ulong number),SimObject>active=new Dictionary<(Type,ulong),SimObject>();
  readonly Dictionary<SimObject,object>syn=new Dictionary<SimObject,object>();
         
-internal readonly HashSet<Vector2Int>playersMovement=new HashSet<Vector2Int>();
-
 internal PersistentUniqueIdsBackgroundContainer persistUniqueIdsBG;
 internal class PersistentUniqueIdsBackgroundContainer:BackgroundContainer{
  internal ExecutionMode executionMode_bg=ExecutionMode.Save;
@@ -151,8 +154,17 @@ void OnDestroyingCoreEvent(object sender,EventArgs e){
 
 void OnExitSave(){
  Debug.Log("SimObjectSpawner:OnExitSave");
+ foreach(var a in active){var sO=a.Value;
+  Debug.Log("SimObjectSpawner:OnExitSave:save active sO.id:"+sO.id);
+  sO.OnExitSave();
+ }
+ if(SimObject.PersistentDataMultithreaded.Clear()==0){
+  Debug.Log("all active sOs were saved successfully");
+ }else{
+  Debug.LogError("some active sOs failed to be saved");
+ }
  if(ids==null){
-  Debug.Log("ids exit save is not needed: no changed made");
+  Debug.Log("ids exit save is not needed: no changes were made");
   PersistentUniqueIdsMultithreaded.Clear();
  }else{
   persistUniqueIdsBG.IsCompleted(persistUniqueIdsBGThread.IsRunning,-1);
@@ -166,39 +178,40 @@ void OnExitSave(){
    Debug.LogError("ids exit save failed");
   }
  }
- foreach(var a in active){var sO=a.Value;
-  Debug.Log("SimObjectSpawner:OnExitSave:save active sO.id:"+sO.id);
-  sO.OnExitSave();
- }
- if(SimObject.PersistentDataMultithreaded.Clear()==0){
-  Debug.Log("all active sOs were saved successfully");
- }else{
-  Debug.LogError("some active sOs failed to be saved");
- }
 }
                 
-bool gettingFiles;
+bool loadFilesRequested;
 void Update(){
- if(gettingFiles&&getPersistentDataFilesBG.IsCompleted(getPersistentDataFilesBGThread.IsRunning)){
-  gettingFiles=false;
+ if(loadFilesRequested&&OnGotFiles()){
+  loadFilesRequested=false;
   Debug.Log("SimObjectSpawner:Update:player movement:got files to load");
   SpawnQueue.Enqueue(getPersistentDataFilesBG.toSpawn_bg);
   getPersistentDataFilesBG.toSpawn_bg=null;
- }else if(playersMovement.Count>0&&OnBeginGetFiles()){
+ }else if(playersMovement.Count>0&&OnGetFiles()){
   playersMovement.Clear();
   Debug.Log("SimObjectSpawner:Update:player movement:loading required");
-  gettingFiles=true;
+  loadFilesRequested=true;
  }
  foreach(var a in active){var sO=a.Value;
   //Debug.Log("Update:active sO.id:"+sO.id);
   sO.ManualUpdate();
  }
+ while(DespawnQueue.Count>0){var toDespawn=DespawnQueue.Dequeue();
+  OnDeactivated(toDespawn);
+ }
 }
-bool OnBeginGetFiles(){
+
+bool OnGetFiles(){
  if(getPersistentDataFilesBG.IsCompleted(getPersistentDataFilesBGThread.IsRunning)){
   getPersistentDataFilesBG.syn_bg=syn.Values.ToArray();
   getPersistentDataFilesBG.playersMovement_bg=new HashSet<Vector2Int>(playersMovement,playersMovement.Comparer);
   GetPersistentDataFilesMultithreaded.Schedule(getPersistentDataFilesBG);
+  return true;
+ }
+ return false;
+}
+bool OnGotFiles(){
+ if(getPersistentDataFilesBG.IsCompleted(getPersistentDataFilesBGThread.IsRunning)){
   return true;
  }
  return false;
@@ -216,7 +229,6 @@ internal class SpawnData{
  }
 }
 
-internal Dictionary<Type,ulong>ids;
 WaitUntil waitSpawnQueue;
 WaitUntil waitPersistentUniqueIdsBGIsCompleted;
 IEnumerator SpawnCoroutine(){
@@ -271,5 +283,12 @@ IEnumerator SpawnCoroutine(){
   PersistentUniqueIdsMultithreaded.Schedule(persistUniqueIdsBG);
  }
 goto Loop;}
+
+internal readonly Queue<SimObject>DespawnQueue=new Queue<SimObject>();
+void OnDeactivated(SimObject sO){
+ active.Remove(sO.id.Value);
+  syn.Remove(sO);
+ sO.id=null;
+}
 
 }}
