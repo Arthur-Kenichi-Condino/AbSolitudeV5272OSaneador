@@ -161,6 +161,7 @@ internal void OnExitSave(){
 [SerializeField]bool DEBUG_UNLOAD=false;
 
 bool unplacing;
+bool unplaceRequired;
 bool unloading;
 bool unloadRequired;
 bool unloadRequested;
@@ -169,23 +170,23 @@ bool loadRequired;
 bool loadRequested;
 bool saveRequired;
 internal void ManualUpdate(){
- if(DEBUG_UNPLACE){
-  DEBUG_UNPLACE=false;
-  Debug.Log("ManualUpdate:DEBUG_UNPLACE:save and UNPLACE:"+id,transform);
-  OnUnplace();
-
- }else{
-  if(DEBUG_UNLOAD){
-   DEBUG_UNLOAD=false;
-   Debug.Log("ManualUpdate:DEBUG_UNLOAD:save and unload:"+id,transform);
-   OnUnload();
+ if(!unplacing){
+  if(!unloading){
+   if(!loading){
+    if(DEBUG_UNPLACE){
+     DEBUG_UNPLACE=false;
+     Debug.Log("ManualUpdate:DEBUG_UNPLACE:save and UNPLACE:"+id,transform);
+     OnUnplace();
+   
+    }else{
+     if(DEBUG_UNLOAD){
+      DEBUG_UNLOAD=false;
+      Debug.Log("ManualUpdate:DEBUG_UNLOAD:save and unload:"+id,transform);
+      OnUnload();
                      
-  }else{
-   if(transform.hasChanged){
-    transform.hasChanged=false;
-    if(!unplacing){
-     if(!unloading){
-      if(!loading){
+     }else{
+      if(transform.hasChanged){
+       transform.hasChanged=false;
        Debug.Log("ManualUpdate:transform.hasChanged:save required:"+id,transform);
        saveRequired=true;
       }
@@ -197,6 +198,8 @@ internal void ManualUpdate(){
  
  if(unplacing){
   Debug.Log("ManualUpdate:unplacing:"+id,transform);
+  if(unplaceRequired&&OnUnplacing()){
+  }
 
  }else{
   if(unloading){
@@ -291,6 +294,10 @@ bool OnUnloadedData(){
 void OnUnplace(){
  unplacing=true;
  Debug.Log("OnUnplace:something caused this sO to be disabled and removed from the world");
+ unplaceRequired=true;
+}
+bool OnUnplacing(){
+ return false;
 }
 
 }}

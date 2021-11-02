@@ -185,8 +185,6 @@ void Update(){
  if(loadFilesRequested&&OnGotFiles()){
   loadFilesRequested=false;
   Debug.Log("SimObjectSpawner:Update:player movement:got files to load");
-  SpawnQueue.Enqueue(getPersistentDataFilesBG.toSpawn_bg);
-  getPersistentDataFilesBG.toSpawn_bg=null;
  }else if(playersMovement.Count>0&&OnGetFiles()){
   playersMovement.Clear();
   Debug.Log("SimObjectSpawner:Update:player movement:loading required");
@@ -212,6 +210,8 @@ bool OnGetFiles(){
 }
 bool OnGotFiles(){
  if(getPersistentDataFilesBG.IsCompleted(getPersistentDataFilesBGThread.IsRunning)){
+  SpawnQueue.Enqueue(getPersistentDataFilesBG.toSpawn_bg);
+  getPersistentDataFilesBG.toSpawn_bg=null;
   return true;
  }
  return false;
