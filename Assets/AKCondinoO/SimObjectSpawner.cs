@@ -13,6 +13,7 @@ namespace AKCondinoO.Sims{internal class SimObjectSpawner:MonoBehaviour{internal
 internal readonly HashSet<Vector2Int>playersMovement=new HashSet<Vector2Int>();
         
 internal Dictionary<Type,ulong>ids;
+internal Dictionary<Type,List<ulong>>releasedIds;
 
 internal readonly Dictionary<(Type simType,ulong number),SimObject>active=new Dictionary<(Type,ulong),SimObject>();
  readonly Dictionary<SimObject,object>syn=new Dictionary<SimObject,object>();
@@ -25,12 +26,15 @@ internal class PersistentUniqueIdsBackgroundContainer:BackgroundContainer{
   Load,
  }
  internal Dictionary<Type,ulong>ids_bg;
+ internal Dictionary<Type,List<ulong>>releasedIds_bg;
 }
 internal PersistentUniqueIdsMultithreaded persistUniqueIdsBGThread;
 internal class PersistentUniqueIdsMultithreaded:BaseMultithreaded<PersistentUniqueIdsBackgroundContainer>{
  readonly JsonSerializer jsonSerializer=new JsonSerializer();
  protected override void Execute(){
   string uniqueIdsFile=string.Format("{0}{1}",Core.savePath,"uniqueIds.JsonSerializer");
+
+  string releasedIdsFile=string.Format("{0}{1}",Core.savePath,"releasedIds.JsonSerializer");
 
   if      (current.executionMode_bg==PersistentUniqueIdsBackgroundContainer.ExecutionMode.Load){
    Debug.Log("PersistentUniqueIdsMultithreaded:Execute:Load:uniqueIdsFile: "+uniqueIdsFile);
@@ -44,6 +48,17 @@ internal class PersistentUniqueIdsMultithreaded:BaseMultithreaded<PersistentUniq
     }
    }
 
+   Debug.Log("PersistentUniqueIdsMultithreaded:Execute:Load:releasedIdsFile: "+releasedIdsFile);
+   using(var file=new FileStream(releasedIdsFile,FileMode.OpenOrCreate,FileAccess.ReadWrite,FileShare.None)){
+    if(file.Length>0){
+     using(var reader=new StreamReader(file)){using(var json=new JsonTextReader(reader)){
+      current.releasedIds_bg=(Dictionary<Type,List<ulong>>)jsonSerializer.Deserialize(json,typeof(Dictionary<Type,List<ulong>>));
+     }}
+    }else{
+     current.releasedIds_bg=new Dictionary<Type,List<ulong>>();
+    }
+   }
+
   }else if(current.executionMode_bg==PersistentUniqueIdsBackgroundContainer.ExecutionMode.Save){
    Debug.Log("PersistentUniqueIdsMultithreaded:Execute:Save:uniqueIdsFile: "+uniqueIdsFile);
    using(var file=new FileStream(uniqueIdsFile,FileMode.OpenOrCreate,FileAccess.ReadWrite,FileShare.None)){
@@ -53,8 +68,17 @@ internal class PersistentUniqueIdsMultithreaded:BaseMultithreaded<PersistentUniq
      jsonSerializer.Serialize(json,current.ids_bg,typeof(Dictionary<Type,ulong>));
     }}
    }
-  }
 
+   Debug.Log("PersistentUniqueIdsMultithreaded:Execute:Save:releasedIdsFile: "+releasedIdsFile);
+   using(var file=new FileStream(releasedIdsFile,FileMode.OpenOrCreate,FileAccess.ReadWrite,FileShare.None)){
+    file.SetLength(0);
+    file.Flush(true);
+    using(var writer=new StreamWriter(file)){using(var json=new JsonTextWriter(writer)){
+     jsonSerializer.Serialize(json,current.releasedIds_bg,typeof(Dictionary<Type,List<ulong>>));
+    }}
+   }
+
+  }
  }
 }
         
@@ -197,6 +221,9 @@ void Update(){
  while(DespawnQueue.Count>0){var toDespawn=DespawnQueue.Dequeue();
   OnDeactivated(toDespawn);
  }
+ while(DespawnReleaseIdQueue.Count>0){var toDespawnReleaseId=DespawnReleaseIdQueue.Dequeue();
+  OnDeactivatedReleaseId(toDespawnReleaseId);
+ }
 }
 
 bool OnGetFiles(){
@@ -245,6 +272,7 @@ IEnumerator SpawnCoroutine(){
   if(persistUniqueIdsBG.executionMode_bg==PersistentUniqueIdsBackgroundContainer.ExecutionMode.Load){
    Debug.Log("register loaded ids");
    ids=persistUniqueIdsBG.ids_bg;
+   releasedIds=persistUniqueIdsBG.releasedIds_bg;
   }
   while(SpawnQueue.Count>0){var toSpawn=SpawnQueue.Dequeue();
    foreach(var at in toSpawn.at){
@@ -260,7 +288,13 @@ IEnumerator SpawnCoroutine(){
      if(!ids.ContainsKey(simType)){
       ids.Add(simType,1);
      }else{
-      number=ids[simType]++;
+      if(releasedIds.ContainsKey(simType)&&releasedIds[simType].Count>0){
+       List<ulong>simTypeReleasedIds=releasedIds[simType];
+       number=simTypeReleasedIds[simTypeReleasedIds.Count-1];
+       simTypeReleasedIds.RemoveAt(simTypeReleasedIds.Count-1);
+      }else{
+       number=ids[simType]++;
+      }
      }
     }
     (Type simType,ulong number)id=(simType,number);
@@ -288,6 +322,17 @@ internal readonly Queue<SimObject>DespawnQueue=new Queue<SimObject>();
 void OnDeactivated(SimObject sO){
  active.Remove(sO.id.Value);
   syn.Remove(sO);
+ sO.id=null;
+}
+
+internal readonly Queue<SimObject>DespawnReleaseIdQueue=new Queue<SimObject>();
+void OnDeactivatedReleaseId(SimObject sO){
+ active.Remove(sO.id.Value);
+  syn.Remove(sO);
+ if(!releasedIds.ContainsKey(sO.id.Value.simType)){
+  releasedIds.Add(sO.id.Value.simType,new List<ulong>());
+ }
+ releasedIds[sO.id.Value.simType].Add(sO.id.Value.number);
  sO.id=null;
 }
 

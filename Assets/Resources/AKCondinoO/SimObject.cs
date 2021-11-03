@@ -20,6 +20,7 @@ internal class PersistentDataBackgroundContainer:BackgroundContainer{
  internal enum ExecutionMode{
   Save,
   Load,
+  Unplace,
  }
 
  internal(Type simType,ulong number)id_bg;
@@ -52,7 +53,34 @@ internal class PersistentDataMultithreaded:BaseMultithreaded<PersistentDataBackg
   lock(current.syn_bg){
    string specsDataFile=string.Format("{0}({1},{2}).JsonSerializer",Core.sObjectsSavePath,current.id_bg.simType,current.id_bg.number);
 
-   if      (current.executionMode_bg==PersistentDataBackgroundContainer.ExecutionMode.Load){
+   if      (current.executionMode_bg==PersistentDataBackgroundContainer.ExecutionMode.Unplace){
+    Debug.Log("PersistentDataMultithreaded:Execute:unplacing");
+
+    PersistentDataBackgroundContainer.SerializableSpecsData specsData_old=null;
+    using(var file=new FileStream(specsDataFile,FileMode.OpenOrCreate,FileAccess.ReadWrite,FileShare.None)){
+     if(file.Length>0){
+      using(var reader=new StreamReader(file)){using(var json=new JsonTextReader(reader)){
+       specsData_old=(PersistentDataBackgroundContainer.SerializableSpecsData)jsonSerializer.Deserialize(json,current.specsData_bg.GetType());
+      }} 
+     }
+    }
+    if(specsData_old!=null){
+     if(File.Exists(specsData_old.transformFile)){
+      File.Delete(specsData_old.transformFile);
+     }
+    }
+
+    current.specsData_bg.transformFile="";
+
+    using(var file=new FileStream(specsDataFile,FileMode.OpenOrCreate,FileAccess.ReadWrite,FileShare.None)){
+     file.SetLength(0);
+     file.Flush(true);
+     using(var writer=new StreamWriter(file)){using(var json=new JsonTextWriter(writer)){
+      jsonSerializer.Serialize(json,current.specsData_bg,current.specsData_bg.GetType());
+     }}
+    }
+
+   }else if(current.executionMode_bg==PersistentDataBackgroundContainer.ExecutionMode.Load){
     Debug.Log("PersistentDataMultithreaded:Execute:loading");
 
     PersistentDataBackgroundContainer.SerializableSpecsData specsData_cur=null;
@@ -162,6 +190,7 @@ internal void OnExitSave(){
 
 bool unplacing;
 bool unplaceRequired;
+bool unplaceRequested;
 bool unloading;
 bool unloadRequired;
 bool unloadRequested;
@@ -198,7 +227,15 @@ internal void ManualUpdate(){
  
  if(unplacing){
   Debug.Log("ManualUpdate:unplacing:"+id,transform);
-  if(unplaceRequired&&OnUnplacing()){
+  if(unplaceRequested&&OnUnplacedData()){
+   unplaceRequested=false;
+   Debug.Log("ManualUpdate:unplacing finished:"+id,transform);
+   unplacing=false;
+   SimObjectSpawner.Singleton.DespawnReleaseIdQueue.Enqueue(this);
+  }else if(unplaceRequired&&OnUnplacing()){
+   unplaceRequired=false;
+   Debug.Log("ManualUpdate:unplacing started:"+id,transform);
+   unplaceRequested=true;
   }
 
  }else{
@@ -297,6 +334,18 @@ void OnUnplace(){
  unplaceRequired=true;
 }
 bool OnUnplacing(){
+ if(container.IsCompleted(SimObjectSpawner.Singleton.persistentDataBGThreads[0].IsRunning)){
+  container.executionMode_bg=PersistentDataBackgroundContainer.ExecutionMode.Unplace;
+  container.id_bg=id.Value;
+  PersistentDataMultithreaded.Schedule(container);
+  return true;
+ }
+ return false;
+}
+bool OnUnplacedData(){
+ if(container.IsCompleted(SimObjectSpawner.Singleton.persistentDataBGThreads[0].IsRunning)){
+  return true;
+ }
  return false;
 }
 
