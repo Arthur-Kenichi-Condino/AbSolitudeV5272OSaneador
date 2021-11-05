@@ -1,5 +1,6 @@
 using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 using static AKCondinoO.Voxels.VoxelTerrain;
@@ -7,6 +8,8 @@ using static Utils;
 
 namespace AKCondinoO.Sims{internal class SimObject:MonoBehaviour{
 internal readonly object syn=new object();        
+        
+internal LinkedListNode<SimObject>pooled;
 
 internal(Type simType,ulong number)?id=null;
 

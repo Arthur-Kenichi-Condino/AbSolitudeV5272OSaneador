@@ -17,6 +17,8 @@ internal Dictionary<Type,List<ulong>>releasedIds;
 
 internal readonly Dictionary<(Type simType,ulong number),SimObject>active=new Dictionary<(Type,ulong),SimObject>();
  readonly Dictionary<SimObject,object>syn=new Dictionary<SimObject,object>();
+
+internal readonly Dictionary<Type,LinkedList<SimObject>>pool=new Dictionary<Type,LinkedList<SimObject>>();
         
 internal PersistentUniqueIdsBackgroundContainer persistUniqueIdsBG;
 internal class PersistentUniqueIdsBackgroundContainer:BackgroundContainer{
@@ -133,11 +135,12 @@ internal class GetPersistentDataFilesMultithreaded:BaseMultithreaded<GetPersiste
 internal readonly SimObject.PersistentDataMultithreaded[]persistentDataBGThreads=new SimObject.PersistentDataMultithreaded[Environment.ProcessorCount];
 
 internal readonly Dictionary<Type,GameObject>Prefabs=new Dictionary<Type,GameObject>();
-void Awake(){if(Singleton==null){Singleton=this;}else{DestroyImmediate(this);}
+void Awake(){if(Singleton==null){Singleton=this;}else{DestroyImmediate(this);return;}
 
  foreach(var o in Resources.LoadAll("AKCondinoO/",typeof(GameObject))){var gO=(GameObject)o;var sO=gO.GetComponent<SimObject>();if(sO==null)continue;
   Type t=sO.GetType();
   Prefabs.Add(t,gO);
+  pool.Add(t,new LinkedList<SimObject>());
  }
 
  Core.Singleton.OnDestroyingCoreEvent+=OnDestroyingCoreEvent;
@@ -303,8 +306,26 @@ IEnumerator SpawnCoroutine(){
      continue;
     }
     Debug.Log("SpawnCoroutine:id:"+id);
-    var gO=Instantiate(Prefabs[at.type],at.position,Quaternion.Euler(at.rotation));gO.transform.localScale=at.scale;
-    var sO=gO.GetComponent<SimObject>();
+    GameObject gO;
+    SimObject sO;
+    if(pool[at.type].Count>0){
+     Debug.Log("SpawnCoroutine:using pooled sim object");
+     sO=pool[at.type].First.Value;
+     pool[at.type].RemoveFirst();
+     sO.pooled=null;
+
+     gO=sO.gameObject;
+     gO.transform.position=at.position;
+     gO.transform.rotation=Quaternion.Euler(at.rotation);
+     gO.transform.localScale=at.scale;
+
+    }else{
+     Debug.Log("SpawnCoroutine:Instantiate from Prefab");
+     gO=Instantiate(Prefabs[at.type],at.position,Quaternion.Euler(at.rotation));
+     gO.transform.localScale=at.scale;
+
+     sO=gO.GetComponent<SimObject>();
+    }
     active.Add(id,sO);
      syn.Add(sO,sO.syn);
     sO.id=id;
@@ -322,6 +343,9 @@ internal readonly Queue<SimObject>DespawnQueue=new Queue<SimObject>();
 void OnDeactivated(SimObject sO){
  active.Remove(sO.id.Value);
   syn.Remove(sO);
+
+ sO.pooled=pool[sO.id.Value.simType].AddLast(sO);
+
  sO.id=null;
 }
 
@@ -329,10 +353,14 @@ internal readonly Queue<SimObject>DespawnReleaseIdQueue=new Queue<SimObject>();
 void OnDeactivatedReleaseId(SimObject sO){
  active.Remove(sO.id.Value);
   syn.Remove(sO);
+
  if(!releasedIds.ContainsKey(sO.id.Value.simType)){
   releasedIds.Add(sO.id.Value.simType,new List<ulong>());
  }
  releasedIds[sO.id.Value.simType].Add(sO.id.Value.number);
+            
+ sO.pooled=pool[sO.id.Value.simType].AddLast(sO);
+
  sO.id=null;
 }
 

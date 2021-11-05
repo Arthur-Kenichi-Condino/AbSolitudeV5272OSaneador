@@ -1,4 +1,5 @@
 using AKCondinoO.Sims;
+using AKCondinoO.Voxels;
 using UnityEngine;
 using static AKCondinoO.Voxels.VoxelTerrain;
 
@@ -27,6 +28,7 @@ void Update(){
   if(cCoord!=cCoord_Pre||initialization){
    Debug.Log("NetcodePlayerPrefab:changed to cCoord:"+cCoord+"!",this);
    SimObjectSpawner.Singleton.playersMovement.Add(cCoord);
+   VoxelTerrain.Singleton.playersMovement.Add(this,(cCoord,cCoord_Pre));
    cnkRgn=cCoordTocnkRgn(cCoord);
    Debug.Log("NetcodePlayerPrefab:changed to cnkRgn:"+cnkRgn+"!",this);
   }

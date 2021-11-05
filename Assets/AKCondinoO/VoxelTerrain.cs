@@ -1,9 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using static AKCondinoO.Voxels.VoxelTerrainChunk;
 
-namespace AKCondinoO.Voxels{internal class VoxelTerrain:MonoBehaviour{
+namespace AKCondinoO.Voxels{internal class VoxelTerrain:MonoBehaviour{internal static VoxelTerrain Singleton;
 internal const int MaxcCoordx=6250;
 internal const int MaxcCoordy=6250;
 internal static Vector2Int instantiationDistance{get;}=new Vector2Int(5,5);
@@ -65,6 +66,46 @@ internal static Vector2Int expropriationDistance{get;}=new Vector2Int(5,5);
 
 #endregion
         
-internal readonly Dictionary<NetcodePlayerPrefab,(Vector2Int,Vector2Int)?>playersMovement=new Dictionary<NetcodePlayerPrefab,(Vector2Int,Vector2Int)?>();
+internal readonly Dictionary<NetcodePlayerPrefab,(Vector2Int cCoord,Vector2Int cCoord_Pre)>playersMovement=new Dictionary<NetcodePlayerPrefab,(Vector2Int,Vector2Int)>();
+
+internal readonly Dictionary<int,VoxelTerrainChunk>active=new Dictionary<int,VoxelTerrainChunk>();
+
+void Awake(){if(Singleton==null){Singleton=this;}else{DestroyImmediate(this);return;}
+}
+
+void Update(){
+ if(playersMovement.Count>0){
+  foreach(var movement in playersMovement){var moved=movement.Value;
+   Debug.Log("player movement:"+movement);
+   Vector2Int pCoord=moved.cCoord;
+   Vector2Int pCoord_Pre=moved.cCoord_Pre;
+
+   for(Vector2Int eCoord=new Vector2Int(),cCoord1=new Vector2Int();eCoord.y<=expropriationDistance.y;eCoord.y++){for(cCoord1.y=-eCoord.y+pCoord_Pre.y;cCoord1.y<=eCoord.y+pCoord_Pre.y;cCoord1.y+=eCoord.y*2){
+   for(           eCoord.x=0                                      ;eCoord.x<=expropriationDistance.x;eCoord.x++){for(cCoord1.x=-eCoord.x+pCoord_Pre.x;cCoord1.x<=eCoord.x+pCoord_Pre.x;cCoord1.x+=eCoord.x*2){
+
+    if(Math.Abs(cCoord1.x)>=MaxcCoordx||
+       Math.Abs(cCoord1.y)>=MaxcCoordy){
+     goto _skip;
+    }
+
+    if(playersMovement.All(
+     p=>{
+      return Mathf.Abs(cCoord1.x-p.Key.cCoord.x)>instantiationDistance.x||
+             Mathf.Abs(cCoord1.y-p.Key.cCoord.y)>instantiationDistance.y;
+     })
+    ){
+     int cnkIdx1=GetcnkIdx(cCoord1.x,cCoord1.y);
+    }
+
+    _skip:{}
+    if(eCoord.x==0){break;}
+   }}
+    if(eCoord.y==0){break;}
+   }}
+
+  }
+  playersMovement.Clear();
+ }
+}
 
 }}

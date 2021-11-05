@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 7355805200245561111}
   - component: {fileID: 6839996186913898581}
   - component: {fileID: 7355805200245561110}
+  - component: {fileID: 531232586110231750}
   m_Layer: 0
   m_Name: Core
   m_TagString: Untagged
@@ -44,7 +45,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e78ca981cae2e2a48bc0182593316f8e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  DEBUG_CREATE_SIM_OBJECT_AMOUNT: 10
+  DEBUG_CREATE_SIM_OBJECT_AMOUNT: 1
   DEBUG_CREATE_SIM_OBJECT_ROTATION: {x: 0, y: 0, z: 0}
   DEBUG_CREATE_SIM_OBJECT_POSITION: {x: 0, y: 10, z: 0}
   DEBUG_CREATE_SIM_OBJECT_SCALE: {x: 1, y: 1, z: 1}
@@ -59,5 +60,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3bc3e4f103f7a7640b5d1d9fe64b46db, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &531232586110231750
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7355805200245561109}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1ced1493d1a78504792d1a353edb0477, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 

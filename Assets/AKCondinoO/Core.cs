@@ -16,7 +16,7 @@ internal static string sObjectsSavePath=string.Format("{0}{1}/",savePath,"sObjPD
 
 internal static int ActiveThreads;
 
-void Awake(){if(Singleton==null){Singleton=this;}else{DestroyImmediate(this);}
+void Awake(){if(Singleton==null){Singleton=this;}else{DestroyImmediate(this);return;}
 Directory.CreateDirectory(savePath);
 Directory.CreateDirectory(perChunkSavePath);
 Directory.CreateDirectory(sObjectsSavePath);
