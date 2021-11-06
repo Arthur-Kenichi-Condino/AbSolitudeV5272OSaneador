@@ -84,4 +84,6 @@ internal void OnExit(){
  if(marchingCubesBG.TempTri.IsCreated)marchingCubesBG.TempTri.Dispose();
 }
 
+internal int?cnkIdx=null;
+
 }}

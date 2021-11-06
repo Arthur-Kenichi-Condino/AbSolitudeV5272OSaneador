@@ -134,6 +134,12 @@ void Update(){
      })
     ){
      int cnkIdx1=GetcnkIdx(cCoord1.x,cCoord1.y);
+     if(active.TryGetValue(cnkIdx1,out VoxelTerrainChunk cnk)){
+      if(cnk.expropriated==null){
+       cnk.expropriated=pool.AddLast(cnk);
+      }
+     }
+
     }
 
     _skip:{}
@@ -155,12 +161,23 @@ void Update(){
     //Debug.Log("instantiation at:"+cCoord1);
     
     int cnkIdx1=GetcnkIdx(cCoord1.x,cCoord1.y);
-
     if(!active.TryGetValue(cnkIdx1,out VoxelTerrainChunk cnk)){
      Debug.Log("activate for:"+cnkIdx1);
      cnk=pool.First.Value;
      pool.RemoveFirst();
      cnk.expropriated=null;
+     if(cnk.cnkIdx!=null&&active.ContainsKey(cnk.cnkIdx.Value)){
+      active.Remove(cnk.cnkIdx.Value);
+     }
+     active.Add(cnkIdx1,cnk);
+     cnk.cnkIdx=cnkIdx1;
+
+    }else{
+     if(cnk.expropriated!=null){
+      pool.Remove(cnk.expropriated);
+      cnk.expropriated=null;
+     }
+
     }
 
     _skip:{}
