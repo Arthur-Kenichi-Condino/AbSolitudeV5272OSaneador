@@ -68,18 +68,55 @@ internal static Vector2Int expropriationDistance{get;}=new Vector2Int(5,5);
         
 internal readonly Dictionary<NetcodePlayerPrefab,(Vector2Int cCoord,Vector2Int cCoord_Pre)>playersMovement=new Dictionary<NetcodePlayerPrefab,(Vector2Int,Vector2Int)>();
 
+internal VoxelTerrainChunk[]all;
+
 internal readonly Dictionary<int,VoxelTerrainChunk>active=new Dictionary<int,VoxelTerrainChunk>();
 
+internal readonly LinkedList<VoxelTerrainChunk>pool=new LinkedList<VoxelTerrainChunk>();
+
+[SerializeField]internal VoxelTerrainChunk Prefab;
+
 void Awake(){if(Singleton==null){Singleton=this;}else{DestroyImmediate(this);return;}
+
+ Core.Singleton.OnDestroyingCoreEvent+=OnDestroyingCoreEvent;
+
 }
 
+void OnDestroyingCoreEvent(object sender,EventArgs e){
+ Debug.Log("OnDestroyingCoreEvent");
+
+ if(all!=null){
+  for(int i=0;i<all.Length;++i){
+   Debug.Log("OnDestroyingCoreEvent:VoxelTerrain:delete chunk");
+   all[i].OnExit();
+  }
+ }
+
+}
+
+bool initialization=true;
+
+int maxConnections=1;
 void Update(){
+
+ if(all==null){
+  int poolSizeRequired=maxConnections*(expropriationDistance.x*2+1)*(expropriationDistance.y*2+1);
+  Debug.Log("poolSizeRequired:"+poolSizeRequired);
+  all=new VoxelTerrainChunk[poolSizeRequired];
+  for(int i=0;i<all.Length;++i){
+   VoxelTerrainChunk cnk;
+   all[i]=cnk=Instantiate(Prefab);
+   cnk.expropriated=pool.AddLast(cnk);
+  }
+ }
+
  if(playersMovement.Count>0){
   foreach(var movement in playersMovement){var moved=movement.Value;
    Debug.Log("player movement:"+movement);
    Vector2Int pCoord=moved.cCoord;
    Vector2Int pCoord_Pre=moved.cCoord_Pre;
 
+   #region expropriation
    for(Vector2Int eCoord=new Vector2Int(),cCoord1=new Vector2Int();eCoord.y<=expropriationDistance.y;eCoord.y++){for(cCoord1.y=-eCoord.y+pCoord_Pre.y;cCoord1.y<=eCoord.y+pCoord_Pre.y;cCoord1.y+=eCoord.y*2){
    for(           eCoord.x=0                                      ;eCoord.x<=expropriationDistance.x;eCoord.x++){for(cCoord1.x=-eCoord.x+pCoord_Pre.x;cCoord1.x<=eCoord.x+pCoord_Pre.x;cCoord1.x+=eCoord.x*2){
 
@@ -87,6 +124,8 @@ void Update(){
        Math.Abs(cCoord1.y)>=MaxcCoordy){
      goto _skip;
     }
+
+    //Debug.Log("expropriation at:"+cCoord1);
 
     if(playersMovement.All(
      p=>{
@@ -102,6 +141,34 @@ void Update(){
    }}
     if(eCoord.y==0){break;}
    }}
+   #endregion
+   
+   #region instantiation
+   for(Vector2Int iCoord=new Vector2Int(),cCoord1=new Vector2Int();iCoord.y<=instantiationDistance.y;iCoord.y++){for(cCoord1.y=-iCoord.y+pCoord.y;cCoord1.y<=iCoord.y+pCoord.y;cCoord1.y+=iCoord.y*2){
+   for(           iCoord.x=0                                      ;iCoord.x<=instantiationDistance.x;iCoord.x++){for(cCoord1.x=-iCoord.x+pCoord.x;cCoord1.x<=iCoord.x+pCoord.x;cCoord1.x+=iCoord.x*2){
+
+    if(Math.Abs(cCoord1.x)>=MaxcCoordx||
+       Math.Abs(cCoord1.y)>=MaxcCoordy){
+     goto _skip;
+    }
+
+    //Debug.Log("instantiation at:"+cCoord1);
+    
+    int cnkIdx1=GetcnkIdx(cCoord1.x,cCoord1.y);
+
+    if(!active.TryGetValue(cnkIdx1,out VoxelTerrainChunk cnk)){
+     Debug.Log("activate for:"+cnkIdx1);
+     cnk=pool.First.Value;
+     pool.RemoveFirst();
+     cnk.expropriated=null;
+    }
+
+    _skip:{}
+    if(iCoord.x==0){break;}
+   }}
+    if(iCoord.y==0){break;}
+   }}
+   #endregion
 
   }
   playersMovement.Clear();

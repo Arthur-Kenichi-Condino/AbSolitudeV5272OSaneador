@@ -135,15 +135,16 @@ internal class GetPersistentDataFilesMultithreaded:BaseMultithreaded<GetPersiste
 internal readonly SimObject.PersistentDataMultithreaded[]persistentDataBGThreads=new SimObject.PersistentDataMultithreaded[Environment.ProcessorCount];
 
 internal readonly Dictionary<Type,GameObject>Prefabs=new Dictionary<Type,GameObject>();
+
 void Awake(){if(Singleton==null){Singleton=this;}else{DestroyImmediate(this);return;}
+
+ Core.Singleton.OnDestroyingCoreEvent+=OnDestroyingCoreEvent;
 
  foreach(var o in Resources.LoadAll("AKCondinoO/",typeof(GameObject))){var gO=(GameObject)o;var sO=gO.GetComponent<SimObject>();if(sO==null)continue;
   Type t=sO.GetType();
   Prefabs.Add(t,gO);
   pool.Add(t,new LinkedList<SimObject>());
  }
-
- Core.Singleton.OnDestroyingCoreEvent+=OnDestroyingCoreEvent;
 
  persistUniqueIdsBG=new PersistentUniqueIdsBackgroundContainer();
  PersistentUniqueIdsMultithreaded.Stop=false;

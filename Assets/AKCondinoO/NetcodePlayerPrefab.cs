@@ -5,14 +5,14 @@ using static AKCondinoO.Voxels.VoxelTerrain;
 
 namespace AKCondinoO{internal class NetcodePlayerPrefab:MonoBehaviour{
 
-bool initialization=true;
-
 internal Vector2Int cCoord,cCoord_Pre;
 internal Vector2Int cnkRgn;
 
 void Awake(){
  cCoord_Pre=cCoord=vecPosTocCoord(transform.position);
 }
+        
+bool initialization=true;
 
 bool moved;
 void Update(){

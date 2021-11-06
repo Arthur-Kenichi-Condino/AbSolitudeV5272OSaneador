@@ -73,11 +73,13 @@ void Awake(){
 }
 
 internal void OnActivated(){
+ Debug.Log("VoxelTerrainChunk:OnActivated");
  marchingCubesBG.TempVer=new NativeList<Vertex>(Allocator.Persistent);
  marchingCubesBG.TempTri=new NativeList<UInt32>(Allocator.Persistent);
 }
 
 internal void OnExit(){
+ Debug.Log("VoxelTerrainChunk:OnExit");
  if(marchingCubesBG.TempVer.IsCreated)marchingCubesBG.TempVer.Dispose();
  if(marchingCubesBG.TempTri.IsCreated)marchingCubesBG.TempTri.Dispose();
 }
