@@ -106,6 +106,7 @@ void Update(){
   for(int i=0;i<all.Length;++i){
    VoxelTerrainChunk cnk;
    all[i]=cnk=Instantiate(Prefab);
+   all[i].OnActivated();
    cnk.expropriated=pool.AddLast(cnk);
   }
  }
@@ -171,6 +172,7 @@ void Update(){
      }
      active.Add(cnkIdx1,cnk);
      cnk.cnkIdx=cnkIdx1;
+     cnk.OncCoordChanged(cCoord1);
 
     }else{
      if(cnk.expropriated!=null){
@@ -190,6 +192,11 @@ void Update(){
   }
   playersMovement.Clear();
  }
+
+ foreach(var a in active){var cnk=a.Value;
+  cnk.ManualUpdate();
+ }
+
 }
 
 }}

@@ -83,7 +83,36 @@ internal void OnExit(){
  if(marchingCubesBG.TempVer.IsCreated)marchingCubesBG.TempVer.Dispose();
  if(marchingCubesBG.TempTri.IsCreated)marchingCubesBG.TempTri.Dispose();
 }
-
+        
+bool initialization=true;
+        
+Vector2Int cCoord;
+Vector2Int cnkRgn;
 internal int?cnkIdx=null;
+        
+internal void OncCoordChanged(Vector2Int cCoord1){
+ if(initialization||cCoord1!=cCoord){
+  cCoord=cCoord1;
+  cnkRgn=cCoordTocnkRgn(cCoord);
+  Debug.Log("VoxelTerrainChunk:OncCoordChanged:"+cCoord1);
+  moveRequired=true;
+ }
+ initialization=false;
+}
+
+bool moveRequired;
+internal void ManualUpdate(){
+ if(moveRequired){
+  moveRequired=false;
+  Debug.Log("ManualUpdate:moveRequired:"+cnkRgn);
+  worldBounds.center=transform.position=new Vector3(cnkRgn.x,0,cnkRgn.y);
+ }
+}
+
+#if UNITY_EDITOR
+void OnDrawGizmos(){
+ Core.DrawBounds(worldBounds,Color.white);
+}
+#endif
 
 }}
