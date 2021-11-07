@@ -102,11 +102,18 @@ internal void OncCoordChanged(Vector2Int cCoord1){
 
 bool moveRequired;
 internal void ManualUpdate(){
- if(moveRequired){
+ if(moveRequired&&OnMoving()){
   moveRequired=false;
   Debug.Log("ManualUpdate:moveRequired:"+cnkRgn);
   worldBounds.center=transform.position=new Vector3(cnkRgn.x,0,cnkRgn.y);
  }
+}
+
+bool OnMoving(){
+ if(marchingCubesBG.IsCompleted(VoxelTerrain.Singleton.marchingCubesBGThreads[0].IsRunning)){
+  return true;
+ }
+ return false;
 }
 
 #if UNITY_EDITOR

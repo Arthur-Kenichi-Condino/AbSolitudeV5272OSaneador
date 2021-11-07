@@ -74,12 +74,18 @@ internal readonly Dictionary<int,VoxelTerrainChunk>active=new Dictionary<int,Vox
 
 internal readonly LinkedList<VoxelTerrainChunk>pool=new LinkedList<VoxelTerrainChunk>();
 
+internal readonly VoxelTerrainChunk.MarchingCubesMultithreaded[]marchingCubesBGThreads=new VoxelTerrainChunk.MarchingCubesMultithreaded[Environment.ProcessorCount];
+
 [SerializeField]internal VoxelTerrainChunk Prefab;
 
 void Awake(){if(Singleton==null){Singleton=this;}else{DestroyImmediate(this);return;}
 
  Core.Singleton.OnDestroyingCoreEvent+=OnDestroyingCoreEvent;
 
+ VoxelTerrainChunk.MarchingCubesMultithreaded.Stop=false;
+ for(int i=0;i<marchingCubesBGThreads.Length;++i){
+  marchingCubesBGThreads[i]=new VoxelTerrainChunk.MarchingCubesMultithreaded();
+ }
 }
 
 void OnDestroyingCoreEvent(object sender,EventArgs e){
@@ -91,7 +97,11 @@ void OnDestroyingCoreEvent(object sender,EventArgs e){
    all[i].OnExit();
   }
  }
-
+ 
+ VoxelTerrainChunk.MarchingCubesMultithreaded.Stop=true;
+ for(int i=0;i<marchingCubesBGThreads.Length;++i){
+  marchingCubesBGThreads[i].Wait();
+ }
 }
 
 bool initialization=true;
