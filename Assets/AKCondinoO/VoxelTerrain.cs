@@ -98,6 +98,11 @@ void OnDestroyingCoreEvent(object sender,EventArgs e){
   }
  }
  
+ if(VoxelTerrainChunk.MarchingCubesMultithreaded.Clear()==0){
+  Debug.Log("chunks deletion was successful");
+ }else{
+  Debug.LogError("chunks deletion failed");
+ }
  VoxelTerrainChunk.MarchingCubesMultithreaded.Stop=true;
  for(int i=0;i<marchingCubesBGThreads.Length;++i){
   marchingCubesBGThreads[i].Wait();
@@ -209,4 +214,14 @@ void Update(){
 
 }
 
-}}
+}
+
+internal enum MaterialId:ushort{
+ Air=0,//  Default value
+ Bedrock=1,//  Indestrutível
+ Dirt=2,
+ Rock=3,
+ Sand=4,
+}
+
+}
