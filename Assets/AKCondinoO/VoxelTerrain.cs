@@ -5,6 +5,9 @@ using UnityEngine;
 using static AKCondinoO.Voxels.VoxelTerrainChunk;
 
 namespace AKCondinoO.Voxels{internal class VoxelTerrain:MonoBehaviour{internal static VoxelTerrain Singleton;
+
+internal const double IsoLevel=-50.0d;
+
 internal const int MaxcCoordx=6250;
 internal const int MaxcCoordy=6250;
 internal static Vector2Int instantiationDistance{get;}=new Vector2Int(5,5);
