@@ -85,6 +85,8 @@ void Awake(){if(Singleton==null){Singleton=this;}else{DestroyImmediate(this);ret
 
  Core.Singleton.OnDestroyingCoreEvent+=OnDestroyingCoreEvent;
 
+ VoxelTerrainChunk.MarchingCubesMultithreaded.AtlasHelper.GetAtlasData(Prefab.GetComponent<MeshRenderer>().sharedMaterial);
+
  VoxelTerrainChunk.MarchingCubesMultithreaded.Stop=false;
  for(int i=0;i<marchingCubesBGThreads.Length;++i){
   marchingCubesBGThreads[i]=new VoxelTerrainChunk.MarchingCubesMultithreaded();

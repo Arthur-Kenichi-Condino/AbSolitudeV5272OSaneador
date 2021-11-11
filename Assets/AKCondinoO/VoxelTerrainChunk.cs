@@ -118,6 +118,11 @@ internal class MarchingCubesMultithreaded:BaseMultithreaded<MarchingCubesBackgro
   new Vector3(-.5f, .5f, .5f),
  });
 
+ readonly int[]idx=new int[3];
+  readonly Vector3[]verPos=new Vector3[3];
+
+ static Vector3 trianglePosAdj{get;}=new Vector3((Width/2.0f)-0.5f,(Height/2.0f)-0.5f,(Depth/2.0f)-0.5f);
+
  internal MarchingCubesMultithreaded(){
   for(int i=0;i<voxelsCache1[2].Length;++i){
    voxelsCache1[2][i]=new Voxel[4];
@@ -152,6 +157,14 @@ internal class MarchingCubesMultithreaded:BaseMultithreaded<MarchingCubesBackgro
  }
  protected override void Execute(){
   Debug.Log("MarchingCubesMultithreaded:Execute:"+current.cCoord_bg);
+
+  current.TempVer.Clear();
+  current.TempTri.Clear();
+
+  UInt32 vertexCount=0;
+
+  Vector2Int posOffset=Vector2Int.zero;
+
   Vector3Int vCoord1;
   for(vCoord1=new Vector3Int();vCoord1.y<Height;vCoord1.y++){
   for(vCoord1.x=0             ;vCoord1.x<Width ;vCoord1.x++){
@@ -338,6 +351,41 @@ internal class MarchingCubesMultithreaded:BaseMultithreaded<MarchingCubesBackgro
     }
 
     /*  Create the triangle  */
+    for(int i=0;Tables.TriangleTable[edgeIndex][i]!=-1;i+=3){
+     idx[0]=Tables.TriangleTable[edgeIndex][i  ];
+     idx[1]=Tables.TriangleTable[edgeIndex][i+1];
+     idx[2]=Tables.TriangleTable[edgeIndex][i+2];
+
+     Vector3 pos=vCoord1-trianglePosAdj;pos.x+=posOffset.x;
+                                        pos.z+=posOffset.y;
+
+     Vector2 materialUV=AtlasHelper.uv[Mathf.Max((int)materials[idx[0]],
+                                                 (int)materials[idx[1]],
+                                                 (int)materials[idx[2]]
+                                                )];
+
+     current.TempVer.Add(new Vertex(verPos[0]=pos+vertices[idx[0]],normals[idx[0]],materialUV));
+     current.TempVer.Add(new Vertex(verPos[1]=pos+vertices[idx[1]],normals[idx[1]],materialUV));
+     current.TempVer.Add(new Vertex(verPos[2]=pos+vertices[idx[2]],normals[idx[2]],materialUV));
+     current.TempTri.Add(vertexCount+2);
+     current.TempTri.Add(vertexCount+1);
+     current.TempTri.Add(vertexCount  );
+                         vertexCount+=3;
+    }
+
+    //  Cache the data
+    verticesCache[0][0][0]=vertices[ 4]+Vector3.back;//  Adiciona um valor "negativo" porque o voxelCoord próximo vai usar esse valor mas precisa obter "uma posição anterior"
+    verticesCache[0][0][1]=vertices[ 5]+Vector3.back;
+    verticesCache[0][0][2]=vertices[ 6]+Vector3.back;
+    verticesCache[0][0][3]=vertices[ 7]+Vector3.back;
+    verticesCache[1][vCoord1.z][0]=vertices[ 1]+Vector3.left;
+    verticesCache[1][vCoord1.z][1]=vertices[ 5]+Vector3.left;
+    verticesCache[1][vCoord1.z][2]=vertices[ 9]+Vector3.left;
+    verticesCache[1][vCoord1.z][3]=vertices[10]+Vector3.left;
+    verticesCache[2][vCoord1.z+vCoord1.x*Depth][0]=vertices[ 2]+Vector3.down;
+    verticesCache[2][vCoord1.z+vCoord1.x*Depth][1]=vertices[ 6]+Vector3.down;
+    verticesCache[2][vCoord1.z+vCoord1.x*Depth][2]=vertices[10]+Vector3.down;
+    verticesCache[2][vCoord1.z+vCoord1.x*Depth][3]=vertices[11]+Vector3.down;
 
    }
 
@@ -369,12 +417,28 @@ internal class MarchingCubesMultithreaded:BaseMultithreaded<MarchingCubesBackgro
 
  }
 
+ internal static class AtlasHelper{
+
+  internal static Material material{get;private set;}
+
+  internal static readonly Vector2[]uv=new Vector2[Enum.GetNames(typeof(MaterialId)).Length];
+                
+  internal static void GetAtlasData(Material material){
+   AtlasHelper.material=material;
+
+   uv[(int)MaterialId.Dirt]=new Vector2(1,0);
+   uv[(int)MaterialId.Rock]=new Vector2(0,0);
+  }
+
+ }
+
 }
 
 void Awake(){
  mesh=new Mesh(){
   bounds=worldBounds=new Bounds(Vector3.zero,new Vector3(Width,Height,Depth)),
  };
+ GetComponent<MeshFilter>().mesh=mesh;
 }
 
 internal void OnActivated(){
@@ -406,11 +470,24 @@ internal void OncCoordChanged(Vector2Int cCoord1){
  initialization=false;
 }
 
+bool runningMarchingCubes;
+bool buildRequested;
 bool moveRequired;
 internal void ManualUpdate(){
- if(moveRequired&&OnMoving()){
-  moveRequired=false;
-  Debug.Log("ManualUpdate:moveRequired:"+cnkRgn);
+ if(runningMarchingCubes){
+  if(buildRequested&&OnBuilt()){
+   buildRequested=false;
+   Debug.Log("ManualUpdate:build finished:assigned built mesh data:"+cnkRgn);
+   runningMarchingCubes=false;
+  }
+
+ }else{
+  if(moveRequired&&OnMoving()){
+   moveRequired=false;
+   Debug.Log("ManualUpdate:moveRequired:"+cnkRgn);
+   OnMoved();
+  }
+
  }
 }
 
@@ -421,6 +498,26 @@ bool OnMoving(){
   marchingCubesBG.cnkRgn_bg=cnkRgn;
   marchingCubesBG.cnkIdx_bg=cnkIdx.Value;
   MarchingCubesMultithreaded.Schedule(marchingCubesBG);
+  return true;
+ }
+ return false;
+}
+void OnMoved(){
+ runningMarchingCubes=true;
+ Debug.Log("OnMove:chunk moved:running Marching Cubes");
+ buildRequested=true;
+}
+
+bool OnBuilt(){
+ if(marchingCubesBG.IsCompleted(VoxelTerrain.Singleton.marchingCubesBGThreads[0].IsRunning)){
+  bool resize;
+  if(resize=marchingCubesBG.TempVer.Length>mesh.vertexCount){
+   mesh.SetVertexBufferParams(marchingCubesBG.TempVer.Length,layout);
+  }
+  mesh.SetVertexBufferData(marchingCubesBG.TempVer.AsArray(),0,0,marchingCubesBG.TempVer.Length,0,meshFlags);
+  if(resize){
+   mesh.SetIndexBufferParams(marchingCubesBG.TempTri.Length,IndexFormat.UInt32);
+  }
   return true;
  }
  return false;
