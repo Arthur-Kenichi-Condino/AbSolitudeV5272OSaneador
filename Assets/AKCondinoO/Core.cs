@@ -123,7 +123,7 @@ internal abstract class BaseMultithreaded<T>where T:BackgroundContainer{
   task=Task.Factory.StartNew(BG,TaskCreationOptions.LongRunning);
  }
  protected T current{get;private set;}
- void BG(){
+ void BG(){Thread.CurrentThread.IsBackground=false;
   Debug.Log("begin bg task");
   ManualResetEvent backgroundData;
    AutoResetEvent foregroundData;
