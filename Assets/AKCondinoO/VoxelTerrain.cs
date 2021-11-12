@@ -84,6 +84,8 @@ internal readonly VoxelTerrainChunk.MarchingCubesMultithreaded[]marchingCubesBGT
 void Awake(){if(Singleton==null){Singleton=this;}else{DestroyImmediate(this);return;}
 
  Core.Singleton.OnDestroyingCoreEvent+=OnDestroyingCoreEvent;
+            
+ VoxelTerrainChunk.MarchingCubesMultithreaded.biome.Seed=0;
 
  VoxelTerrainChunk.MarchingCubesMultithreaded.AtlasHelper.GetAtlasData(Prefab.GetComponent<MeshRenderer>().sharedMaterial);
 

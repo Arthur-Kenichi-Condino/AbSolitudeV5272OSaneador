@@ -22,7 +22,7 @@ void Update(){
  }
  if(moved||initialization){
   moved=false;
-  Debug.Log("NetcodePlayerPrefab:moved!",this);
+  //Debug.Log("NetcodePlayerPrefab:moved!",this);
   cCoord_Pre=cCoord;
   cCoord=vecPosTocCoord(transform.position);
   if(cCoord!=cCoord_Pre||initialization){
