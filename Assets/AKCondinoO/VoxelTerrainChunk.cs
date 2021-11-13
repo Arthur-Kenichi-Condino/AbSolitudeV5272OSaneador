@@ -126,6 +126,8 @@ internal class MarchingCubesMultithreaded:BaseMultithreaded<MarchingCubesBackgro
 
  static Vector3 trianglePosAdj{get;}=new Vector3((Width/2.0f)-0.5f,(Height/2.0f)-0.5f,(Depth/2.0f)-0.5f);
 
+ readonly Dictionary<int,Voxel>[]neighbors=new Dictionary<int,Voxel>[8];
+
  internal MarchingCubesMultithreaded(){
   for(int i=0;i<voxelsCache1[2].Length;++i){
    voxelsCache1[2][i]=new Voxel[4];
@@ -145,6 +147,10 @@ internal class MarchingCubesMultithreaded:BaseMultithreaded<MarchingCubesBackgro
    if(i<verticesCache[1].Length){
     verticesCache[1][i]=new Vector3[4];
    }
+  }
+
+  for(int i=0;i<neighbors.Length;++i){
+   neighbors[i]=new Dictionary<int,Voxel>();
   }
  }
 
@@ -173,6 +179,9 @@ internal class MarchingCubesMultithreaded:BaseMultithreaded<MarchingCubesBackgro
   for(int i=0;i<verticesCache[1].Length;++i){Array.Clear(verticesCache[1][i],0,verticesCache[1][i].Length);}
   for(int i=0;i<verticesCache[2].Length;++i){Array.Clear(verticesCache[2][i],0,verticesCache[2][i].Length);}
 
+  for(int i=0;i<neighbors.Length;++i){
+   neighbors[i].Clear();
+  }
  }
  protected override void Execute(){
   Debug.Log("MarchingCubesMultithreaded:Execute:"+current.cCoord_bg);
@@ -230,11 +239,18 @@ internal class MarchingCubesMultithreaded:BaseMultithreaded<MarchingCubesBackgro
      int vxlIdx2=GetvxlIdx(vCoord2.x,vCoord2.y,vCoord2.z);
 
      int oftIdx2=GetoftIdx(cCoord2-current.cCoord_bg);
+     /*  já construído:  */
+     if(oftIdx2==0&&voxels[vxlIdx2].IsCreated){
+      polygonCell[corner]=voxels[vxlIdx2];
+     }else if(oftIdx2>0&&neighbors[oftIdx2-1].ContainsKey(vxlIdx2)){
+      polygonCell[corner]=neighbors[oftIdx2-1][vxlIdx2];
+     }else{
 
-     //  pegar valor do bioma:
-     Vector3Int noiseInput=vCoord2;noiseInput.x+=cnkRgn2.x;
-                                   noiseInput.z+=cnkRgn2.y;
-     biome.Setvxl(noiseInput,noiseForHeightCache,materialIdPerHeightNoiseCache,oftIdx2,vCoord2.z+vCoord2.x*Depth,ref polygonCell[corner]);
+      //  pegar valor do bioma:
+      Vector3Int noiseInput=vCoord2;noiseInput.x+=cnkRgn2.x;
+                                    noiseInput.z+=cnkRgn2.y;
+      biome.Setvxl(noiseInput,noiseForHeightCache,materialIdPerHeightNoiseCache,oftIdx2,vCoord2.z+vCoord2.x*Depth,ref polygonCell[corner]);
+     }
 
      if(polygonCell[corner].Material!=MaterialId.Air&&polygonCell[corner].Normal==Vector3.zero){
 
@@ -268,9 +284,22 @@ internal class MarchingCubesMultithreaded:BaseMultithreaded<MarchingCubesBackgro
 
         int oftIdx3=GetoftIdx(cCoord3-current.cCoord_bg);
 
-        Vector3Int noiseInput=vCoord3;noiseInput.x+=cnkRgn3.x;
-                                      noiseInput.z+=cnkRgn3.y;
-        biome.Setvxl(noiseInput,noiseForHeightCache,materialIdPerHeightNoiseCache,oftIdx3,vCoord3.z+vCoord3.x*Depth,ref tmpvxl[tmpIdx]);
+        if(oftIdx3==0&&voxels[vxlIdx3].IsCreated){
+         tmpvxl[tmpIdx]=voxels[vxlIdx3];
+        }else if(oftIdx3>0&&neighbors[oftIdx3-1].ContainsKey(vxlIdx3)){
+         tmpvxl[tmpIdx]=neighbors[oftIdx3-1][vxlIdx3];
+        }else{
+
+         Vector3Int noiseInput=vCoord3;noiseInput.x+=cnkRgn3.x;
+                                       noiseInput.z+=cnkRgn3.y;
+         biome.Setvxl(noiseInput,noiseForHeightCache,materialIdPerHeightNoiseCache,oftIdx3,vCoord3.z+vCoord3.x*Depth,ref tmpvxl[tmpIdx]);
+        }
+
+        if(oftIdx3==0){
+         voxels[vxlIdx3]=tmpvxl[tmpIdx];
+        }else if(oftIdx3>0){
+         neighbors[oftIdx3-1][vxlIdx3]=tmpvxl[tmpIdx];
+        }
 
        }
  
@@ -285,6 +314,12 @@ internal class MarchingCubesMultithreaded:BaseMultithreaded<MarchingCubesBackgro
       if(polygonCell[corner].Normal!=Vector3.zero){
        polygonCell[corner].Normal.Normalize();
       }
+
+      if(oftIdx2==0){
+       voxels[vxlIdx2]=polygonCell[corner];
+      }else if(oftIdx2>0){
+       neighbors[oftIdx2-1][vxlIdx2]=polygonCell[corner];
+      }//  :salvar valor construído
 
      }
      voxelsCache2[0][0]=polygonCell[corner];
