@@ -683,7 +683,7 @@ bool OnBuilt(){
 
 #if UNITY_EDITOR
 void OnDrawGizmos(){
- Core.DrawBounds(worldBounds,Color.white);
+ //Core.DrawBounds(worldBounds,Color.white);
 }
 #endif
 
