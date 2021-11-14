@@ -5,6 +5,7 @@ using paulbourke.MarchingCubes;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Runtime.InteropServices;
 using Unity.Collections;
 using UnityEngine;
@@ -128,6 +129,8 @@ internal class MarchingCubesMultithreaded:BaseMultithreaded<MarchingCubesBackgro
 
  readonly Dictionary<int,Voxel>[]neighbors=new Dictionary<int,Voxel>[8];
 
+ readonly Dictionary<Vector3,List<Vector2>>vertexUV=new Dictionary<Vector3,List<Vector2>>();
+
  internal MarchingCubesMultithreaded(){
   for(int i=0;i<voxelsCache1[2].Length;++i){
    voxelsCache1[2][i]=new Voxel[4];
@@ -182,6 +185,8 @@ internal class MarchingCubesMultithreaded:BaseMultithreaded<MarchingCubesBackgro
   for(int i=0;i<neighbors.Length;++i){
    neighbors[i].Clear();
   }
+
+  vertexUV.Clear();
  }
  protected override void Execute(){
   Debug.Log("MarchingCubesMultithreaded:Execute:"+current.cCoord_bg);
@@ -425,6 +430,10 @@ internal class MarchingCubesMultithreaded:BaseMultithreaded<MarchingCubesBackgro
      current.TempTri.Add(vertexCount+1);
      current.TempTri.Add(vertexCount  );
                          vertexCount+=3;
+
+     if(!vertexUV.ContainsKey(verPos[0])){vertexUV.Add(verPos[0],new List<Vector2>());}vertexUV[verPos[0]].Add(materialUV);
+     if(!vertexUV.ContainsKey(verPos[1])){vertexUV.Add(verPos[1],new List<Vector2>());}vertexUV[verPos[1]].Add(materialUV);
+     if(!vertexUV.ContainsKey(verPos[2])){vertexUV.Add(verPos[2],new List<Vector2>());}vertexUV[verPos[2]].Add(materialUV);
     }
 
     //  Cache the data
@@ -444,6 +453,17 @@ internal class MarchingCubesMultithreaded:BaseMultithreaded<MarchingCubesBackgro
    }
 
   }}}
+
+  for(int i=0;i<current.TempVer.Length/3;i++){
+   idx[0]=i*3;
+   idx[1]=i*3+1;
+   idx[2]=i*3+2;
+   for(int j=0;j<3;j++){
+
+    var materialIdGroupingOrdered=vertexUV[verPos[j]=current.TempVer[idx[j]].pos].ToArray().Select(uv=>{return (MaterialId)Array.IndexOf(AtlasHelper.uv,uv);}).GroupBy(value=>value).OrderByDescending(group=>group.Key).ThenByDescending(group=>group.Count());
+
+   }
+  }
   
   int GetoftIdx(Vector2Int offset){//  ..for neighbors
    if(offset.x== 0&&offset.y== 0)return 0;
