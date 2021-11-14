@@ -131,6 +131,10 @@ internal class MarchingCubesMultithreaded:BaseMultithreaded<MarchingCubesBackgro
 
  readonly Dictionary<Vector3,List<Vector2>>vertexUV=new Dictionary<Vector3,List<Vector2>>();
 
+ readonly Dictionary<int,int>weights=new Dictionary<int,int>(4);
+
+ static Vector2 emptyUV{get;}=new Vector2(-1,-1);
+
  internal MarchingCubesMultithreaded(){
   for(int i=0;i<voxelsCache1[2].Length;++i){
    voxelsCache1[2][i]=new Voxel[4];
@@ -461,6 +465,57 @@ internal class MarchingCubesMultithreaded:BaseMultithreaded<MarchingCubesBackgro
    for(int j=0;j<3;j++){
 
     var materialIdGroupingOrdered=vertexUV[verPos[j]=current.TempVer[idx[j]].pos].ToArray().Select(uv=>{return (MaterialId)Array.IndexOf(AtlasHelper.uv,uv);}).GroupBy(value=>value).OrderByDescending(group=>group.Key).ThenByDescending(group=>group.Count());
+    weights.Clear();
+    int total=0;
+
+    Vector2 uv0=current.TempVer[idx[j]].texCoord0;
+
+    foreach(var materialIdGroup in materialIdGroupingOrdered){
+     Vector2 uv=AtlasHelper.uv[(int)materialIdGroup.First()];
+
+     bool add;
+     if(uv0==uv){
+      total+=weights[0]=materialIdGroup.Count();
+
+     }else if(((add=current.TempVer[idx[j]].texCoord1==emptyUV)&&current.TempVer[idx[j]].texCoord2!=uv&&current.TempVer[idx[j]].texCoord3!=uv)||current.TempVer[idx[j]].texCoord1==uv){
+      if(add){
+       var v1=current.TempVer[idx[0]];v1.texCoord1=uv;current.TempVer[idx[0]]=v1;
+           v1=current.TempVer[idx[1]];v1.texCoord1=uv;current.TempVer[idx[1]]=v1;
+           v1=current.TempVer[idx[2]];v1.texCoord1=uv;current.TempVer[idx[2]]=v1;
+      }
+      total+=weights[1]=materialIdGroup.Count();
+
+     }else if(((add=current.TempVer[idx[j]].texCoord2==emptyUV)&&current.TempVer[idx[j]].texCoord3!=uv                                       )||current.TempVer[idx[j]].texCoord2==uv){
+      if(add){
+       var v1=current.TempVer[idx[0]];v1.texCoord2=uv;current.TempVer[idx[0]]=v1;
+           v1=current.TempVer[idx[1]];v1.texCoord2=uv;current.TempVer[idx[1]]=v1;
+           v1=current.TempVer[idx[2]];v1.texCoord2=uv;current.TempVer[idx[2]]=v1;
+      }
+      total+=weights[2]=materialIdGroup.Count();
+
+     }else if(((add=current.TempVer[idx[j]].texCoord3==emptyUV)                                                                              )||current.TempVer[idx[j]].texCoord3==uv){
+      if(add){
+       var v1=current.TempVer[idx[0]];v1.texCoord3=uv;current.TempVer[idx[0]]=v1;
+           v1=current.TempVer[idx[1]];v1.texCoord3=uv;current.TempVer[idx[1]]=v1;
+           v1=current.TempVer[idx[2]];v1.texCoord3=uv;current.TempVer[idx[2]]=v1;
+      }
+      total+=weights[3]=materialIdGroup.Count();
+
+     }
+    }
+
+    if(weights.Count>1){
+     var v2=current.TempVer[idx[j]];
+
+     Color col=v2.color;
+                                col.r=(weights[0]/(float)total);
+     if(weights.ContainsKey(1)){col.g=(weights[1]/(float)total);}
+     if(weights.ContainsKey(2)){col.b=(weights[2]/(float)total);}
+     if(weights.ContainsKey(3)){col.a=(weights[3]/(float)total);}
+
+     v2.color=col;
+     current.TempVer[idx[j]]=v2;
+    }
 
    }
   }
