@@ -199,6 +199,8 @@ internal class MarchingCubesMultithreaded:BaseMultithreaded<MarchingCubesBackgro
   current.TempTri.Clear();
 
   UInt32 vertexCount=0;
+                
+  Vector2Int crdOffset=Vector2Int.zero;
 
   Vector2Int posOffset=Vector2Int.zero;
 
@@ -207,14 +209,14 @@ internal class MarchingCubesMultithreaded:BaseMultithreaded<MarchingCubesBackgro
   for(vCoord1.x=0             ;vCoord1.x<Width ;vCoord1.x++){
   for(vCoord1.z=0             ;vCoord1.z<Depth ;vCoord1.z++){
 
-   int corner=0;Vector3Int vCoord2=vCoord1;                        if(vCoord1.z>0)polygonCell[corner]=voxelsCache1[0][0][0];else if(vCoord1.x>0)polygonCell[corner]=voxelsCache1[1][vCoord1.z][0];else if(vCoord1.y>0)polygonCell[corner]=voxelsCache1[2][vCoord1.z+vCoord1.x*Depth][0];else SetpolygonCellVoxel();
-   corner++;vCoord2=vCoord1;vCoord2.x+=1;                          if(vCoord1.z>0)polygonCell[corner]=voxelsCache1[0][0][1];                                                                      else if(vCoord1.y>0)polygonCell[corner]=voxelsCache1[2][vCoord1.z+vCoord1.x*Depth][1];else SetpolygonCellVoxel();
-   corner++;vCoord2=vCoord1;vCoord2.x+=1;vCoord2.y+=1;             if(vCoord1.z>0)polygonCell[corner]=voxelsCache1[0][0][2];                                                                                                                                                            else SetpolygonCellVoxel();
-   corner++;vCoord2=vCoord1;             vCoord2.y+=1;             if(vCoord1.z>0)polygonCell[corner]=voxelsCache1[0][0][3];else if(vCoord1.x>0)polygonCell[corner]=voxelsCache1[1][vCoord1.z][1];                                                                                      else SetpolygonCellVoxel();
-   corner++;vCoord2=vCoord1;                          vCoord2.z+=1;                                                              if(vCoord1.x>0)polygonCell[corner]=voxelsCache1[1][vCoord1.z][2];else if(vCoord1.y>0)polygonCell[corner]=voxelsCache1[2][vCoord1.z+vCoord1.x*Depth][2];else SetpolygonCellVoxel();
-   corner++;vCoord2=vCoord1;vCoord2.x+=1;             vCoord2.z+=1;                                                                                                                                    if(vCoord1.y>0)polygonCell[corner]=voxelsCache1[2][vCoord1.z+vCoord1.x*Depth][3];else SetpolygonCellVoxel();
-   corner++;vCoord2=vCoord1;vCoord2.x+=1;vCoord2.y+=1;vCoord2.z+=1;                                                                                                                                                                                                                          SetpolygonCellVoxel();
-   corner++;vCoord2=vCoord1;             vCoord2.y+=1;vCoord2.z+=1;                                                              if(vCoord1.x>0)polygonCell[corner]=voxelsCache1[1][vCoord1.z][3];                                                                                      else SetpolygonCellVoxel();
+   int corner=0;Vector3Int vCoord2=vCoord1;                                       if(vCoord1.z>0)polygonCell[corner]=voxelsCache1[0][0][0];else if(vCoord1.x>0)polygonCell[corner]=voxelsCache1[1][vCoord1.z][0];else if(vCoord1.y>0)polygonCell[corner]=voxelsCache1[2][vCoord1.z+vCoord1.x*Depth][0];else SetpolygonCellVoxel();
+       corner++;           vCoord2=vCoord1;vCoord2.x+=1;                          if(vCoord1.z>0)polygonCell[corner]=voxelsCache1[0][0][1];                                                                      else if(vCoord1.y>0)polygonCell[corner]=voxelsCache1[2][vCoord1.z+vCoord1.x*Depth][1];else SetpolygonCellVoxel();
+       corner++;           vCoord2=vCoord1;vCoord2.x+=1;vCoord2.y+=1;             if(vCoord1.z>0)polygonCell[corner]=voxelsCache1[0][0][2];                                                                                                                                                            else SetpolygonCellVoxel();
+       corner++;           vCoord2=vCoord1;             vCoord2.y+=1;             if(vCoord1.z>0)polygonCell[corner]=voxelsCache1[0][0][3];else if(vCoord1.x>0)polygonCell[corner]=voxelsCache1[1][vCoord1.z][1];                                                                                      else SetpolygonCellVoxel();
+       corner++;           vCoord2=vCoord1;                          vCoord2.z+=1;                                                              if(vCoord1.x>0)polygonCell[corner]=voxelsCache1[1][vCoord1.z][2];else if(vCoord1.y>0)polygonCell[corner]=voxelsCache1[2][vCoord1.z+vCoord1.x*Depth][2];else SetpolygonCellVoxel();
+       corner++;           vCoord2=vCoord1;vCoord2.x+=1;             vCoord2.z+=1;                                                                                                                                    if(vCoord1.y>0)polygonCell[corner]=voxelsCache1[2][vCoord1.z+vCoord1.x*Depth][3];else SetpolygonCellVoxel();
+       corner++;           vCoord2=vCoord1;vCoord2.x+=1;vCoord2.y+=1;vCoord2.z+=1;                                                                                                                                                                                                                          SetpolygonCellVoxel();
+       corner++;           vCoord2=vCoord1;             vCoord2.y+=1;vCoord2.z+=1;                                                              if(vCoord1.x>0)polygonCell[corner]=voxelsCache1[1][vCoord1.z][3];                                                                                      else SetpolygonCellVoxel();
    voxelsCache1[0][0][0]=polygonCell[4];
    voxelsCache1[0][0][1]=polygonCell[5];
    voxelsCache1[0][0][2]=polygonCell[6];
@@ -264,12 +266,12 @@ internal class MarchingCubesMultithreaded:BaseMultithreaded<MarchingCubesBackgro
      if(polygonCell[corner].Material!=MaterialId.Air&&polygonCell[corner].Normal==Vector3.zero){
 
       //  calcular normal:
-      int tmpIdx=0;Vector3Int vCoord3=vCoord2;vCoord3.x++;                                                                                                                                                              SetpolygonCellNormalSettmpvxl();
-      tmpIdx++;vCoord3=vCoord2;               vCoord3.x--;if(vCoord2.z>1&&vCoord2.x>1&&vCoord2.y>1&&voxelsCache2[1][vCoord2.z].IsCreated)                tmpvxl[tmpIdx]=voxelsCache2[1][vCoord2.z];                else SetpolygonCellNormalSettmpvxl();
-      tmpIdx++;vCoord3=vCoord2;               vCoord3.y++;                                                                                                                                                              SetpolygonCellNormalSettmpvxl();
-      tmpIdx++;vCoord3=vCoord2;               vCoord3.y--;if(vCoord2.z>1&&vCoord2.x>1&&vCoord2.y>1&&voxelsCache2[2][vCoord2.z+vCoord2.x*Depth].IsCreated)tmpvxl[tmpIdx]=voxelsCache2[2][vCoord2.z+vCoord2.x*Depth];else SetpolygonCellNormalSettmpvxl();
-      tmpIdx++;vCoord3=vCoord2;               vCoord3.z++;                                                                                                                                                              SetpolygonCellNormalSettmpvxl();
-      tmpIdx++;vCoord3=vCoord2;               vCoord3.z--;if(vCoord2.z>1&&vCoord2.x>1&&vCoord2.y>1&&voxelsCache2[0][0].IsCreated)                        tmpvxl[tmpIdx]=voxelsCache2[0][0];                        else SetpolygonCellNormalSettmpvxl();
+      int tmpIdx=0;Vector3Int vCoord3=vCoord2;vCoord3.x++;                                                                                                                                                                                      SetpolygonCellNormalSettmpvxl();
+          tmpIdx++;           vCoord3=vCoord2;vCoord3.x--;                        if(vCoord2.z>1&&vCoord2.x>1&&vCoord2.y>1&&voxelsCache2[1][vCoord2.z].IsCreated)                tmpvxl[tmpIdx]=voxelsCache2[1][vCoord2.z];                else SetpolygonCellNormalSettmpvxl();
+          tmpIdx++;           vCoord3=vCoord2;            vCoord3.y++;                                                                                                                                                                          SetpolygonCellNormalSettmpvxl();
+          tmpIdx++;           vCoord3=vCoord2;            vCoord3.y--;            if(vCoord2.z>1&&vCoord2.x>1&&vCoord2.y>1&&voxelsCache2[2][vCoord2.z+vCoord2.x*Depth].IsCreated)tmpvxl[tmpIdx]=voxelsCache2[2][vCoord2.z+vCoord2.x*Depth];else SetpolygonCellNormalSettmpvxl();
+          tmpIdx++;           vCoord3=vCoord2;                        vCoord3.z++;                                                                                                                                                              SetpolygonCellNormalSettmpvxl();
+          tmpIdx++;           vCoord3=vCoord2;                        vCoord3.z--;if(vCoord2.z>1&&vCoord2.x>1&&vCoord2.y>1&&voxelsCache2[0][0].IsCreated)                        tmpvxl[tmpIdx]=voxelsCache2[0][0];                        else SetpolygonCellNormalSettmpvxl();
 
       void SetpolygonCellNormalSettmpvxl(){
  
@@ -299,6 +301,7 @@ internal class MarchingCubesMultithreaded:BaseMultithreaded<MarchingCubesBackgro
          tmpvxl[tmpIdx]=neighbors[oftIdx3-1][vxlIdx3];
         }else{
 
+         //  pegar valor do bioma:
          Vector3Int noiseInput=vCoord3;noiseInput.x+=cnkRgn3.x;
                                        noiseInput.z+=cnkRgn3.y;
          biome.Setvxl(noiseInput,noiseForHeightCache,materialIdPerHeightNoiseCache,oftIdx3,vCoord3.z+vCoord3.x*Depth,ref tmpvxl[tmpIdx]);
@@ -457,6 +460,79 @@ internal class MarchingCubesMultithreaded:BaseMultithreaded<MarchingCubesBackgro
    }
 
   }}}
+  
+  for(crdOffset.y=0,posOffset.y=0,
+      vCoord1.y=0;vCoord1.y<Height;vCoord1.y++){
+  for(vCoord1.z=0;vCoord1.z<Depth ;vCoord1.z++){
+      vCoord1.x=0;
+   //  east
+   crdOffset.x=1;
+   posOffset.x=Width;
+   AddEdgesvertexUV();
+                        
+      vCoord1.x=Width-1;
+   //  west
+   crdOffset.x=-1;
+   posOffset.x=-Width;
+   AddEdgesvertexUV();
+  }}
+  for(crdOffset.x=0,posOffset.x=0,
+      vCoord1.y=0;vCoord1.y<Height;vCoord1.y++){
+  for(vCoord1.x=0;vCoord1.x<Width ;vCoord1.x++){
+      vCoord1.z=0;
+   //  north
+   crdOffset.y=1;
+   posOffset.y=Depth;
+   AddEdgesvertexUV();
+
+      vCoord1.z=Depth-1;
+   //  south
+   crdOffset.y=-1;
+   posOffset.y=-Depth;
+   AddEdgesvertexUV();
+  }}
+  void AddEdgesvertexUV(){
+   int corner=0;Vector3Int vCoord2=vCoord1;                                       SetpolygonCellVoxel();
+       corner++;           vCoord2=vCoord1;vCoord2.x+=1;                          SetpolygonCellVoxel();
+       corner++;           vCoord2=vCoord1;vCoord2.x+=1;vCoord2.y+=1;             SetpolygonCellVoxel();
+       corner++;           vCoord2=vCoord1;             vCoord2.y+=1;             SetpolygonCellVoxel();
+       corner++;           vCoord2=vCoord1;                          vCoord2.z+=1;SetpolygonCellVoxel();
+       corner++;           vCoord2=vCoord1;vCoord2.x+=1;             vCoord2.z+=1;SetpolygonCellVoxel();
+       corner++;           vCoord2=vCoord1;vCoord2.x+=1;vCoord2.y+=1;vCoord2.z+=1;SetpolygonCellVoxel();
+       corner++;           vCoord2=vCoord1;             vCoord2.y+=1;vCoord2.z+=1;SetpolygonCellVoxel();
+   void SetpolygonCellVoxel(){
+    if(vCoord2.y<=0){
+     polygonCell[corner]=Voxel.Bedrock;/*  :fora do mundo, baixo  */
+    }else if(vCoord2.y>=Height){
+     polygonCell[corner]=Voxel.Air;/*  :fora do mundo, cima  */
+    }else{
+     Vector2Int cnkRgn2=current.cnkRgn_bg+posOffset;
+     Vector2Int cCoord2=current.cCoord_bg+crdOffset;
+     if(vCoord2.x<0||vCoord2.x>=Width||
+        vCoord2.z<0||vCoord2.z>=Depth
+     ){
+      ValidateCoord(ref cnkRgn2,ref vCoord2);
+      cCoord2=cnkRgnTocCoord(cnkRgn2);
+     }
+
+     int vxlIdx2=GetvxlIdx(vCoord2.x,vCoord2.y,vCoord2.z);
+
+     int oftIdx2=GetoftIdx(cCoord2-current.cCoord_bg);
+     /*  já construído:  */
+     if(oftIdx2==0&&voxels[vxlIdx2].IsCreated){
+      polygonCell[corner]=voxels[vxlIdx2];
+     }else if(oftIdx2>0&&neighbors[oftIdx2-1].ContainsKey(vxlIdx2)){
+      polygonCell[corner]=neighbors[oftIdx2-1][vxlIdx2];
+     }else{
+
+      //  pegar valor do bioma:
+      Vector3Int noiseInput=vCoord2;noiseInput.x+=cnkRgn2.x;
+                                    noiseInput.z+=cnkRgn2.y;
+     }
+
+    }
+   }
+  }
 
   for(int i=0;i<current.TempVer.Length/3;i++){
    idx[0]=i*3;
