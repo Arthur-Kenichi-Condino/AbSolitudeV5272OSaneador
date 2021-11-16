@@ -8,6 +8,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Runtime.InteropServices;
 using Unity.Collections;
+using Unity.Jobs;
 using UnityEngine;
 using UnityEngine.Rendering;
 using static AKCondinoO.Voxels.VoxelTerrain;
@@ -854,11 +855,28 @@ internal class MarchingCubesMultithreaded:BaseMultithreaded<MarchingCubesBackgro
 
 }
 
+BakerJob bakeJob;
+struct BakerJob:IJob{
+ public int meshId;
+ public void Execute(){
+  Physics.BakeMesh(meshId,false);
+ }
+}
+JobHandle bakingHandle;
+
 void Awake(){
+ renderer=GetComponent<MeshRenderer>();
+ collider=GetComponent<MeshCollider>();
+
  mesh=new Mesh(){
   bounds=worldBounds=new Bounds(Vector3.zero,new Vector3(Width,Height,Depth)),
  };
+
  GetComponent<MeshFilter>().mesh=mesh;
+
+ bakeJob=new BakerJob(){
+  meshId=mesh.GetInstanceID(),
+ };
 }
 
 internal void OnActivated(){
@@ -890,22 +908,42 @@ internal void OncCoordChanged(Vector2Int cCoord1){
  initialization=false;
 }
 
+bool addingTrees;
+bool bakingMesh;
+bool bakeRequested;
 bool runningMarchingCubes;
 bool buildRequested;
 bool moveRequired;
 internal void ManualUpdate(){
- if(runningMarchingCubes){
-  if(buildRequested&&OnBuilt()){
-   buildRequested=false;
-   Debug.Log("ManualUpdate:build finished:assigned built mesh data:"+cnkRgn);
-   runningMarchingCubes=false;
-  }
+ if(addingTrees){
 
  }else{
-  if(moveRequired&&OnMoving()){
-   moveRequired=false;
-   Debug.Log("ManualUpdate:moveRequired:"+cnkRgn);
-   OnMoved();
+  if(bakingMesh){
+   if(bakeRequested&&OnBakedMesh()){
+    bakeRequested=false;
+    Debug.Log("ManualUpdate:mesh baked:assigned mesh collider data:"+cnkRgn);
+    bakingMesh=false;
+    OnAddTrees();
+   }
+    
+  }else{
+   if(runningMarchingCubes){
+    if(buildRequested&&OnBuilt()){
+     buildRequested=false;
+     Debug.Log("ManualUpdate:build finished:assigned built mesh data:"+cnkRgn);
+     runningMarchingCubes=false;
+     OnReadyToBakeMesh();
+    }
+
+   }else{
+    if(moveRequired&&OnMoving()){
+     moveRequired=false;
+     Debug.Log("ManualUpdate:moveRequired:"+cnkRgn);
+     OnMoved();
+    }
+     
+   }
+ 
   }
 
  }
@@ -944,6 +982,26 @@ bool OnBuilt(){
   return true;
  }
  return false;
+}
+void OnReadyToBakeMesh(){
+ bakingHandle.Complete();
+ bakingHandle=bakeJob.Schedule();
+ bakingMesh=true;
+ Debug.Log("OnReadyToBakeMesh:chunk has a valid mesh:bake mesh for mesh collider");
+ bakeRequested=true;
+}
+
+bool OnBakedMesh(){
+ if(bakingHandle.IsCompleted){
+  bakingHandle.Complete();
+  collider.sharedMesh=null;
+  collider.sharedMesh=mesh;
+  return true;
+ }
+ return false;
+}
+void OnAddTrees(){
+ Debug.Log("OnAddTrees:chunk has a valid collider:add trees");
 }
 
 #if UNITY_EDITOR
