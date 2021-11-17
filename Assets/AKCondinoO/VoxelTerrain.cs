@@ -79,6 +79,8 @@ internal readonly LinkedList<VoxelTerrainChunk>pool=new LinkedList<VoxelTerrainC
 
 internal readonly VoxelTerrainChunk.MarchingCubesMultithreaded[]marchingCubesBGThreads=new VoxelTerrainChunk.MarchingCubesMultithreaded[Environment.ProcessorCount];
 
+internal readonly VoxelTerrainChunk.TreesMultithreaded[]addTreesBGThreads=new VoxelTerrainChunk.TreesMultithreaded[Environment.ProcessorCount];
+
 [SerializeField]internal VoxelTerrainChunk Prefab;
 
 void Awake(){if(Singleton==null){Singleton=this;}else{DestroyImmediate(this);return;}
@@ -93,6 +95,11 @@ void Awake(){if(Singleton==null){Singleton=this;}else{DestroyImmediate(this);ret
  for(int i=0;i<marchingCubesBGThreads.Length;++i){
   marchingCubesBGThreads[i]=new VoxelTerrainChunk.MarchingCubesMultithreaded();
  }
+
+ VoxelTerrainChunk.TreesMultithreaded.Stop=false;
+ for(int i=0;i<addTreesBGThreads.Length;++i){
+  addTreesBGThreads[i]=new VoxelTerrainChunk.TreesMultithreaded();
+ }
 }
 
 void OnDestroyingCoreEvent(object sender,EventArgs e){
@@ -106,13 +113,23 @@ void OnDestroyingCoreEvent(object sender,EventArgs e){
  }
  
  if(VoxelTerrainChunk.MarchingCubesMultithreaded.Clear()==0){
-  Debug.Log("chunks deletion was successful");
+  Debug.Log("chunks' Marching Cubes disposal was successful");
  }else{
-  Debug.LogError("chunks deletion failed");
+  Debug.LogError("chunks' Marching Cubes disposal failed");
  }
  VoxelTerrainChunk.MarchingCubesMultithreaded.Stop=true;
  for(int i=0;i<marchingCubesBGThreads.Length;++i){
   marchingCubesBGThreads[i].Wait();
+ }
+ 
+ if(VoxelTerrainChunk.TreesMultithreaded.Clear()==0){
+  Debug.Log("chunks' Trees disposal was successful");
+ }else{
+  Debug.LogError("chunks' Trees disposal failed");
+ }
+ VoxelTerrainChunk.TreesMultithreaded.Stop=true;
+ for(int i=0;i<addTreesBGThreads.Length;++i){
+  addTreesBGThreads[i].Wait();
  }
 }
 

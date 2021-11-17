@@ -46,6 +46,7 @@ internal Bounds worldBounds;
 internal new MeshRenderer renderer;
 internal new MeshCollider collider;
 
+#region Marching Cubes
 internal readonly MarchingCubesBackgroundContainer marchingCubesBG=new MarchingCubesBackgroundContainer();
 internal class MarchingCubesBackgroundContainer:BackgroundContainer{
  internal NativeList<Vertex>TempVer;
@@ -854,6 +855,7 @@ internal class MarchingCubesMultithreaded:BaseMultithreaded<MarchingCubesBackgro
  }
 
 }
+#endregion
 
 BakerJob bakeJob;
 struct BakerJob:IJob{
@@ -863,6 +865,20 @@ struct BakerJob:IJob{
  }
 }
 JobHandle bakingHandle;
+        
+internal readonly TreesBackgroundContainer addTreesBG=new TreesBackgroundContainer();
+internal class TreesBackgroundContainer:BackgroundContainer{
+ internal NativeList<RaycastCommand>getGroundRays;
+ internal NativeList<RaycastHit    >getGroundHits;
+
+        internal readonly List<(int x,int z)>gotGroundRays=new List<(int,int)>();
+ internal readonly Dictionary<int,RaycastHit>gotGroundHits=new Dictionary<int,RaycastHit>(Width*Depth);
+}
+internal class TreesMultithreaded:BaseMultithreaded<TreesBackgroundContainer>{
+ protected override void Execute(){
+  Debug.Log("TreesMultithreaded:Execute:");
+ }
+}
 
 void Awake(){
  renderer=GetComponent<MeshRenderer>();
@@ -890,6 +906,10 @@ internal void OnExit(){
  marchingCubesBG.IsCompleted(VoxelTerrain.Singleton.marchingCubesBGThreads[0].IsRunning,-1);
  if(marchingCubesBG.TempVer.IsCreated)marchingCubesBG.TempVer.Dispose();
  if(marchingCubesBG.TempTri.IsCreated)marchingCubesBG.TempTri.Dispose();
+
+ addTreesBG.IsCompleted(VoxelTerrain.Singleton.addTreesBGThreads[0].IsRunning,-1);
+ if(addTreesBG.getGroundRays.IsCreated)addTreesBG.getGroundRays.Dispose();
+ if(addTreesBG.getGroundHits.IsCreated)addTreesBG.getGroundHits.Dispose();
 }
         
 bool initialization=true;
