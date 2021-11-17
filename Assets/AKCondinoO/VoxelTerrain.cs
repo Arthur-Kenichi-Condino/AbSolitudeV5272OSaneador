@@ -202,7 +202,7 @@ void Update(){
     
     int cnkIdx1=GetcnkIdx(cCoord1.x,cCoord1.y);
     if(!active.TryGetValue(cnkIdx1,out VoxelTerrainChunk cnk)){
-     Debug.Log("activate for:"+cnkIdx1);
+     //Debug.Log("activate for:"+cnkIdx1);
      cnk=pool.First.Value;
      pool.RemoveFirst();
      cnk.expropriated=null;

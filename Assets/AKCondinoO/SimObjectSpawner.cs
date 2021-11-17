@@ -110,7 +110,7 @@ internal class GetPersistentDataFilesMultithreaded:BaseMultithreaded<GetPersiste
      if(Directory.Exists(transformPath)){
       foreach(var transformFile in Directory.GetFiles(transformPath,"(*,*)*")){
        string transformFileName=Path.GetFileName(transformFile);
-       Debug.Log("got load file:"+transformFileName);
+       //Debug.Log("got load file:"+transformFileName);
        string typeAndId=transformFileName.Split('(',')')[1];
         string[]typeAndIdSplit=typeAndId.Split(',');
          string typeString=typeAndIdSplit[0];

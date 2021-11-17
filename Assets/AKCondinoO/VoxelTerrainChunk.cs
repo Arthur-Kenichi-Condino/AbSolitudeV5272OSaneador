@@ -195,7 +195,7 @@ internal class MarchingCubesMultithreaded:BaseMultithreaded<MarchingCubesBackgro
   vertexUV.Clear();
  }
  protected override void Execute(){
-  Debug.Log("MarchingCubesMultithreaded:Execute:"+current.cCoord_bg);
+  //Debug.Log("MarchingCubesMultithreaded:Execute:"+current.cCoord_bg);
 
   current.TempVer.Clear();
   current.TempTri.Clear();
@@ -899,6 +899,9 @@ internal void OnActivated(){
  Debug.Log("VoxelTerrainChunk:OnActivated");
  marchingCubesBG.TempVer=new NativeList<Vertex>(Allocator.Persistent);
  marchingCubesBG.TempTri=new NativeList<UInt32>(Allocator.Persistent);
+
+ addTreesBG.getGroundRays=new NativeList<RaycastCommand>(Width*Depth,Allocator.Persistent);
+ addTreesBG.getGroundHits=new NativeList<RaycastHit    >(Width*Depth,Allocator.Persistent);
 }
 
 internal void OnExit(){
@@ -922,7 +925,7 @@ internal void OncCoordChanged(Vector2Int cCoord1){
  if(initialization||cCoord1!=cCoord){
   cCoord=cCoord1;
   cnkRgn=cCoordTocnkRgn(cCoord);
-  Debug.Log("VoxelTerrainChunk:OncCoordChanged:"+cCoord1);
+  //Debug.Log("VoxelTerrainChunk:OncCoordChanged:"+cCoord1);
   moveRequired=true;
  }
  initialization=false;
@@ -950,7 +953,7 @@ internal void ManualUpdate(){
    if(runningMarchingCubes){
     if(buildRequested&&OnBuilt()){
      buildRequested=false;
-     Debug.Log("ManualUpdate:build finished:assigned built mesh data:"+cnkRgn);
+     //Debug.Log("ManualUpdate:build finished:assigned built mesh data:"+cnkRgn);
      runningMarchingCubes=false;
      OnReadyToBakeMesh();
     }
@@ -958,7 +961,7 @@ internal void ManualUpdate(){
    }else{
     if(moveRequired&&OnMoving()){
      moveRequired=false;
-     Debug.Log("ManualUpdate:moveRequired:"+cnkRgn);
+     //Debug.Log("ManualUpdate:moveRequired:"+cnkRgn);
      OnMoved();
     }
      
@@ -982,7 +985,7 @@ bool OnMoving(){
 }
 void OnMoved(){
  runningMarchingCubes=true;
- Debug.Log("OnMove:chunk moved:running Marching Cubes");
+ //Debug.Log("OnMove:chunk moved:running Marching Cubes");
  buildRequested=true;
 }
 
