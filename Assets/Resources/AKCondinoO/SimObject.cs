@@ -52,7 +52,7 @@ internal class PersistentDataBackgroundContainer:BackgroundContainer{
 internal class PersistentDataMultithreaded:BaseMultithreaded<PersistentDataBackgroundContainer>{
  readonly JsonSerializer jsonSerializer=new JsonSerializer();
  protected override void Execute(){
-  Debug.Log("PersistentDataMultithreaded:Execute");
+  //Debug.Log("PersistentDataMultithreaded:Execute");
   lock(current.syn_bg){
    string specsDataFile=string.Format("{0}({1},{2}).JsonSerializer",Core.sObjectsSavePath,current.id_bg.simType,current.id_bg.number);
 
@@ -167,7 +167,7 @@ internal void OnActivated(bool load){
  if(!loading){
   container.SetSerializable(transform);
  }else{
-  Debug.Log("SimObject:OnActivated:loading:transform has incorrect data");
+  //Debug.Log("SimObject:OnActivated:loading:transform has incorrect data");
   loadRequired=true;
  }
 }
@@ -258,15 +258,15 @@ internal void ManualUpdate(){
     
   }else{
    if(loading){
-    Debug.Log("ManualUpdate:loading:"+id,transform);
+    //Debug.Log("ManualUpdate:loading:"+id,transform);
     if(loadRequested&&OnLoadedData()){
      loadRequested=false;
-     Debug.Log("ManualUpdate:loading finished:"+id,transform);
+     //Debug.Log("ManualUpdate:loading finished:"+id,transform);
      transform.hasChanged=false;
      loading=false;
     }else if(loadRequired&&OnLoading()){
      loadRequired=false;
-     Debug.Log("ManualUpdate:loading started:"+id,transform);
+     //Debug.Log("ManualUpdate:loading started:"+id,transform);
      loadRequested=true;
     }
  

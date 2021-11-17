@@ -944,7 +944,7 @@ internal void ManualUpdate(){
   if(bakingMesh){
    if(bakeRequested&&OnBakedMesh()){
     bakeRequested=false;
-    Debug.Log("ManualUpdate:mesh baked:assigned mesh collider data:"+cnkRgn);
+    //Debug.Log("ManualUpdate:mesh baked:assigned mesh collider data:"+cnkRgn);
     bakingMesh=false;
     OnAddTrees();
    }
@@ -1010,7 +1010,7 @@ void OnReadyToBakeMesh(){
  bakingHandle.Complete();
  bakingHandle=bakeJob.Schedule();
  bakingMesh=true;
- Debug.Log("OnReadyToBakeMesh:chunk has a valid mesh:bake mesh for mesh collider");
+ //Debug.Log("OnReadyToBakeMesh:chunk has a valid mesh:bake mesh for mesh collider");
  bakeRequested=true;
 }
 

@@ -280,7 +280,7 @@ IEnumerator SpawnCoroutine(){
   }
   while(SpawnQueue.Count>0){var toSpawn=SpawnQueue.Dequeue();
    foreach(var at in toSpawn.at){
-    Debug.Log("SpawnCoroutine:at:"+at);
+    //Debug.Log("SpawnCoroutine:at:"+at);
     Type simType=at.type;
     ulong number;
     bool load=false;
@@ -306,7 +306,7 @@ IEnumerator SpawnCoroutine(){
      Debug.Log("SpawnCoroutine:id already spawned:"+id);
      continue;
     }
-    Debug.Log("SpawnCoroutine:id:"+id);
+    //Debug.Log("SpawnCoroutine:id:"+id);
     GameObject gO;
     SimObject sO;
     if(pool[at.type].Count>0){
@@ -321,7 +321,7 @@ IEnumerator SpawnCoroutine(){
      gO.transform.localScale=at.scale;
 
     }else{
-     Debug.Log("SpawnCoroutine:Instantiate from Prefab");
+     //Debug.Log("SpawnCoroutine:Instantiate from Prefab");
      gO=Instantiate(Prefabs[at.type],at.position,Quaternion.Euler(at.rotation));
      gO.transform.localScale=at.scale;
 
