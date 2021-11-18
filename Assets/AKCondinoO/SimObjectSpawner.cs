@@ -39,7 +39,7 @@ internal class PersistentUniqueIdsMultithreaded:BaseMultithreaded<PersistentUniq
   string releasedIdsFile=string.Format("{0}{1}",Core.savePath,"releasedIds.JsonSerializer");
 
   if      (current.executionMode_bg==PersistentUniqueIdsBackgroundContainer.ExecutionMode.Load){
-   Debug.Log("PersistentUniqueIdsMultithreaded:Execute:Load:uniqueIdsFile: "+uniqueIdsFile);
+   //Debug.Log("PersistentUniqueIdsMultithreaded:Execute:Load:uniqueIdsFile: "+uniqueIdsFile);
    using(var file=new FileStream(uniqueIdsFile,FileMode.OpenOrCreate,FileAccess.ReadWrite,FileShare.None)){
     if(file.Length>0){
      using(var reader=new StreamReader(file)){using(var json=new JsonTextReader(reader)){
@@ -50,7 +50,7 @@ internal class PersistentUniqueIdsMultithreaded:BaseMultithreaded<PersistentUniq
     }
    }
 
-   Debug.Log("PersistentUniqueIdsMultithreaded:Execute:Load:releasedIdsFile: "+releasedIdsFile);
+   //Debug.Log("PersistentUniqueIdsMultithreaded:Execute:Load:releasedIdsFile: "+releasedIdsFile);
    using(var file=new FileStream(releasedIdsFile,FileMode.OpenOrCreate,FileAccess.ReadWrite,FileShare.None)){
     if(file.Length>0){
      using(var reader=new StreamReader(file)){using(var json=new JsonTextReader(reader)){

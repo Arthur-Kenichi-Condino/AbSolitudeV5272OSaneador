@@ -3,6 +3,7 @@ using LibNoise.Generator;
 using LibNoise.Operator;
 using paulbourke.MarchingCubes;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -868,15 +869,61 @@ JobHandle bakingHandle;
         
 internal readonly TreesBackgroundContainer addTreesBG=new TreesBackgroundContainer();
 internal class TreesBackgroundContainer:BackgroundContainer{
- internal NativeList<RaycastCommand>getGroundRays;
- internal NativeList<RaycastHit    >getGroundHits;
+ internal ExecutionMode executionMode_bg=ExecutionMode._1;
+ internal enum ExecutionMode{
+  _1,
+  _2,
+ }
 
-        internal readonly List<(int x,int z)>gotGroundRays=new List<(int,int)>();
- internal readonly Dictionary<int,RaycastHit>gotGroundHits=new Dictionary<int,RaycastHit>(Width*Depth);
+ internal NativeList<RaycastCommand>GetGroundRays;
+ internal NativeList<RaycastHit    >GetGroundHits;
+
+        internal readonly List<(int x,int z)>gotGroundRays_bg=new List<(int,int)>();
+ internal readonly Dictionary<int,RaycastHit>gotGroundHits_bg=new Dictionary<int,RaycastHit>(Width*Depth);
+
+ internal bool findPositionsCoroutineIdleWaiting=true;
+
+ internal bool findPositionsCoroutineBeginFlag;
+  WaitUntil waitForBeginFlag;
+
+  WaitUntil waitForScheduledTask;
+
+  internal Coroutine findPositionsCoroutine;
+ internal IEnumerator FindPositionsCoroutine(){
+
+  Debug.Log("FindPositionsCoroutine() coroutine started");
+
+  waitForBeginFlag=new WaitUntil(()=>findPositionsCoroutineBeginFlag);
+
+  waitForScheduledTask=new WaitUntil(()=>this.IsCompleted(VoxelTerrain.Singleton.addTreesBGThreads[0].IsRunning));
+
+  Loop:{
+   yield return waitForBeginFlag;
+    findPositionsCoroutineBeginFlag=false;
+
+   Debug.Log("FindPositionsCoroutine(): begin flag was set true");
+
+   GetGroundRays.Clear();
+   GetGroundHits.Clear();
+
+   gotGroundRays_bg.Clear();
+   gotGroundHits_bg.Clear();
+
+   executionMode_bg=ExecutionMode._1;
+   TreesMultithreaded.Schedule(this);
+   yield return waitForScheduledTask;
+
+   findPositionsCoroutineIdleWaiting=true;
+  }
+  goto Loop;
+ }
 }
 internal class TreesMultithreaded:BaseMultithreaded<TreesBackgroundContainer>{
  protected override void Execute(){
   Debug.Log("TreesMultithreaded:Execute:");
+  if      (current.executionMode_bg==TreesBackgroundContainer.ExecutionMode._1){
+   Debug.Log("TreesMultithreaded:Execute:_1");
+  }
  }
 }
 
@@ -900,8 +947,9 @@ internal void OnActivated(){
  marchingCubesBG.TempVer=new NativeList<Vertex>(Allocator.Persistent);
  marchingCubesBG.TempTri=new NativeList<UInt32>(Allocator.Persistent);
 
- addTreesBG.getGroundRays=new NativeList<RaycastCommand>(Width*Depth,Allocator.Persistent);
- addTreesBG.getGroundHits=new NativeList<RaycastHit    >(Width*Depth,Allocator.Persistent);
+ addTreesBG.GetGroundRays=new NativeList<RaycastCommand>(Width*Depth,Allocator.Persistent);
+ addTreesBG.GetGroundHits=new NativeList<RaycastHit    >(Width*Depth,Allocator.Persistent);
+ addTreesBG.findPositionsCoroutine=StartCoroutine(addTreesBG.FindPositionsCoroutine());
 }
 
 internal void OnExit(){
@@ -910,9 +958,12 @@ internal void OnExit(){
  if(marchingCubesBG.TempVer.IsCreated)marchingCubesBG.TempVer.Dispose();
  if(marchingCubesBG.TempTri.IsCreated)marchingCubesBG.TempTri.Dispose();
 
+ if(this!=null){
+  StopCoroutine(addTreesBG.findPositionsCoroutine);
+ }
  addTreesBG.IsCompleted(VoxelTerrain.Singleton.addTreesBGThreads[0].IsRunning,-1);
- if(addTreesBG.getGroundRays.IsCreated)addTreesBG.getGroundRays.Dispose();
- if(addTreesBG.getGroundHits.IsCreated)addTreesBG.getGroundHits.Dispose();
+ if(addTreesBG.GetGroundRays.IsCreated)addTreesBG.GetGroundRays.Dispose();
+ if(addTreesBG.GetGroundHits.IsCreated)addTreesBG.GetGroundHits.Dispose();
 }
         
 bool initialization=true;
@@ -932,6 +983,8 @@ internal void OncCoordChanged(Vector2Int cCoord1){
 }
 
 bool addingTrees;
+bool addTreesRequired;
+bool addTreesRequested;
 bool bakingMesh;
 bool bakeRequested;
 bool runningMarchingCubes;
@@ -939,6 +992,15 @@ bool buildRequested;
 bool moveRequired;
 internal void ManualUpdate(){
  if(addingTrees){
+  if(addTreesRequested&&OnAddedTrees()){
+   addTreesRequested=false;
+   Debug.Log("ManualUpdate:added trees:they'll be spawned shortly:"+cnkRgn);
+   addingTrees=false;
+  }else if(addTreesRequired&&OnAddingTrees()){
+   addTreesRequired=false;
+   Debug.Log("ManualUpdate:adding trees:find positions:"+cnkRgn);
+   addTreesRequested=true;
+  }
 
  }else{
   if(bakingMesh){
@@ -1024,7 +1086,24 @@ bool OnBakedMesh(){
  return false;
 }
 void OnAddTrees(){
+ addingTrees=true;
  Debug.Log("OnAddTrees:chunk has a valid collider:add trees");
+ addTreesRequired=true;
+}
+
+bool OnAddingTrees(){
+ if(addTreesBG.IsCompleted(VoxelTerrain.Singleton.addTreesBGThreads[0].IsRunning)&&addTreesBG.findPositionsCoroutineIdleWaiting){
+  addTreesBG.findPositionsCoroutineIdleWaiting=false;
+  addTreesBG.findPositionsCoroutineBeginFlag=true;
+  return true;
+ }
+ return false;
+}
+bool OnAddedTrees(){
+ if(addTreesBG.IsCompleted(VoxelTerrain.Singleton.addTreesBGThreads[0].IsRunning)&&addTreesBG.findPositionsCoroutineIdleWaiting){
+  return true;
+ }
+ return false;
 }
 
 #if UNITY_EDITOR
