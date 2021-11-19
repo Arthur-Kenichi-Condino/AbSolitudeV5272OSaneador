@@ -875,6 +875,9 @@ internal class TreesBackgroundContainer:BackgroundContainer{
   _2,
  }
 
+ internal Vector2Int cCoord_bg;
+ internal Vector2Int cnkRgn_bg;
+
  internal NativeList<RaycastCommand>GetGroundRays;
  internal NativeList<RaycastHit    >GetGroundHits;
 
@@ -901,7 +904,7 @@ internal class TreesBackgroundContainer:BackgroundContainer{
    yield return waitForBeginFlag;
     findPositionsCoroutineBeginFlag=false;
 
-   Debug.Log("FindPositionsCoroutine(): begin flag was set true");
+   Debug.Log("FindPositionsCoroutine():begin flag was set true:"+cnkRgn_bg);
 
    GetGroundRays.Clear();
    GetGroundHits.Clear();
@@ -919,10 +922,29 @@ internal class TreesBackgroundContainer:BackgroundContainer{
  }
 }
 internal class TreesMultithreaded:BaseMultithreaded<TreesBackgroundContainer>{
+
+ readonly Dictionary<Type,Vector2Int>spacingOwnTypeOnly=new Dictionary<Type,Vector2Int>();
+
+ protected override void Cleanup(){
+  spacingOwnTypeOnly.Clear();
+ }
+
  protected override void Execute(){
   Debug.Log("TreesMultithreaded:Execute:");
   if      (current.executionMode_bg==TreesBackgroundContainer.ExecutionMode._1){
-   Debug.Log("TreesMultithreaded:Execute:_1");
+   Debug.Log("TreesMultithreaded:Execute:_1:get rays to ground");
+
+   Vector3Int vCoord1=new Vector3Int(0,Height/2-1,0);
+
+   for(vCoord1.x=0             ;vCoord1.x<Width;vCoord1.x++){
+   for(vCoord1.z=0             ;vCoord1.z<Depth;vCoord1.z++){
+
+    Vector3Int noiseInput=vCoord1;noiseInput.x+=current.cnkRgn_bg.x;
+                                  noiseInput.z+=current.cnkRgn_bg.y;
+
+   }
+   }
+
   }
  }
 }
@@ -1093,6 +1115,8 @@ void OnAddTrees(){
 
 bool OnAddingTrees(){
  if(addTreesBG.IsCompleted(VoxelTerrain.Singleton.addTreesBGThreads[0].IsRunning)&&addTreesBG.findPositionsCoroutineIdleWaiting){
+  addTreesBG.cCoord_bg=cCoord;
+  addTreesBG.cnkRgn_bg=cnkRgn;
   addTreesBG.findPositionsCoroutineIdleWaiting=false;
   addTreesBG.findPositionsCoroutineBeginFlag=true;
   return true;
