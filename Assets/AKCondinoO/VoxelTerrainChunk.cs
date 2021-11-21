@@ -838,6 +838,17 @@ internal class MarchingCubesMultithreaded:BaseMultithreaded<MarchingCubesBackgro
   }
   #endregion
 
+  internal class TreeData{
+  }
+
+  readonly protected Dictionary<int,Type[]>treePicking=new Dictionary<int,Type[]>{
+  };
+
+  internal (Type tree,TreeData treeData)?Tree(Vector3Int noiseInputRounded){
+                                      Vector3 noiseInput=noiseInputRounded+deround;
+   return null;
+  }
+
  }
 
  internal static class AtlasHelper{
@@ -932,7 +943,7 @@ internal class TreesMultithreaded:BaseMultithreaded<TreesBackgroundContainer>{
  protected override void Execute(){
   Debug.Log("TreesMultithreaded:Execute:");
   if      (current.executionMode_bg==TreesBackgroundContainer.ExecutionMode._1){
-   Debug.Log("TreesMultithreaded:Execute:_1:get rays to ground");
+   Debug.Log("TreesMultithreaded:Execute:_1:get rays to ground:"+current.cCoord_bg);
 
    Vector3Int vCoord1=new Vector3Int(0,Height/2-1,0);
 
