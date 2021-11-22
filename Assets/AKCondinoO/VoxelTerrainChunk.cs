@@ -969,18 +969,39 @@ internal class TreesMultithreaded:BaseMultithreaded<TreesBackgroundContainer>{
    Vector3Int vCoord1=new Vector3Int(0,Height/2-1,0);
 
    for(vCoord1.x=0             ;vCoord1.x<Width;vCoord1.x++){
+
+    foreach(var tree in spacingOwnTypeOnly.Keys.ToArray()){Vector2Int spaced=spacingOwnTypeOnly[tree];
+     spaced.y=0;
+     spaced.x--;
+     if(spaced.x>0){
+      spacingOwnTypeOnly[tree]=spaced;
+     }else{
+      spacingOwnTypeOnly.Remove(tree);
+     }
+    }
+
    for(vCoord1.z=0             ;vCoord1.z<Depth;vCoord1.z++){
+
+    foreach(var tree in spacingOwnTypeOnly.Keys.ToArray()){Vector2Int spaced=spacingOwnTypeOnly[tree];
+     if(spaced.y>0){
+      spaced.y--;
+      spacingOwnTypeOnly[tree]=spaced;
+     }
+    }
 
     Vector3Int noiseInput=vCoord1;noiseInput.x+=current.cnkRgn_bg.x;
                                   noiseInput.z+=current.cnkRgn_bg.y;
 
     (Type tree,MarchingCubesMultithreaded.BaseBiome.TreeData treeData)?treePicked=MarchingCubesMultithreaded.biome.Tree(noiseInput);
+    if(treePicked!=null){
 
-    //  To do: instead of the fixed value 10, use radius of the selected tree
-    if(vCoord1.x<10||
-       vCoord1.z<10
-    ){
-     continue;
+     //  To do: instead of the fixed value 10, use radius of the selected tree
+     if(vCoord1.x<10||
+        vCoord1.z<10
+     ){
+      continue;
+     }
+
     }
 
    }
