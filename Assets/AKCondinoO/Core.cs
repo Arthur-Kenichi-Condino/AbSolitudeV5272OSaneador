@@ -17,9 +17,11 @@ internal static string sObjectsSavePath=string.Format("{0}{1}/",savePath,"sObjPD
 internal static int ActiveThreads;
 
 void Awake(){if(Singleton==null){Singleton=this;}else{DestroyImmediate(this);return;}
-Directory.CreateDirectory(savePath);
-Directory.CreateDirectory(perChunkSavePath);
-Directory.CreateDirectory(sObjectsSavePath);
+ Directory.CreateDirectory(savePath);
+ Directory.CreateDirectory(perChunkSavePath);
+ Directory.CreateDirectory(sObjectsSavePath);
+
+ PhysHelper.SetLayerMasks();
 }
 
 void OnDestroy(){
@@ -45,9 +47,6 @@ internal class OnDestroyingCoreEventArgs:EventArgs{
 bool initialized;
 void Update(){
  if(!initialized){
-  Directory.CreateDirectory(savePath);
-  Directory.CreateDirectory(perChunkSavePath);
-  Directory.CreateDirectory(sObjectsSavePath);
   initialized=true;
  }
  if(DEBUG_CREATE_SIM_OBJECT!=null){

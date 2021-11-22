@@ -1002,6 +1002,23 @@ internal class TreesMultithreaded:BaseMultithreaded<TreesBackgroundContainer>{
       continue;
      }
 
+     if(spacingOwnTypeOnly.TryGetValue(treePicked.Value.tree,out Vector2Int spaced)){
+      if(spaced.x>0||
+         spaced.y>0
+      ){
+       continue;
+      }
+     }
+
+     Vector3 from=vCoord1;
+             from.x+=(current.cnkRgn_bg.x-Width/2f)+.5f;
+             from.z+=(current.cnkRgn_bg.y-Depth/2f)+.5f;
+
+     current.GetGroundRays.AddNoResize(new RaycastCommand(from,Vector3.down,Height,PhysHelper.VoxelTerrain));
+     current.GetGroundHits.AddNoResize(new RaycastHit    ()                                                );
+
+     current.gotGroundRays_bg.Add((vCoord1.x,vCoord1.z));
+
     }
 
    }
