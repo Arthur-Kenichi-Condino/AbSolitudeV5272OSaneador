@@ -923,6 +923,9 @@ internal class TreesBackgroundContainer:BackgroundContainer{
 
   WaitUntil waitForScheduledTask;
 
+ JobHandle doRaycastsHandle;
+  WaitUntil waitForRaycastsHandle;
+
   internal Coroutine findPositionsCoroutine;
  internal IEnumerator FindPositionsCoroutine(){
 
@@ -931,6 +934,8 @@ internal class TreesBackgroundContainer:BackgroundContainer{
   waitForBeginFlag=new WaitUntil(()=>findPositionsCoroutineBeginFlag);
 
   waitForScheduledTask=new WaitUntil(()=>this.IsCompleted(VoxelTerrain.Singleton.addTreesBGThreads[0].IsRunning));
+
+  waitForRaycastsHandle=new WaitUntil(()=>doRaycastsHandle.IsCompleted);
 
   Loop:{
    yield return waitForBeginFlag;
@@ -947,6 +952,10 @@ internal class TreesBackgroundContainer:BackgroundContainer{
    executionMode_bg=ExecutionMode._1;
    TreesMultithreaded.Schedule(this);
    yield return waitForScheduledTask;
+
+   doRaycastsHandle=RaycastCommand.ScheduleBatch(GetGroundRays,GetGroundHits,1,default(JobHandle));
+   yield return waitForRaycastsHandle;
+   doRaycastsHandle.Complete();
 
    findPositionsCoroutineIdleWaiting=true;
   }
@@ -1019,6 +1028,8 @@ internal class TreesMultithreaded:BaseMultithreaded<TreesBackgroundContainer>{
 
      current.gotGroundRays_bg.Add((vCoord1.x,vCoord1.z));
 
+     //  To do: instead of the fixed value 10, use radius of the selected tree
+     spacingOwnTypeOnly[treePicked.Value.tree]=new Vector2Int(10,10);
     }
 
    }
