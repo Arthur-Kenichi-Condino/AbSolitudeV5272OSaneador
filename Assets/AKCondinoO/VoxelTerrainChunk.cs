@@ -1,3 +1,4 @@
+using AKCondinoO.Sims.Trees;
 using LibNoise;
 using LibNoise.Generator;
 using LibNoise.Operator;
@@ -841,11 +842,31 @@ internal class MarchingCubesMultithreaded:BaseMultithreaded<MarchingCubesBackgro
   internal class TreeData{
   }
 
+  readonly protected Dictionary<Type,TreeData>treesData=new Dictionary<Type,TreeData>(){
+   {
+    typeof(Pinus_elliottii),
+    new TreeData{
+    }
+   },
+  };
+
   readonly protected Dictionary<int,Type[]>treePicking=new Dictionary<int,Type[]>{
+   {
+    1,
+    new Type[]{
+     typeof(Pinus_elliottii),
+    }
+   },
   };
 
   internal (Type tree,TreeData treeData)?Tree(Vector3Int noiseInputRounded){
                                       Vector3 noiseInput=noiseInputRounded+deround;
+   if(treePicking.TryGetValue(Select(noiseInput),out Type[]treesPicked)){
+    //  To do: random chance to use tree selected
+    foreach(Type tree in treesPicked){TreeData treeData=treesData[tree];
+     return(tree,treeData);
+    }
+   }
    return null;
   }
 
@@ -952,6 +973,15 @@ internal class TreesMultithreaded:BaseMultithreaded<TreesBackgroundContainer>{
 
     Vector3Int noiseInput=vCoord1;noiseInput.x+=current.cnkRgn_bg.x;
                                   noiseInput.z+=current.cnkRgn_bg.y;
+
+    (Type tree,MarchingCubesMultithreaded.BaseBiome.TreeData treeData)?treePicked=MarchingCubesMultithreaded.biome.Tree(noiseInput);
+
+    //  To do: instead of the fixed value 10, use radius of the selected tree
+    if(vCoord1.x<10||
+       vCoord1.z<10
+    ){
+     continue;
+    }
 
    }
    }

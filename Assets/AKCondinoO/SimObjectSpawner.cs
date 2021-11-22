@@ -144,6 +144,7 @@ void Awake(){if(Singleton==null){Singleton=this;}else{DestroyImmediate(this);ret
   Type t=sO.GetType();
   Prefabs.Add(t,gO);
   pool.Add(t,new LinkedList<SimObject>());
+  Debug.Log("added Prefab:"+sO.name);
  }
 
  persistUniqueIdsBG=new PersistentUniqueIdsBackgroundContainer();
