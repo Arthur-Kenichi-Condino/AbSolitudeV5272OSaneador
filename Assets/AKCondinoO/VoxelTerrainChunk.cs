@@ -1,3 +1,4 @@
+using AKCondinoO.Sims;
 using AKCondinoO.Sims.Trees;
 using LibNoise;
 using LibNoise.Generator;
@@ -916,6 +917,8 @@ internal class TreesBackgroundContainer:BackgroundContainer{
         internal readonly List<(int x,int z)>gotGroundRays_bg=new List<(int,int)>();
  internal readonly Dictionary<int,RaycastHit>gotGroundHits_bg=new Dictionary<int,RaycastHit>(Width*Depth);
 
+ internal readonly SimObjectSpawner.SpawnData toSpawn=new SimObjectSpawner.SpawnData();
+
  internal bool findPositionsCoroutineIdleWaiting=true;
 
  internal bool findPositionsCoroutineBeginFlag;
@@ -956,6 +959,26 @@ internal class TreesBackgroundContainer:BackgroundContainer{
    doRaycastsHandle=RaycastCommand.ScheduleBatch(GetGroundRays,GetGroundHits,1,default(JobHandle));
    yield return waitForRaycastsHandle;
    doRaycastsHandle.Complete();
+
+   Vector3Int vCoord1=new Vector3Int(0,0,0);
+   int i=0;
+   for(vCoord1.x=0             ;vCoord1.x<Width;vCoord1.x++){
+   for(vCoord1.z=0             ;vCoord1.z<Depth;vCoord1.z++){
+    if(gotGroundRays_bg.Contains((vCoord1.x,vCoord1.z))){
+     RaycastHit hit=GetGroundHits[i++];
+     if(hit.collider!=null){
+      int index=vCoord1.z+vCoord1.x*Depth;
+      gotGroundHits_bg.Add(index,hit);
+
+      Debug.DrawRay(GetGroundHits[i-1].point,(GetGroundRays[i-1].from-GetGroundHits[i-1].point).normalized,Color.white,5f);
+
+     }
+    }
+   }}
+
+   executionMode_bg=ExecutionMode._2;
+   TreesMultithreaded.Schedule(this);
+   yield return waitForScheduledTask;
 
    findPositionsCoroutineIdleWaiting=true;
   }
@@ -1034,6 +1057,17 @@ internal class TreesMultithreaded:BaseMultithreaded<TreesBackgroundContainer>{
 
    }
    }
+
+  }else if(current.executionMode_bg==TreesBackgroundContainer.ExecutionMode._2){
+   Debug.Log("TreesMultithreaded:Execute:_2:got ground hits:"+current.cCoord_bg);
+
+   Debug.Log("current.gotGroundHits_bg.Count:"+current.gotGroundHits_bg.Count);
+
+   Vector3Int vCoord1=new Vector3Int(0,Height/2-1,0);
+   int i=0;
+   for(vCoord1.x=0             ;vCoord1.x<Width;vCoord1.x++){
+   for(vCoord1.z=0             ;vCoord1.z<Depth;vCoord1.z++){
+   }}
 
   }
  }
