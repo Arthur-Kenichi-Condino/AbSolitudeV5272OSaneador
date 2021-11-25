@@ -155,10 +155,18 @@ internal class PersistentDataMultithreaded:BaseMultithreaded<PersistentDataBackg
  }
 }
 
+internal readonly List<Collider>volumeColliders=new List<Collider>();
+
 protected virtual void Awake(){
  if(container==null){container=new PersistentDataBackgroundContainer(syn);}
  if(container.specsData_bg==null){container.specsData_bg=new PersistentDataBackgroundContainer.SerializableSpecsData();}
  if(container.transform_bg==null){container.transform_bg=new PersistentDataBackgroundContainer.SerializableTransform();}
+
+ foreach(Collider collider in GetComponentsInChildren<Collider>()){
+  if(collider.CompareTag("SimObjectVolume")){
+   volumeColliders.Add(collider);
+  }
+ }
 }
 
 internal void OnActivated(bool load){
@@ -210,6 +218,8 @@ internal void ManualUpdate(){
      Debug.Log("ManualUpdate:DEBUG_UNPLACE:save and UNPLACE:"+id,transform);
      OnUnplace();
    
+    }else if(IsOverlappingNonAlloc()){
+
     }else{
      if(DEBUG_UNLOAD){
       DEBUG_UNLOAD=false;
@@ -352,8 +362,21 @@ bool OnUnplacedData(){
  return false;
 }
 
-void OnCollisionStay(Collision collisionInfo){
- Debug.Log("OnCollisionStay:I'm overlapping another simObject:"+collisionInfo.collider.name,this);
+bool IsOverlappingNonAlloc(){
+
+ int overlappingsLength;
+
+ for(int i=0;i<volumeColliders.Count;++i){
+
+  if(volumeColliders[i]is CapsuleCollider capsule){
+   //Debug.Log("I have a volume capsule: test for overlaps",this);
+  }
+
+ }
+
+ //Debug.Log("OnCollisionStay:I'm overlapping another simObject:"+collisionInfo.collider.name,this);
+
+ return false;
 }
 
 }}
