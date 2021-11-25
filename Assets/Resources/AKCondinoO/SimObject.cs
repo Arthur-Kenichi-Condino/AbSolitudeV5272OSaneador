@@ -362,19 +362,37 @@ bool OnUnplacedData(){
  return false;
 }
 
+Collider[]overlappedColliders=new Collider[1];
 bool IsOverlappingNonAlloc(){
-
- int overlappingsLength;
 
  for(int i=0;i<volumeColliders.Count;++i){
 
+  int overlappingsLength=0;
+
   if(volumeColliders[i]is CapsuleCollider capsule){
    //Debug.Log("I have a volume capsule: test for overlaps",this);
+   var direction=new Vector3{[capsule.direction]=1};
+   var offset=capsule.height/2-capsule.radius;
+   var localPoint0=capsule.center-direction*offset;
+   var localPoint1=capsule.center+direction*offset;
+   var point0=transform.TransformPoint(localPoint0);
+   var point1=transform.TransformPoint(localPoint1);
+   if((overlappingsLength=Physics.OverlapCapsuleNonAlloc(point0,point1,capsule.radius,overlappedColliders))>0){
+    while(overlappedColliders.Length<=overlappingsLength){
+     Array.Resize(ref overlappedColliders,overlappingsLength*2);
+     Debug.Log("IsOverlappingNonAlloc():overlappedColliders resized to:"+overlappedColliders.Length);
+     overlappingsLength=Physics.OverlapCapsuleNonAlloc(point0,point1,capsule.radius,overlappedColliders);
+    }
+   }
+
+  }
+
+  for(int j=0;j<overlappingsLength;++j){
+   var overlapping=overlappedColliders[j];
+   Debug.Log("IsOverlappingNonAlloc():I'm overlapping another simObject:"+overlappedColliders[j].name,this);
   }
 
  }
-
- //Debug.Log("OnCollisionStay:I'm overlapping another simObject:"+collisionInfo.collider.name,this);
 
  return false;
 }
