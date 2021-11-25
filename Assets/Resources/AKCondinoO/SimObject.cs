@@ -352,4 +352,8 @@ bool OnUnplacedData(){
  return false;
 }
 
+void OnCollisionStay(Collision collisionInfo){
+ Debug.Log("OnCollisionStay:I'm overlapping another simObject:"+collisionInfo.collider.name,this);
+}
+
 }}

@@ -906,6 +906,7 @@ internal class TreesBackgroundContainer:BackgroundContainer{
  internal enum ExecutionMode{
   _1,
   _2,
+  _3,
  }
 
  internal Vector2Int cCoord_bg;
@@ -917,7 +918,10 @@ internal class TreesBackgroundContainer:BackgroundContainer{
         internal readonly List<(int x,int z)>gotGroundRays_bg=new List<(int,int)>();
  internal readonly Dictionary<int,RaycastHit>gotGroundHits_bg=new Dictionary<int,RaycastHit>(Width*Depth);
 
- internal readonly SimObjectSpawner.SpawnData toSpawn=new SimObjectSpawner.SpawnData();
+ internal readonly Dictionary<(int x,int z),(Type tree,MarchingCubesMultithreaded.BaseBiome.TreeData treeData)>treeAt_bg=new Dictionary<(int,int),(Type,MarchingCubesMultithreaded.BaseBiome.TreeData)>();
+
+ internal readonly SimObjectSpawner.SpawnData toSpawn_bg=new SimObjectSpawner.SpawnData(Width*Depth);
+  WaitUntil waitForSpawner;
 
  internal bool findPositionsCoroutineIdleWaiting=true;
 
@@ -939,6 +943,8 @@ internal class TreesBackgroundContainer:BackgroundContainer{
   waitForScheduledTask=new WaitUntil(()=>this.IsCompleted(VoxelTerrain.Singleton.addTreesBGThreads[0].IsRunning));
 
   waitForRaycastsHandle=new WaitUntil(()=>doRaycastsHandle.IsCompleted);
+
+  waitForSpawner=new WaitUntil(()=>toSpawn_bg.dequeued);
 
   Loop:{
    yield return waitForBeginFlag;
@@ -975,8 +981,15 @@ internal class TreesBackgroundContainer:BackgroundContainer{
      }
     }
    }}
-
+   
    executionMode_bg=ExecutionMode._2;
+   TreesMultithreaded.Schedule(this);
+   yield return waitForScheduledTask;
+
+   SimObjectSpawner.Singleton.SpawnQueue.Enqueue(toSpawn_bg);
+   yield return waitForSpawner;
+                    
+   executionMode_bg=ExecutionMode._3;
    TreesMultithreaded.Schedule(this);
    yield return waitForScheduledTask;
 
@@ -997,6 +1010,8 @@ internal class TreesMultithreaded:BaseMultithreaded<TreesBackgroundContainer>{
   Debug.Log("TreesMultithreaded:Execute:");
   if      (current.executionMode_bg==TreesBackgroundContainer.ExecutionMode._1){
    Debug.Log("TreesMultithreaded:Execute:_1:get rays to ground:"+current.cCoord_bg);
+
+   current.treeAt_bg.Clear();
 
    Vector3Int vCoord1=new Vector3Int(0,Height/2-1,0);
 
@@ -1051,6 +1066,8 @@ internal class TreesMultithreaded:BaseMultithreaded<TreesBackgroundContainer>{
 
      current.gotGroundRays_bg.Add((vCoord1.x,vCoord1.z));
 
+     current.treeAt_bg.Add((vCoord1.x,vCoord1.z),treePicked.Value);
+
      //  To do: instead of the fixed value 10, use radius of the selected tree
      spacingOwnTypeOnly[treePicked.Value.tree]=new Vector2Int(10,10);
     }
@@ -1062,13 +1079,24 @@ internal class TreesMultithreaded:BaseMultithreaded<TreesBackgroundContainer>{
    Debug.Log("TreesMultithreaded:Execute:_2:got ground hits:"+current.cCoord_bg);
 
    Debug.Log("current.gotGroundHits_bg.Count:"+current.gotGroundHits_bg.Count);
+                    
+   current.toSpawn_bg.at.Clear();
+   current.toSpawn_bg.dequeued=false;
 
    Vector3Int vCoord1=new Vector3Int(0,Height/2-1,0);
    int i=0;
    for(vCoord1.x=0             ;vCoord1.x<Width;vCoord1.x++){
    for(vCoord1.z=0             ;vCoord1.z<Depth;vCoord1.z++){
-   }}
+    int index=vCoord1.z+vCoord1.x*Depth;
+    if(current.gotGroundHits_bg.TryGetValue(index,out RaycastHit floor)){
+     (Type tree,MarchingCubesMultithreaded.BaseBiome.TreeData treeData)treeAt=current.treeAt_bg[(vCoord1.x,vCoord1.z)];
 
+     current.toSpawn_bg.at.Add((floor.point,Vector3.zero,Vector3.one,treeAt.tree,null));
+    }
+   }}
+   
+  }else if(current.executionMode_bg==TreesBackgroundContainer.ExecutionMode._3){
+   Debug.Log("TreesMultithreaded:Execute:_3:save \"done\" file:"+current.cCoord_bg);
   }
  }
 }
