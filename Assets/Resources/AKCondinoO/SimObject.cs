@@ -155,6 +155,8 @@ internal class PersistentDataMultithreaded:BaseMultithreaded<PersistentDataBackg
  }
 }
 
+internal Collider[]colliders;
+
 internal readonly List<Collider>volumeColliders=new List<Collider>();
 
 protected virtual void Awake(){
@@ -162,7 +164,7 @@ protected virtual void Awake(){
  if(container.specsData_bg==null){container.specsData_bg=new PersistentDataBackgroundContainer.SerializableSpecsData();}
  if(container.transform_bg==null){container.transform_bg=new PersistentDataBackgroundContainer.SerializableTransform();}
 
- foreach(Collider collider in GetComponentsInChildren<Collider>()){
+ foreach(Collider collider in colliders=GetComponentsInChildren<Collider>()){
   if(collider.CompareTag("SimObjectVolume")){
    volumeColliders.Add(collider);
   }
@@ -174,6 +176,9 @@ internal void OnActivated(bool load){
  loading=load;
  if(!loading){
   container.SetSerializable(transform);
+
+  EnableInteractions();
+
  }else{
   //Debug.Log("SimObject:OnActivated:loading:transform has incorrect data");
   loadRequired=true;
@@ -220,6 +225,11 @@ internal void ManualUpdate(){
    
     }else if(IsOverlappingNonAlloc()){
 
+     OnOverlapperUnplacing(this);
+
+     Debug.Log("ManualUpdate:IsOverlappingNonAlloc:save and UNPLACE:"+id,transform);
+     OnUnplace();
+
     }else{
      if(DEBUG_UNLOAD){
       DEBUG_UNLOAD=false;
@@ -244,6 +254,9 @@ internal void ManualUpdate(){
    unplaceRequested=false;
    Debug.Log("ManualUpdate:unplacing finished:"+id,transform);
    unplacing=false;
+                    
+   OnOverlapperUnplaced(this);
+
    SimObjectSpawner.Singleton.DespawnReleaseIdQueue.Enqueue(this);
   }else if(unplaceRequired&&OnUnplacing()){
    unplaceRequired=false;
@@ -274,6 +287,9 @@ internal void ManualUpdate(){
      //Debug.Log("ManualUpdate:loading finished:"+id,transform);
      transform.hasChanged=false;
      loading=false;
+
+     EnableInteractions();
+
     }else if(loadRequired&&OnLoading()){
      loadRequired=false;
      //Debug.Log("ManualUpdate:loading started:"+id,transform);
@@ -320,6 +336,9 @@ bool OnSaving(){
 }
 
 void OnUnload(){
+
+ DisableInteractions();
+
  unloading=true;
  Debug.Log("OnUnload:something caused this sO to be disabled and unloaded");
  unloadRequired=true;
@@ -342,6 +361,9 @@ bool OnUnloadedData(){
 }
 
 void OnUnplace(){
+
+ DisableInteractions();
+
  unplacing=true;
  Debug.Log("OnUnplace:something caused this sO to be disabled and removed from the world");
  unplaceRequired=true;
@@ -362,8 +384,21 @@ bool OnUnplacedData(){
  return false;
 }
 
+void EnableInteractions(){
+ foreach(Collider collider in colliders){
+  collider.enabled=true;
+ }
+}
+
+void DisableInteractions(){
+ foreach(Collider collider in colliders){
+  collider.enabled=false;
+ }
+}
+
 Collider[]overlappedColliders=new Collider[1];
 bool IsOverlappingNonAlloc(){
+ bool result=false;
 
  for(int i=0;i<volumeColliders.Count;++i){
 
@@ -389,12 +424,30 @@ bool IsOverlappingNonAlloc(){
 
   for(int j=0;j<overlappingsLength;++j){
    var overlapping=overlappedColliders[j];
-   Debug.Log("IsOverlappingNonAlloc():I'm overlapping another simObject:"+overlappedColliders[j].name,this);
+   if(overlapping.transform.root!=transform.root){
+    SimObject sO;
+    if((sO=overlapping.transform.root.GetComponent<SimObject>())!=null){
+     if(!overlappersUnplacing.Contains(sO)){
+      Debug.Log("IsOverlappingNonAlloc():I'm overlapping another simObject:"+overlappedColliders[j].transform.root.name,this);
+      result=true;
+     }
+    }
+   }
   }
 
  }
 
- return false;
+ return result;
+}
+
+static readonly HashSet<SimObject>overlappersUnplacing=new HashSet<SimObject>();
+
+static void OnOverlapperUnplacing(SimObject overlapper){
+ overlappersUnplacing.Add(overlapper);
+}
+
+static void OnOverlapperUnplaced(SimObject overlapper){
+ overlappersUnplacing.Remove(overlapper);
 }
 
 }}
