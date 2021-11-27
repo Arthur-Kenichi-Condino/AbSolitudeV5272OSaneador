@@ -454,7 +454,7 @@ bool IsOverlappingNonAlloc(){
  return result;
 }
 
-static readonly HashSet<SimObject>overlappersUnplacing=new HashSet<SimObject>();
+internal static readonly HashSet<SimObject>overlappersUnplacing=new HashSet<SimObject>();
 
 static void OnOverlapperUnplacing(SimObject overlapper){
  overlappersUnplacing.Add(overlapper);

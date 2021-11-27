@@ -183,6 +183,7 @@ void OnDestroyingCoreEvent(object sender,EventArgs e){
 
 void OnExitSave(){
  Debug.Log("SimObjectSpawner:OnExitSave");
+
  List<(Type simType,ulong number)>unplacedIds=new List<(Type,ulong)>();
  foreach(var a in active){var sO=a.Value;
   Debug.Log("SimObjectSpawner:OnExitSave:save active sO.id:"+sO.id);
@@ -194,11 +195,15 @@ void OnExitSave(){
   }
   releasedIds[id.simType].Add(id.number);
  }
+
+ SimObject.overlappersUnplacing.Clear();
+
  if(SimObject.PersistentDataMultithreaded.Clear()==0){
   Debug.Log("all active sOs were saved successfully");
  }else{
   Debug.LogError("some active sOs failed to be saved");
  }
+
  if(ids==null){
   Debug.Log("ids exit save is not needed: no changes were made");
   PersistentUniqueIdsMultithreaded.Clear();

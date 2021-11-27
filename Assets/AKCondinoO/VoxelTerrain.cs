@@ -76,6 +76,15 @@ internal VoxelTerrainChunk[]all;
 internal readonly Dictionary<int,VoxelTerrainChunk>active=new Dictionary<int,VoxelTerrainChunk>();
 
 internal readonly LinkedList<VoxelTerrainChunk>pool=new LinkedList<VoxelTerrainChunk>();
+        
+internal readonly EditingBackgroundContainer editingBG=new EditingBackgroundContainer();
+internal class EditingBackgroundContainer:BackgroundContainer{
+}
+internal EditingMultithreaded editingBGThread;
+internal class EditingMultithreaded:BaseMultithreaded<EditingBackgroundContainer>{
+ protected override void Execute(){
+ }
+}
 
 internal readonly VoxelTerrainChunk.MarchingCubesMultithreaded[]marchingCubesBGThreads=new VoxelTerrainChunk.MarchingCubesMultithreaded[Environment.ProcessorCount];
 
@@ -100,10 +109,22 @@ void Awake(){if(Singleton==null){Singleton=this;}else{DestroyImmediate(this);ret
  for(int i=0;i<addTreesBGThreads.Length;++i){
   addTreesBGThreads[i]=new VoxelTerrainChunk.TreesMultithreaded();
  }
+
+ EditingMultithreaded.Stop=false;
+ editingBGThread=new EditingMultithreaded();
 }
 
 void OnDestroyingCoreEvent(object sender,EventArgs e){
  Debug.Log("OnDestroyingCoreEvent");
+
+ //  To do: save pending edits
+ if(EditingMultithreaded.Clear()==0){
+  Debug.Log("voxel terrain editor disposal was successful");
+ }else{
+  Debug.LogError("voxel terrain editor disposal failed");
+ }
+ EditingMultithreaded.Stop=true;
+ editingBGThread.Wait();
 
  if(all!=null){
   for(int i=0;i<all.Length;++i){
