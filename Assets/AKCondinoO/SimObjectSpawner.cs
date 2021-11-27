@@ -183,9 +183,16 @@ void OnDestroyingCoreEvent(object sender,EventArgs e){
 
 void OnExitSave(){
  Debug.Log("SimObjectSpawner:OnExitSave");
+ List<(Type simType,ulong number)>unplacedIds=new List<(Type,ulong)>();
  foreach(var a in active){var sO=a.Value;
   Debug.Log("SimObjectSpawner:OnExitSave:save active sO.id:"+sO.id);
-  sO.OnExitSave();
+  sO.OnExitSave(unplacedIds);
+ }
+ foreach(var id in unplacedIds){
+  if(!releasedIds.ContainsKey(id.simType)){
+   releasedIds.Add(id.simType,new List<ulong>());
+  }
+  releasedIds[id.simType].Add(id.number);
  }
  if(SimObject.PersistentDataMultithreaded.Clear()==0){
   Debug.Log("all active sOs were saved successfully");

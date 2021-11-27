@@ -185,11 +185,25 @@ internal void OnActivated(bool load){
  }
 }
 
-internal void OnExitSave(){
+internal void OnExitSave(List<(Type simType,ulong number)>unplacedIds){
  Debug.Log("SimObject:OnExitSave");
  container.IsCompleted(SimObjectSpawner.Singleton.persistentDataBGThreads[0].IsRunning,-1);
  if(unplacing){
   Debug.Log("SimObject:OnExitSave:unplacing:"+id);
+  if(unplaceRequired){
+   unplaceRequired=false;
+   container.executionMode_bg=PersistentDataBackgroundContainer.ExecutionMode.Unplace;
+   container.id_bg=id.Value;
+   PersistentDataMultithreaded.Schedule(container);
+   Debug.Log("SimObject:OnExitSave:unplacing started:"+id);
+   container.IsCompleted(SimObjectSpawner.Singleton.persistentDataBGThreads[0].IsRunning,-1);
+   unplaceRequested=true;
+  }
+  if(unplaceRequested){
+   unplaceRequested=false;
+   Debug.Log("SimObject:OnExitSave:unplacing finished:"+id);
+   unplacedIds.Add(id.Value);
+  }
 
  }else if(!loading){
   container.executionMode_bg=PersistentDataBackgroundContainer.ExecutionMode.Save;
