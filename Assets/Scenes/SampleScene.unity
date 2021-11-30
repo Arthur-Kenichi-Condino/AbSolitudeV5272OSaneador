@@ -456,6 +456,10 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 531232586110231750, guid: 5dfc5ec621a9bfa498d6da1e90e349c0, type: 3}
+      propertyPath: DEBUG_EDIT_AT.y
+      value: 40
+      objectReference: {fileID: 0}
     - target: {fileID: 7355805200245561109, guid: 5dfc5ec621a9bfa498d6da1e90e349c0, type: 3}
       propertyPath: m_Name
       value: Core

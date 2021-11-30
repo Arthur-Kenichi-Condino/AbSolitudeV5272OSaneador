@@ -18,6 +18,8 @@ using static AKCondinoO.Voxels.VoxelTerrain;
 using static AKCondinoO.Voxels.VoxelTerrainChunk.MarchingCubesBackgroundContainer;
 
 namespace AKCondinoO.Voxels{internal class VoxelTerrainChunk:MonoBehaviour{
+internal readonly object syn=new object();        
+
 internal const ushort Height=(256);
 internal const ushort Width=(16);
 internal const ushort Depth=(16);
@@ -50,8 +52,13 @@ internal new MeshRenderer renderer;
 internal new MeshCollider collider;
 
 #region Marching Cubes
-internal readonly MarchingCubesBackgroundContainer marchingCubesBG=new MarchingCubesBackgroundContainer();
+internal MarchingCubesBackgroundContainer marchingCubesBG;
 internal class MarchingCubesBackgroundContainer:BackgroundContainer{
+ internal readonly object syn_bg;
+ internal MarchingCubesBackgroundContainer(object syn){
+  syn_bg=syn;
+ }
+
  internal NativeList<Vertex>TempVer;
  [StructLayout(LayoutKind.Sequential)]internal struct Vertex{
   internal Vector3 pos;
@@ -1102,6 +1109,8 @@ internal class TreesMultithreaded:BaseMultithreaded<TreesBackgroundContainer>{
 }
 
 void Awake(){
+ marchingCubesBG=new MarchingCubesBackgroundContainer(syn);
+
  renderer=GetComponent<MeshRenderer>();
  collider=GetComponent<MeshCollider>();
 
@@ -1221,7 +1230,7 @@ bool OnMoving(){
 }
 void OnMoved(){
  runningMarchingCubes=true;
- //Debug.Log("OnMove:chunk moved:running Marching Cubes");
+ //Debug.Log("OnMoved:chunk moved:running Marching Cubes");
  buildRequested=true;
 }
 

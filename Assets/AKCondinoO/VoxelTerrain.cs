@@ -72,6 +72,7 @@ internal static Vector2Int expropriationDistance{get;}=new Vector2Int(5,5);
 internal readonly Dictionary<NetcodePlayerPrefab,(Vector2Int cCoord,Vector2Int cCoord_Pre)>playersMovement=new Dictionary<NetcodePlayerPrefab,(Vector2Int,Vector2Int)>();
 
 internal VoxelTerrainChunk[]all;
+ readonly Dictionary<VoxelTerrainChunk,object>syn=new Dictionary<VoxelTerrainChunk,object>();
 
 internal readonly Dictionary<int,VoxelTerrainChunk>active=new Dictionary<int,VoxelTerrainChunk>();
 
@@ -79,10 +80,18 @@ internal readonly LinkedList<VoxelTerrainChunk>pool=new LinkedList<VoxelTerrainC
         
 internal readonly EditingBackgroundContainer editingBG=new EditingBackgroundContainer();
 internal class EditingBackgroundContainer:BackgroundContainer{
+ internal enum EditMode{Cube,}
+ internal object[]syn_bg;
+ internal Queue<EditRequest>editingRequests_bg;
 }
 internal EditingMultithreaded editingBGThread;
 internal class EditingMultithreaded:BaseMultithreaded<EditingBackgroundContainer>{
  protected override void Execute(){
+  Debug.Log("EditingMultithreaded:Execute:current.editingRequests_bg.Count:"+current.editingRequests_bg.Count);
+  while(current.editingRequests_bg.Count>0){
+   var editRequest=current.editingRequests_bg.Dequeue();
+   Debug.Log("edit request dequeued:editRequest.center:"+editRequest.center);
+  }
  }
 }
 
@@ -154,9 +163,20 @@ void OnDestroyingCoreEvent(object sender,EventArgs e){
  }
 }
 
+[SerializeField]bool                                DEBUG_EDIT=false;
+[SerializeField]Vector3                             DEBUG_EDIT_AT=Vector3.zero;
+[SerializeField]EditingBackgroundContainer.EditMode DEBUG_EDIT_MODE=EditingBackgroundContainer.EditMode.Cube;
+[SerializeField]Vector3Int                          DEBUG_EDIT_SIZE=new Vector3Int(3,3,3);
+[SerializeField]double                              DEBUG_EDIT_DENSITY=100.0;
+[SerializeField]MaterialId                          DEBUG_EDIT_MATERIAL_ID=MaterialId.Dirt;
+[SerializeField]int                                 DEBUG_EDIT_SMOOTHNESS=5;
+
 bool initialization=true;
 
 int maxConnections=1;
+
+bool editRequired;
+bool editRequested;
 void Update(){
 
  if(all==null){
@@ -166,9 +186,36 @@ void Update(){
   for(int i=0;i<all.Length;++i){
    VoxelTerrainChunk cnk;
    all[i]=cnk=Instantiate(Prefab);
+    syn.Add(cnk,cnk.syn);
    all[i].OnActivated();
    cnk.expropriated=pool.AddLast(cnk);
   }
+
+  editingBG.syn_bg=syn.Values.ToArray();
+ }
+ 
+ if(DEBUG_EDIT){
+  DEBUG_EDIT=false;
+  Debug.Log("DEBUG_EDIT:");
+  Edit(
+   DEBUG_EDIT_AT,
+   DEBUG_EDIT_MODE,
+   DEBUG_EDIT_SIZE,
+   DEBUG_EDIT_DENSITY,
+   DEBUG_EDIT_MATERIAL_ID,
+   DEBUG_EDIT_SMOOTHNESS
+  );
+ }
+ if(editingRequests.Count>0){
+  editRequired=true;
+ }
+ if(editRequested&&OnEdited()){
+  editRequested=false;
+  Debug.Log("Update:editRequested:edited voxel terrain");
+ }else if(editRequired&&OnEdit()){
+  editRequired=false;
+  Debug.Log("Update:editRequired:editing requests enqueued to bg task");
+  OnEditing();
  }
 
  if(playersMovement.Count>0){
@@ -257,6 +304,49 @@ void Update(){
   cnk.ManualUpdate();
  }
 
+}
+
+bool OnEdit(){
+ if(editingBG.IsCompleted(editingBGThread.IsRunning)){
+  editingBG.editingRequests_bg=new Queue<EditRequest>(editingRequests);
+  editingRequests.Clear();
+  EditingMultithreaded.Schedule(editingBG);
+  return true;
+ }
+ return false;
+}
+void OnEditing(){
+ editRequested=true;
+ Debug.Log("OnEditing:editing started");
+}
+bool OnEdited(){
+ if(editingBG.IsCompleted(editingBGThread.IsRunning)){
+  return true;
+ }
+ return false;
+}
+
+readonly Queue<EditRequest>editingRequests=new Queue<EditRequest>();
+internal class EditRequest{
+ internal Vector3                             center;
+ internal EditingBackgroundContainer.EditMode mode;
+ internal Vector3Int                          size;
+ internal double                              density;
+ internal MaterialId                          material;
+ internal int                                 smoothness;
+}
+
+void Edit(Vector3 at,EditingBackgroundContainer.EditMode mode,Vector3Int size,double density,MaterialId material,int smoothness){
+ editingRequests.Enqueue(
+  new EditRequest{
+   center=at,
+   mode=mode,
+   size=size,
+   density=density,
+   material=material,
+   smoothness=smoothness,
+  }
+ );
 }
 
 }
