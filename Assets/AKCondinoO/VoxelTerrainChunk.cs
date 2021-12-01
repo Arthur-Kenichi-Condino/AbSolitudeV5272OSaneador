@@ -8,6 +8,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using Unity.Collections;
@@ -209,6 +210,13 @@ internal class MarchingCubesMultithreaded:BaseMultithreaded<MarchingCubesBackgro
 
   current.TempVer.Clear();
   current.TempTri.Clear();
+
+  lock(current.syn_bg){
+   string editsFile=string.Format("{0}{1}/{2}",Core.perChunkSavePath,current.cnkIdx_bg,"edits.MessagePackSerializer");
+   if(File.Exists(editsFile)){
+    Debug.Log("loading voxel terrain edits from file:"+editsFile);
+   }
+  }
 
   UInt32 vertexCount=0;
                 

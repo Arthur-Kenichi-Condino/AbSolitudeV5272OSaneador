@@ -96,6 +96,7 @@ internal class GetPersistentDataFilesMultithreaded:BaseMultithreaded<GetPersiste
   Debug.Log("GetPersistentDataFilesMultithreaded:Execute:current.playersMovement_bg.Count:"+current.playersMovement_bg.Count);
   foreach(var syn in current.syn_bg)Monitor.Enter(syn);
   try{
+
    current.toSpawn_bg=new SpawnData();
    foreach(Vector2Int pCoord in current.playersMovement_bg){
     for(Vector2Int iCoord=new Vector2Int(),cCoord1=new Vector2Int();iCoord.y<=instantiationDistance.y-1;iCoord.y++){for(cCoord1.y=-iCoord.y+pCoord.y;cCoord1.y<=iCoord.y+pCoord.y;cCoord1.y+=iCoord.y*2){
@@ -124,6 +125,7 @@ internal class GetPersistentDataFilesMultithreaded:BaseMultithreaded<GetPersiste
     if(iCoord.x==0){break;}}}
     if(iCoord.y==0){break;}}}
    }
+
   }catch{
    throw;
   }finally{
