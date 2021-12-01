@@ -87,6 +87,15 @@ internal class EditingBackgroundContainer:BackgroundContainer{
 }
 internal EditingMultithreaded editingBGThread;
 internal class EditingMultithreaded:BaseMultithreaded<EditingBackgroundContainer>{
+
+ readonly Dictionary<int,Dictionary<Vector3Int,(double density,MaterialId materialId)>>fromFilesData=new Dictionary<int,Dictionary<Vector3Int,(double,MaterialId)>>();
+ readonly Dictionary<int,Dictionary<Vector3Int,(double density,MaterialId materialId)>>curSavingData=new Dictionary<int,Dictionary<Vector3Int,(double,MaterialId)>>();
+
+ protected override void Cleanup(){
+  fromFilesData.Clear();
+  curSavingData.Clear();
+ }
+
  protected override void Execute(){
   Debug.Log("EditingMultithreaded:Execute:current.editingRequests_bg.Count:"+current.editingRequests_bg.Count);
 
@@ -133,6 +142,25 @@ internal class EditingMultithreaded:BaseMultithreaded<EditingBackgroundContainer
         sqrt_xz_2=Mathf.Sqrt(Mathf.Pow(x,2)+Mathf.Pow(z,2));
         sqrt_zy_2=Mathf.Sqrt(Mathf.Pow(z,2)+Mathf.Pow(y,2));
         double resultDensity;
+        if(y>=size.y||x>=size.x||z>=size.z){
+         if(y>=size.y&&x>=size.x&&z>=size.z){
+          float sqrt_yx_xz_2=Mathf.Sqrt(Mathf.Pow(sqrt_yx_2,2)+Mathf.Pow(sqrt_xz_2,2));
+           float sqrt_yx_xz_zy_2=Mathf.Sqrt(Mathf.Pow(sqrt_yx_xz_2,2)+Mathf.Pow(sqrt_zy_2,2));
+          resultDensity=density*(1f-(sqrt_yx_xz_zy_2-sqrt_yx_xz_1)/(sqrt_yx_xz_zy_2));
+         }else if(y>=size.y&&x>=size.x){resultDensity=density*(1f-(sqrt_yx_2-sqrt_yx_1)/(sqrt_yx_2));
+         }else if(x>=size.x&&z>=size.z){resultDensity=density*(1f-(sqrt_xz_2-sqrt_xz_1)/(sqrt_xz_2));
+         }else if(z>=size.z&&y>=size.y){resultDensity=density*(1f-(sqrt_zy_2-sqrt_zy_1)/(sqrt_zy_2));
+         }else if(y>=size.y){resultDensity=density*(1f-(y-size.y)/(float)y)*1.414f;
+         }else if(x>=size.x){resultDensity=density*(1f-(x-size.x)/(float)x)*1.414f;
+         }else if(z>=size.z){resultDensity=density*(1f-(z-size.z)/(float)z)*1.414f;
+         }else{
+          resultDensity=0d;
+         }
+        }else{
+         resultDensity=density;
+        }
+        if(!fromFilesData.ContainsKey(cnkIdx3)){
+        }
        if(z==0){break;}
       }}
        if(x==0){break;}
