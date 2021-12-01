@@ -161,6 +161,7 @@ internal class EditingMultithreaded:BaseMultithreaded<EditingBackgroundContainer
         }
         if(!fromFilesData.ContainsKey(cnkIdx3)){
         }
+        VoxelTerrainChunk.MarchingCubesMultithreaded.Voxel currentVoxel;
        if(z==0){break;}
       }}
        if(x==0){break;}
