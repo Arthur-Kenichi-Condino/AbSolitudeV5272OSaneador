@@ -163,11 +163,22 @@ internal class EditingMultithreaded:BaseMultithreaded<EditingBackgroundContainer
         }
         VoxelTerrainChunk.MarchingCubesMultithreaded.Voxel currentVoxel;
         if(fromFilesData.ContainsKey(cnkIdx3)&&fromFilesData[cnkIdx3].ContainsKey(vCoord3)){
+         (double density,MaterialId materialId)voxelData=fromFilesData[cnkIdx3][vCoord3];
+         currentVoxel=new VoxelTerrainChunk.MarchingCubesMultithreaded.Voxel(voxelData.density,Vector3.zero,voxelData.materialId);
         }else{
          currentVoxel=new VoxelTerrainChunk.MarchingCubesMultithreaded.Voxel();
          Vector3Int noiseInput=vCoord3;noiseInput.x+=cnkRgn3.x;
                                        noiseInput.z+=cnkRgn3.y;
+         VoxelTerrainChunk.MarchingCubesMultithreaded.biome.Setvxl(noiseInput,null,null,0,vCoord3.z+vCoord3.x*Depth,ref currentVoxel);
         }
+        resultDensity=Math.Max(resultDensity,currentVoxel.Density);
+        if(material==MaterialId.Air&&!(-resultDensity>=50d)){
+         resultDensity=-resultDensity;
+        }
+        if(!curSavingData.ContainsKey(cnkIdx3)){
+         curSavingData.Add(cnkIdx3,new Dictionary<Vector3Int,(double density,MaterialId materialId)>());
+        }
+        curSavingData[cnkIdx3][vCoord3]=(resultDensity,-resultDensity>=50d?MaterialId.Air:material);
        if(z==0){break;}
       }}
        if(x==0){break;}
