@@ -3,6 +3,7 @@ using AKCondinoO.Sims.Trees;
 using LibNoise;
 using LibNoise.Generator;
 using LibNoise.Operator;
+using MessagePack;
 using paulbourke.MarchingCubes;
 using System;
 using System.Collections;
@@ -215,6 +216,14 @@ internal class MarchingCubesMultithreaded:BaseMultithreaded<MarchingCubesBackgro
    string editsFile=string.Format("{0}{1}/{2}",Core.perChunkSavePath,current.cnkIdx_bg,"edits.MessagePackSerializer");
    if(File.Exists(editsFile)){
     Debug.Log("loading voxel terrain edits from file:"+editsFile);
+    using(var file=new FileStream(editsFile,FileMode.Open,FileAccess.Read,FileShare.Read)){
+     if(file.Length>0){
+      Dictionary<Vector3Int,(double density,MaterialId materialId)>fromFileVoxels=(Dictionary<Vector3Int,(double density,MaterialId materialId)>)MessagePackSerializer.Deserialize(typeof(Dictionary<Vector3Int,(double density,MaterialId materialId)>),file);
+      foreach(var voxelData in fromFileVoxels){
+       voxels[GetvxlIdx(voxelData.Key.x,voxelData.Key.y,voxelData.Key.z)]=new Voxel(voxelData.Value.density,Vector3.zero,voxelData.Value.materialId);
+      }
+     }
+    }
    }
   }
 

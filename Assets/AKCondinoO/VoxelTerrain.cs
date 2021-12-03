@@ -1,5 +1,7 @@
+using MessagePack;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading;
 using UnityEngine;
@@ -99,9 +101,6 @@ internal class EditingMultithreaded:BaseMultithreaded<EditingBackgroundContainer
  protected override void Execute(){
   Debug.Log("EditingMultithreaded:Execute:current.editingRequests_bg.Count:"+current.editingRequests_bg.Count);
 
-  foreach(var syn in current.syn_bg)Monitor.Enter(syn);
-  try{
-
    while(current.editingRequests_bg.Count>0){
     var editRequest=current.editingRequests_bg.Dequeue();
     Debug.Log("edit request dequeued:editRequest.center:"+editRequest.center+";editRequest.mode:"+editRequest.mode);
@@ -191,7 +190,35 @@ internal class EditingMultithreaded:BaseMultithreaded<EditingBackgroundContainer
      }
     }
    }
-  
+
+  foreach(var syn in current.syn_bg)Monitor.Enter(syn);
+  try{
+                    
+   foreach(var saving in curSavingData){
+    int cnkIdx1=saving.Key;
+    string editsFile=string.Format("{0}{1}/{2}",Core.perChunkSavePath,cnkIdx1,"edits.MessagePackSerializer");
+    string editsPath=Path.GetDirectoryName(editsFile).Replace("\\","/");
+    Directory.CreateDirectory(editsPath);
+
+    Debug.Log("saving edits at:"+editsPath);
+
+    using(var file=new FileStream(editsFile,FileMode.OpenOrCreate,FileAccess.ReadWrite,FileShare.None)){
+     if(file.Length>0){
+      Dictionary<Vector3Int,(double density,MaterialId materialId)>fromFileVoxels=(Dictionary<Vector3Int,(double density,MaterialId materialId)>)MessagePackSerializer.Deserialize(typeof(Dictionary<Vector3Int,(double density,MaterialId materialId)>),file);
+      foreach(var voxelData in fromFileVoxels){
+       if(!saving.Value.ContainsKey(voxelData.Key)){
+        saving.Value.Add(voxelData.Key,voxelData.Value);
+       }
+      }
+     }
+    }
+    using(var file=new FileStream(editsFile,FileMode.OpenOrCreate,FileAccess.ReadWrite,FileShare.None)){
+     file.SetLength(0);
+     file.Flush(true);
+     MessagePackSerializer.Serialize(typeof(Dictionary<Vector3Int,(double density,MaterialId materialId)>),file,saving.Value);
+    }
+   }
+
   }catch{
    throw;
   }finally{
