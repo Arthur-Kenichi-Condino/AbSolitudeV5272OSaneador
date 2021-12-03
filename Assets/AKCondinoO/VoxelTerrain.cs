@@ -86,6 +86,7 @@ internal class EditingBackgroundContainer:BackgroundContainer{
  internal enum EditMode{Cube,}
  internal object[]syn_bg;
  internal Queue<EditRequest>editingRequests_bg;
+ internal HashSet<int>dirty_bg;
 }
 internal EditingMultithreaded editingBGThread;
 internal class EditingMultithreaded:BaseMultithreaded<EditingBackgroundContainer>{
@@ -100,6 +101,8 @@ internal class EditingMultithreaded:BaseMultithreaded<EditingBackgroundContainer
 
  protected override void Execute(){
   Debug.Log("EditingMultithreaded:Execute:current.editingRequests_bg.Count:"+current.editingRequests_bg.Count);
+
+   current.dirty_bg=new HashSet<int>();
 
    while(current.editingRequests_bg.Count>0){
     var editRequest=current.editingRequests_bg.Dequeue();
@@ -159,6 +162,13 @@ internal class EditingMultithreaded:BaseMultithreaded<EditingBackgroundContainer
          resultDensity=density;
         }
         if(!fromFilesData.ContainsKey(cnkIdx3)){
+         string editsFile=string.Format("{0}{1}/{2}",Core.perChunkSavePath,cnkIdx3,"edits.MessagePackSerializer");
+         using(var file=new FileStream(editsFile,FileMode.Open,FileAccess.Read,FileShare.Read)){
+          if(file.Length>0){
+           Dictionary<Vector3Int,(double density,MaterialId materialId)>fromFileVoxels=(Dictionary<Vector3Int,(double density,MaterialId materialId)>)MessagePackSerializer.Deserialize(typeof(Dictionary<Vector3Int,(double density,MaterialId materialId)>),file);
+           fromFilesData.Add(cnkIdx3,fromFileVoxels);
+          }
+         }
         }
         VoxelTerrainChunk.MarchingCubesMultithreaded.Voxel currentVoxel;
         if(fromFilesData.ContainsKey(cnkIdx3)&&fromFilesData[cnkIdx3].ContainsKey(vCoord3)){
@@ -178,6 +188,22 @@ internal class EditingMultithreaded:BaseMultithreaded<EditingBackgroundContainer
          curSavingData.Add(cnkIdx3,new Dictionary<Vector3Int,(double density,MaterialId materialId)>());
         }
         curSavingData[cnkIdx3][vCoord3]=(resultDensity,-resultDensity>=50d?MaterialId.Air:material);
+
+        current.dirty_bg.Add(cnkIdx3);
+        for(int ngbx=-1;ngbx<=1;ngbx++){
+        for(int ngbz=-1;ngbz<=1;ngbz++){
+         if(ngbx==0&&ngbz==0){
+          continue;
+         }
+         Vector2Int nCoord1=cCoord3+new Vector2Int(ngbx,ngbz);
+         if(Math.Abs(nCoord1.x)>=MaxcCoordx||
+            Math.Abs(nCoord1.y)>=MaxcCoordy){
+          continue;
+         }
+         int ngbIdx1=GetcnkIdx(nCoord1.x,nCoord1.y);
+         current.dirty_bg.Add(ngbIdx1);
+        }}
+
        if(z==0){break;}
       }}
        if(x==0){break;}
@@ -455,6 +481,13 @@ void OnEditing(){
 }
 bool OnEdited(){
  if(editingBG.IsCompleted(editingBGThread.IsRunning)){
+  foreach(int cnkIdx in editingBG.dirty_bg){
+   Debug.Log("OnEdited():"+cnkIdx);
+   if(active.TryGetValue(cnkIdx,out VoxelTerrainChunk cnk)){
+    cnk.OnEdited();
+   }
+  }
+  editingBG.dirty_bg=null;
   return true;
  }
  return false;

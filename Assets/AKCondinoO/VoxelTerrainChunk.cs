@@ -225,6 +225,30 @@ internal class MarchingCubesMultithreaded:BaseMultithreaded<MarchingCubesBackgro
      }
     }
    }
+   for(int x=-1;x<=1;x++){
+   for(int z=-1;z<=1;z++){
+    if(x==0&&z==0){
+     continue;
+    }
+    Vector2Int nCoord1=current.cCoord_bg;
+               nCoord1.x+=x;
+               nCoord1.y+=z;
+    if(Math.Abs(nCoord1.x)>=MaxcCoordx||
+       Math.Abs(nCoord1.y)>=MaxcCoordy){
+     continue;
+    }
+    int ngbIdx1=GetcnkIdx(nCoord1.x,nCoord1.y);
+    editsFile=string.Format("{0}{1}/{2}",Core.perChunkSavePath,ngbIdx1,"edits.MessagePackSerializer");
+    int oftIdx1=GetoftIdx(nCoord1-current.cCoord_bg)-1;
+    if(File.Exists(editsFile)){
+     using(var file=new FileStream(editsFile,FileMode.Open,FileAccess.Read,FileShare.Read)){
+      Dictionary<Vector3Int,(double density,MaterialId materialId)>fromFileVoxels=(Dictionary<Vector3Int,(double density,MaterialId materialId)>)MessagePackSerializer.Deserialize(typeof(Dictionary<Vector3Int,(double density,MaterialId materialId)>),file);
+      foreach(var voxelData in fromFileVoxels){
+       neighbors[oftIdx1][GetvxlIdx(voxelData.Key.x,voxelData.Key.y,voxelData.Key.z)]=new Voxel(voxelData.Value.density,Vector3.zero,voxelData.Value.materialId);
+      }
+     }
+    }
+   }}
   }
 
   UInt32 vertexCount=0;
@@ -1182,6 +1206,10 @@ internal void OncCoordChanged(Vector2Int cCoord1){
  initialization=false;
 }
 
+internal void OnEdited(){
+ rebuildRequired=true;
+}
+
 bool addingTrees;
 bool addTreesRequired;
 bool addTreesRequested;
@@ -1189,6 +1217,7 @@ bool bakingMesh;
 bool bakeRequested;
 bool runningMarchingCubes;
 bool buildRequested;
+bool rebuildRequired;
 bool moveRequired;
 internal void ManualUpdate(){
  if(addingTrees){
