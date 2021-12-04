@@ -959,6 +959,7 @@ internal class TreesBackgroundContainer:BackgroundContainer{
 
  internal Vector2Int cCoord_bg;
  internal Vector2Int cnkRgn_bg;
+ internal        int cnkIdx_bg;
 
  internal NativeList<RaycastCommand>GetGroundRays;
  internal NativeList<RaycastHit    >GetGroundHits;
@@ -1047,6 +1048,8 @@ internal class TreesBackgroundContainer:BackgroundContainer{
  }
 }
 internal class TreesMultithreaded:BaseMultithreaded<TreesBackgroundContainer>{
+
+ readonly static object mutex=new object();
 
  readonly Dictionary<Type,Vector2Int>spacingOwnTypeOnly=new Dictionary<Type,Vector2Int>();
 
@@ -1145,6 +1148,12 @@ internal class TreesMultithreaded:BaseMultithreaded<TreesBackgroundContainer>{
    
   }else if(current.executionMode_bg==TreesBackgroundContainer.ExecutionMode._3){
    Debug.Log("TreesMultithreaded:Execute:_3:save \"done\" file:"+current.cCoord_bg);
+
+   string treesAddedFile=string.Format("{0}{1}/{2}",Core.perChunkSavePath,current.cnkIdx_bg,"trees.txt");
+   lock(mutex){
+    using(var file=new FileStream(treesAddedFile,FileMode.OpenOrCreate,FileAccess.ReadWrite,FileShare.None)){
+    }
+   }
   }
  }
 }
@@ -1207,6 +1216,8 @@ internal void OncCoordChanged(Vector2Int cCoord1){
 }
 
 internal void OnEdited(){
+ rebuildFlag=true;
+
  rebuildRequired=true;
 }
 
@@ -1217,6 +1228,7 @@ bool bakingMesh;
 bool bakeRequested;
 bool runningMarchingCubes;
 bool buildRequested;
+bool rebuildFlag;
 bool rebuildRequired;
 bool moveRequired;
 internal void ManualUpdate(){
@@ -1250,10 +1262,21 @@ internal void ManualUpdate(){
     }
 
    }else{
-    if(moveRequired&&OnMoving()){
-     moveRequired=false;
-     //Debug.Log("ManualUpdate:moveRequired:"+cnkRgn);
-     OnMoved();
+    if(rebuildFlag){
+     if(rebuildRequired&&OnRebuild()){
+      rebuildRequired=false;
+      Debug.Log("ManualUpdate:rebuildRequired:"+cnkRgn);
+      rebuildFlag=false;
+      OnRebuilding();
+     }
+
+    }else{
+     if(moveRequired&&OnMoving()){
+      moveRequired=false;
+      //Debug.Log("ManualUpdate:moveRequired:"+cnkRgn);
+      OnMoved();
+     }
+
     }
      
    }
@@ -1324,6 +1347,7 @@ bool OnAddingTrees(){
  if(addTreesBG.IsCompleted(VoxelTerrain.Singleton.addTreesBGThreads[0].IsRunning)&&addTreesBG.findPositionsCoroutineIdleWaiting){
   addTreesBG.cCoord_bg=cCoord;
   addTreesBG.cnkRgn_bg=cnkRgn;
+  addTreesBG.cnkIdx_bg=cnkIdx.Value;
   addTreesBG.findPositionsCoroutineIdleWaiting=false;
   addTreesBG.findPositionsCoroutineBeginFlag=true;
   return true;
@@ -1335,6 +1359,19 @@ bool OnAddedTrees(){
   return true;
  }
  return false;
+}
+
+bool OnRebuild(){
+ if(marchingCubesBG.IsCompleted(VoxelTerrain.Singleton.marchingCubesBGThreads[0].IsRunning)){
+  MarchingCubesMultithreaded.Schedule(marchingCubesBG);
+  return true;
+ }
+ return false;
+}
+void OnRebuilding(){
+ runningMarchingCubes=true;
+ Debug.Log("OnRebuilding:chunk edited:running Marching Cubes");
+ buildRequested=true;
 }
 
 #if UNITY_EDITOR
