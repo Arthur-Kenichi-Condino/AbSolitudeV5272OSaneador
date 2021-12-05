@@ -1064,6 +1064,14 @@ internal class TreesMultithreaded:BaseMultithreaded<TreesBackgroundContainer>{
 
    current.treeAt_bg.Clear();
 
+   string treesAddedFile=string.Format("{0}{1}/{2}",Core.perChunkSavePath,current.cnkIdx_bg,"trees.txt");
+   lock(mutex){
+    if(File.Exists(treesAddedFile)){
+     Debug.Log("TreesMultithreaded:treesAddedFile present:cancel adding trees:"+current.cCoord_bg);
+     return;
+    }
+   }
+
    Vector3Int vCoord1=new Vector3Int(0,Height/2-1,0);
 
    for(vCoord1.x=0             ;vCoord1.x<Width;vCoord1.x++){
@@ -1150,6 +1158,8 @@ internal class TreesMultithreaded:BaseMultithreaded<TreesBackgroundContainer>{
    Debug.Log("TreesMultithreaded:Execute:_3:save \"done\" file:"+current.cCoord_bg);
 
    string treesAddedFile=string.Format("{0}{1}/{2}",Core.perChunkSavePath,current.cnkIdx_bg,"trees.txt");
+   string treesAddedPath=Path.GetDirectoryName(treesAddedFile).Replace("\\","/");
+   Directory.CreateDirectory(treesAddedPath);
    lock(mutex){
     using(var file=new FileStream(treesAddedFile,FileMode.OpenOrCreate,FileAccess.ReadWrite,FileShare.None)){
     }
