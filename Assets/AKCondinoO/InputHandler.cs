@@ -47,8 +47,19 @@ void Awake(){if(Singleton==null){Singleton=this;}else{DestroyImmediate(this);ret
  Gets.Add(typeof(string ),controllerGets);
 }
 
+internal bool Focus=true;
+void OnApplicationFocus(bool focus){
+ Focus=focus;
+}
+        
+internal Ray ScreenPointRay;
+internal bool Escape;
 // Update is called once per frame
 void Update(){
+ ScreenPointRay=Camera.current.ScreenPointToRay(Input.mousePosition);
+
+ Escape=Input.GetKey(KeyCode.Escape)||Input.GetKeyDown(KeyCode.Escape)||Input.GetKeyUp(KeyCode.Escape);
+
  foreach(var command in AllCommands){
   string         name=command.Key;
   Type           type=command.Value[0].GetType();
@@ -91,6 +102,11 @@ void Update(){
    }else if(mode==Commands.Modes.activeHeld){
     state[0]=GetsDelegatesInvoke(0);
 
+   }else if(mode==Commands.Modes.alternateDown){
+    if(GetsDelegatesInvoke(2)){
+     state[0]=!(bool)state[0];
+    }
+
    }
 
    bool GetsDelegatesInvoke(int getsType){
@@ -101,6 +117,9 @@ void Update(){
 
   }
  }
+
+ Enabled.PAUSE[0]=(bool)Enabled.PAUSE[0]||Escape||!Focus;
+
 }   
 
 #pragma warning disable IDE0051 //  Ignore "remover membros privados não utilizados"
