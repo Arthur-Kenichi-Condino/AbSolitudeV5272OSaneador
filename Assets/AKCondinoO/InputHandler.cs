@@ -56,7 +56,7 @@ internal Ray ScreenPointRay;
 internal bool Escape;
 // Update is called once per frame
 void Update(){
- ScreenPointRay=Camera.current.ScreenPointToRay(Input.mousePosition);
+ ScreenPointRay=(Camera.current!=null?Camera.current:Camera.main).ScreenPointToRay(Input.mousePosition);
 
  Escape=Input.GetKey(KeyCode.Escape)||Input.GetKeyDown(KeyCode.Escape)||Input.GetKeyUp(KeyCode.Escape);
 
@@ -119,6 +119,18 @@ void Update(){
  }
 
  Enabled.PAUSE[0]=(bool)Enabled.PAUSE[0]||Escape||!Focus;
+ if((bool)Enabled.PAUSE[0]!=(bool)Enabled.PAUSE[1]){
+  if((bool)Enabled.PAUSE[0]){
+   Cursor.visible=true;
+   Cursor.lockState=CursorLockMode.None;
+  }else{
+   Cursor.visible=false;
+   Cursor.lockState=CursorLockMode.Locked;
+  }
+ }
+
+ Enabled.MOUSE_ROTATION_DELTA_X[1]=Enabled.MOUSE_ROTATION_DELTA_X[0];Enabled.MOUSE_ROTATION_DELTA_X[0]=Commands.ROTATION_SENSITIVITY_X*Input.GetAxis("Mouse X");
+ Enabled.MOUSE_ROTATION_DELTA_Y[1]=Enabled.MOUSE_ROTATION_DELTA_Y[0];Enabled.MOUSE_ROTATION_DELTA_Y[0]=Commands.ROTATION_SENSITIVITY_Y*Input.GetAxis("Mouse Y");
 
 }   
 
@@ -131,12 +143,24 @@ bool Get(Func<string ,bool>controllerGet,string button){return controllerGet(but
 
 internal static class Commands{
  internal static object[]PAUSE={KeyCode.Tab,Modes.alternateDown};
+ internal static object[]FORWARD ={KeyCode.W,Modes.activeHeld};
+ internal static object[]BACKWARD={KeyCode.S,Modes.activeHeld};
+ internal static object[]RIGHT   ={KeyCode.D,Modes.activeHeld};
+ internal static object[]LEFT    ={KeyCode.A,Modes.activeHeld};
+ internal static float ROTATION_SENSITIVITY_X=360.0f;
+ internal static float ROTATION_SENSITIVITY_Y=360.0f;
 
  internal enum Modes{holdDelayAfterInRange,holdDelay,activeHeld,alternateDown,whenUp,}
 }
 
 internal static class Enabled{
  internal static readonly object[]PAUSE={true,true};
+ internal static readonly object[]FORWARD ={false,false};
+ internal static readonly object[]BACKWARD={false,false};
+ internal static readonly object[]RIGHT   ={false,false};
+ internal static readonly object[]LEFT    ={false,false};
+ internal static readonly float[]MOUSE_ROTATION_DELTA_X={0,0};
+ internal static readonly float[]MOUSE_ROTATION_DELTA_Y={0,0};
 }
 
 }
