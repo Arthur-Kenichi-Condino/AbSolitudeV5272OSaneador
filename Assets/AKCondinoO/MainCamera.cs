@@ -19,9 +19,14 @@ Vector3 tgtRot,tgtRot_Pre;
       Vector3 inputViewRotationEuler;
        [SerializeField]float ViewRotationSmoothValue=.025f;
 Vector3 tgtPos,tgtPos_Pre;
- Vector3 inputMoveSpeed;
-  [SerializeField]Vector3 MoveAcceleration=new Vector3(.01f,.01f,.01f);
-   [SerializeField]Vector3 MaxMoveSpeed=new Vector3(.1f,.1f,.1f);
+ float tgtPosLerpTime;
+  float tgtPosLerpMaxTime=.05f;
+   float tgtPosLerpVal;
+    float tgtPosLerpSpeed=25f;
+     Vector3 tgtPosLerpA,tgtPosLerpB;
+      Vector3 inputMoveSpeed;
+       [SerializeField]Vector3 MoveAcceleration=new Vector3(.01f,.01f,.01f);
+        [SerializeField]Vector3 MaxMoveSpeed=new Vector3(.1f,.1f,.1f);
 // Update is called once per frame
 void Update(){         
  if(!(bool)Enabled.PAUSE[0]){
@@ -86,6 +91,36 @@ void Update(){
  #endregion
  
  #region POSITION LERP
+ if(inputMoveSpeed!=Vector3.zero){
+  tgtPos+=transform.rotation*inputMoveSpeed;
+ }
+ if(tgtPosLerpTime==0){
+  if(tgtPos!=tgtPos_Pre){
+   Debug.Log("input movement detected:start going to tgtPos:"+tgtPos);
+   tgtPosLerpVal=0;
+   tgtPosLerpA=transform.position;
+   tgtPosLerpB=tgtPos;
+   tgtPosLerpTime+=Time.deltaTime;
+   tgtPos_Pre=tgtPos;
+  }
+ }else{
+  tgtPosLerpTime+=Time.deltaTime;
+ }
+ if(tgtPosLerpTime!=0){
+  tgtPosLerpVal+=tgtPosLerpSpeed*Time.deltaTime;
+  if(tgtPosLerpVal>=1){
+   tgtPosLerpVal=1;
+   tgtPosLerpTime=0;
+   Debug.Log("tgtPos:"+tgtPos+" reached");
+  }
+  transform.position=Vector3.Lerp(tgtPosLerpA,tgtPosLerpB,tgtPosLerpVal);
+  if(tgtPosLerpTime>tgtPosLerpMaxTime){
+   if(tgtPos!=tgtPos_Pre){
+    Debug.Log("get new tgtPos:"+tgtPos+";don't need to lerp all the way to old target before going to a new one");
+    tgtPosLerpTime=0;
+   }
+  }
+ }
  #endregion
 
 }
