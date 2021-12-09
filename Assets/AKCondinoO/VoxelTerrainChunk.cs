@@ -999,7 +999,7 @@ internal class TreesBackgroundContainer:BackgroundContainer{
    yield return waitForBeginFlag;
     findPositionsCoroutineBeginFlag=false;
 
-   Debug.Log("FindPositionsCoroutine():begin flag was set true:"+cnkRgn_bg);
+   //Debug.Log("FindPositionsCoroutine():begin flag was set true:"+cnkRgn_bg);
 
    GetGroundRays.Clear();
    GetGroundHits.Clear();
@@ -1058,16 +1058,16 @@ internal class TreesMultithreaded:BaseMultithreaded<TreesBackgroundContainer>{
  }
 
  protected override void Execute(){
-  Debug.Log("TreesMultithreaded:Execute:");
+  //Debug.Log("TreesMultithreaded:Execute:");
   if      (current.executionMode_bg==TreesBackgroundContainer.ExecutionMode._1){
-   Debug.Log("TreesMultithreaded:Execute:_1:get rays to ground:"+current.cCoord_bg);
+   //Debug.Log("TreesMultithreaded:Execute:_1:get rays to ground:"+current.cCoord_bg);
 
    current.treeAt_bg.Clear();
 
    string treesAddedFile=string.Format("{0}{1}/{2}",Core.perChunkSavePath,current.cnkIdx_bg,"trees.txt");
    lock(mutex){
     if(File.Exists(treesAddedFile)){
-     Debug.Log("TreesMultithreaded:treesAddedFile present:cancel adding trees:"+current.cCoord_bg);
+     //Debug.Log("TreesMultithreaded:treesAddedFile present:cancel adding trees:"+current.cCoord_bg);
      return;
     }
    }
@@ -1135,9 +1135,9 @@ internal class TreesMultithreaded:BaseMultithreaded<TreesBackgroundContainer>{
    }
 
   }else if(current.executionMode_bg==TreesBackgroundContainer.ExecutionMode._2){
-   Debug.Log("TreesMultithreaded:Execute:_2:got ground hits:"+current.cCoord_bg);
+   //Debug.Log("TreesMultithreaded:Execute:_2:got ground hits:"+current.cCoord_bg);
 
-   Debug.Log("current.gotGroundHits_bg.Count:"+current.gotGroundHits_bg.Count);
+   //Debug.Log("current.gotGroundHits_bg.Count:"+current.gotGroundHits_bg.Count);
                     
    current.toSpawn_bg.at.Clear();
    current.toSpawn_bg.dequeued=false;
@@ -1155,7 +1155,7 @@ internal class TreesMultithreaded:BaseMultithreaded<TreesBackgroundContainer>{
    }}
    
   }else if(current.executionMode_bg==TreesBackgroundContainer.ExecutionMode._3){
-   Debug.Log("TreesMultithreaded:Execute:_3:save \"done\" file:"+current.cCoord_bg);
+   //Debug.Log("TreesMultithreaded:Execute:_3:save \"done\" file:"+current.cCoord_bg);
 
    string treesAddedFile=string.Format("{0}{1}/{2}",Core.perChunkSavePath,current.cnkIdx_bg,"trees.txt");
    string treesAddedPath=Path.GetDirectoryName(treesAddedFile).Replace("\\","/");
@@ -1245,11 +1245,11 @@ internal void ManualUpdate(){
  if(addingTrees){
   if(addTreesRequested&&OnAddedTrees()){
    addTreesRequested=false;
-   Debug.Log("ManualUpdate:added trees:they'll be spawned shortly:"+cnkRgn);
+   //Debug.Log("ManualUpdate:added trees:they'll be spawned shortly:"+cnkRgn);
    addingTrees=false;
   }else if(addTreesRequired&&OnAddingTrees()){
    addTreesRequired=false;
-   Debug.Log("ManualUpdate:adding trees:find positions:"+cnkRgn);
+   //Debug.Log("ManualUpdate:adding trees:find positions:"+cnkRgn);
    addTreesRequested=true;
   }
 
@@ -1349,7 +1349,7 @@ bool OnBakedMesh(){
 }
 void OnAddTrees(){
  addingTrees=true;
- Debug.Log("OnAddTrees:chunk has a valid collider:add trees");
+ //Debug.Log("OnAddTrees:chunk has a valid collider:add trees");
  addTreesRequired=true;
 }
 

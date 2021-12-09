@@ -84,7 +84,7 @@ internal class PersistentDataMultithreaded:BaseMultithreaded<PersistentDataBackg
     }
 
    }else if(current.executionMode_bg==PersistentDataBackgroundContainer.ExecutionMode.Load){
-    Debug.Log("PersistentDataMultithreaded:Execute:loading");
+    //Debug.Log("PersistentDataMultithreaded:Execute:loading");
 
     PersistentDataBackgroundContainer.SerializableSpecsData specsData_cur=null;
     using(var file=new FileStream(specsDataFile,FileMode.OpenOrCreate,FileAccess.ReadWrite,FileShare.None)){
@@ -110,7 +110,7 @@ internal class PersistentDataMultithreaded:BaseMultithreaded<PersistentDataBackg
     current.transform_bg=transform_cur;
 
    }else if(current.executionMode_bg==PersistentDataBackgroundContainer.ExecutionMode.Save){
-    Debug.Log("PersistentDataMultithreaded:Execute:saving...\ncurrent.transform_bg.position:"+current.transform_bg.position+"\ncurrent.transform_bg.rotation:"+current.transform_bg.rotation+"\ncurrent.transform_bg.localScale:"+current.transform_bg.localScale);
+    //Debug.Log("PersistentDataMultithreaded:Execute:saving...\ncurrent.transform_bg.position:"+current.transform_bg.position+"\ncurrent.transform_bg.rotation:"+current.transform_bg.rotation+"\ncurrent.transform_bg.localScale:"+current.transform_bg.localScale);
 
     Vector2Int cnkRgn1=vecPosTocnkRgn(current.transform_bg.position);
     Vector2Int cCoord1=cnkRgnTocCoord(cnkRgn1);
@@ -155,20 +155,52 @@ internal class PersistentDataMultithreaded:BaseMultithreaded<PersistentDataBackg
  }
 }
 
+internal Bounds localBounds;
+ protected readonly Vector3[]worldBoundsVertices=new Vector3[8];
+  protected bool worldBoundsVerticesTransformed;
+   void TransformBoundsVertices(){
+    worldBoundsVertices[0]=transform.TransformPoint(localBounds.min.x,localBounds.min.y,localBounds.min.z);
+    worldBoundsVertices[1]=transform.TransformPoint(localBounds.max.x,localBounds.min.y,localBounds.min.z);
+    worldBoundsVertices[2]=transform.TransformPoint(localBounds.max.x,localBounds.min.y,localBounds.max.z);
+    worldBoundsVertices[3]=transform.TransformPoint(localBounds.min.x,localBounds.min.y,localBounds.max.z);
+    worldBoundsVertices[4]=transform.TransformPoint(localBounds.min.x,localBounds.max.y,localBounds.min.z);
+    worldBoundsVertices[5]=transform.TransformPoint(localBounds.max.x,localBounds.max.y,localBounds.min.z);
+    worldBoundsVertices[6]=transform.TransformPoint(localBounds.max.x,localBounds.max.y,localBounds.max.z);
+    worldBoundsVertices[7]=transform.TransformPoint(localBounds.min.x,localBounds.max.y,localBounds.max.z);
+    worldBoundsVerticesTransformed=true;
+   }
+
 internal Collider[]colliders;
 
 internal readonly List<Collider>volumeColliders=new List<Collider>();
+
+internal Renderer[]renderers;
 
 protected virtual void Awake(){
  if(container==null){container=new PersistentDataBackgroundContainer(syn);}
  if(container.specsData_bg==null){container.specsData_bg=new PersistentDataBackgroundContainer.SerializableSpecsData();}
  if(container.transform_bg==null){container.transform_bg=new PersistentDataBackgroundContainer.SerializableTransform();}
-
+ 
  foreach(Collider collider in colliders=GetComponentsInChildren<Collider>()){
   if(collider.CompareTag("SimObjectVolume")){
    volumeColliders.Add(collider);
+
+   if(localBounds.extents==Vector3.zero){
+    localBounds=collider.bounds;
+   }else{
+    localBounds.Encapsulate(collider.bounds);
+   }
   }
  }
+
+ localBounds.center=transform.InverseTransformPoint(localBounds.center);
+ Debug.Log("localBounds.center:"+localBounds.center+";localBounds.size:"+localBounds.size,this);
+
+ foreach(Renderer renderer in renderers=GetComponentsInChildren<Renderer>()){
+ }
+
+  DisableInteractions();
+   DisableRendering();
 }
 
 internal void OnActivated(bool load){
@@ -178,6 +210,7 @@ internal void OnActivated(bool load){
   container.SetSerializable(transform);
 
   EnableInteractions();
+   EnableRendering();
 
  }else{
   //Debug.Log("SimObject:OnActivated:loading:transform has incorrect data");
@@ -217,6 +250,8 @@ internal void OnExitSave(List<(Type simType,ulong number)>unplacedIds){
 [SerializeField]bool DEBUG_UNPLACE=false;
 
 [SerializeField]bool DEBUG_UNLOAD=false;
+        
+protected bool sleeping;
 
 bool unplacing;
 bool unplaceRequired;
@@ -237,7 +272,7 @@ internal void ManualUpdate(){
      Debug.Log("ManualUpdate:DEBUG_UNPLACE:save and UNPLACE:"+id,transform);
      OnUnplace();
    
-    }else if(IsOverlappingNonAlloc()){
+    }else if(!sleeping&&IsOverlappingNonAlloc()){
 
      OnOverlapperUnplacing(this);
 
@@ -253,8 +288,13 @@ internal void ManualUpdate(){
      }else{
       if(transform.hasChanged){
        transform.hasChanged=false;
-       Debug.Log("ManualUpdate:transform.hasChanged:save required:"+id,transform);
+       //Debug.Log("ManualUpdate:transform.hasChanged:save required:"+id,transform);
        saveRequired=true;
+
+       OnTransformHasChanged();
+
+      }else{
+       sleeping=true;
       }
      }
     }
@@ -303,6 +343,9 @@ internal void ManualUpdate(){
      loading=false;
 
      EnableInteractions();
+      EnableRendering();
+
+     OnTransformHasChanged();
 
     }else if(loadRequired&&OnLoading()){
      loadRequired=false;
@@ -313,7 +356,7 @@ internal void ManualUpdate(){
    }else{
     if(saveRequired&&OnSaving()){
      saveRequired=false;
-     Debug.Log("ManualUpdate:saving started:"+id,transform);
+     //Debug.Log("ManualUpdate:saving started:"+id,transform);
     }
 
    }
@@ -352,6 +395,7 @@ bool OnSaving(){
 void OnUnload(){
 
  DisableInteractions();
+  DisableRendering();
 
  unloading=true;
  Debug.Log("OnUnload:something caused this sO to be disabled and unloaded");
@@ -377,6 +421,7 @@ bool OnUnloadedData(){
 void OnUnplace(){
 
  DisableInteractions();
+  DisableRendering();
 
  unplacing=true;
  Debug.Log("OnUnplace:something caused this sO to be disabled and removed from the world");
@@ -398,6 +443,12 @@ bool OnUnplacedData(){
  return false;
 }
 
+void OnTransformHasChanged(){
+ TransformBoundsVertices();
+
+ sleeping=false;
+}
+
 void EnableInteractions(){
  foreach(Collider collider in colliders){
   collider.enabled=true;
@@ -410,7 +461,19 @@ void DisableInteractions(){
  }
 }
 
-Collider[]overlappedColliders=new Collider[1];
+void EnableRendering(){
+ foreach(Renderer renderer in renderers){
+  renderer.enabled=true;
+ }
+}
+
+void DisableRendering(){
+ foreach(Renderer renderer in renderers){
+  renderer.enabled=false;
+ }
+}
+
+Collider[]overlappedColliders=new Collider[8];
 bool IsOverlappingNonAlloc(){
  bool result=false;
 
@@ -463,5 +526,11 @@ static void OnOverlapperUnplacing(SimObject overlapper){
 static void OnOverlapperUnplaced(SimObject overlapper){
  overlappersUnplacing.Remove(overlapper);
 }
+
+#if UNITY_EDITOR
+void OnDrawGizmos(){
+ Core.DrawRotatedBounds(worldBoundsVertices,Color.white);
+}
+#endif
 
 }}

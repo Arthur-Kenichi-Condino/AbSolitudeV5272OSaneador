@@ -16,6 +16,8 @@ bool initialization=true;
 
 bool moved;
 void Update(){
+ transform.position=Camera.main.transform.position;
+
  if(transform.hasChanged){
   transform.hasChanged=false;
   moved=true;

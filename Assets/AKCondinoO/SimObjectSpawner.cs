@@ -62,7 +62,7 @@ internal class PersistentUniqueIdsMultithreaded:BaseMultithreaded<PersistentUniq
    }
 
   }else if(current.executionMode_bg==PersistentUniqueIdsBackgroundContainer.ExecutionMode.Save){
-   Debug.Log("PersistentUniqueIdsMultithreaded:Execute:Save:uniqueIdsFile: "+uniqueIdsFile);
+   //Debug.Log("PersistentUniqueIdsMultithreaded:Execute:Save:uniqueIdsFile: "+uniqueIdsFile);
    using(var file=new FileStream(uniqueIdsFile,FileMode.OpenOrCreate,FileAccess.ReadWrite,FileShare.None)){
     file.SetLength(0);
     file.Flush(true);
@@ -71,7 +71,7 @@ internal class PersistentUniqueIdsMultithreaded:BaseMultithreaded<PersistentUniq
     }}
    }
 
-   Debug.Log("PersistentUniqueIdsMultithreaded:Execute:Save:releasedIdsFile: "+releasedIdsFile);
+   //Debug.Log("PersistentUniqueIdsMultithreaded:Execute:Save:releasedIdsFile: "+releasedIdsFile);
    using(var file=new FileStream(releasedIdsFile,FileMode.OpenOrCreate,FileAccess.ReadWrite,FileShare.None)){
     file.SetLength(0);
     file.Flush(true);
@@ -275,9 +275,21 @@ internal class SpawnData{
  }
 }
 
+[SerializeField]double instantiationMaxExecutionTime=7.0;
+
 WaitUntil waitSpawnQueue;
 WaitUntil waitPersistentUniqueIdsBGIsCompleted;
 IEnumerator SpawnCoroutine(){
+
+ System.Diagnostics.Stopwatch stopwatch=new System.Diagnostics.Stopwatch();
+ bool LimitExecutionTime(){
+  if(stopwatch.Elapsed.TotalMilliseconds>instantiationMaxExecutionTime){
+   stopwatch.Restart();
+   return true;
+  }
+  return false;
+ }
+
  waitSpawnQueue=new WaitUntil(()=>{
   return SpawnQueue.Count>0;
  });
@@ -293,6 +305,7 @@ IEnumerator SpawnCoroutine(){
    ids=persistUniqueIdsBG.ids_bg;
    releasedIds=persistUniqueIdsBG.releasedIds_bg;
   }
+  stopwatch.Restart();
   while(SpawnQueue.Count>0){var toSpawn=SpawnQueue.Dequeue();
    foreach(var at in toSpawn.at){
     //Debug.Log("SpawnCoroutine:at:"+at);
@@ -318,7 +331,7 @@ IEnumerator SpawnCoroutine(){
     }
     (Type simType,ulong number)id=(simType,number);
     if(active.ContainsKey(id)){
-     Debug.Log("SpawnCoroutine:id already spawned:"+id);
+     //Debug.Log("SpawnCoroutine:id already spawned:"+id);
      continue;
     }
     //Debug.Log("SpawnCoroutine:id:"+id);
@@ -346,6 +359,9 @@ IEnumerator SpawnCoroutine(){
      syn.Add(sO,sO.syn);
     sO.id=id;
     sO.OnActivated(load);
+
+    if(LimitExecutionTime())yield return null;
+
    }
    toSpawn.dequeued=true;
   }

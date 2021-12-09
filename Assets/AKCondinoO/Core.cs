@@ -17,6 +17,11 @@ internal static string sObjectsSavePath=string.Format("{0}{1}/",savePath,"sObjPD
 internal static int ActiveThreads;
 
 void Awake(){if(Singleton==null){Singleton=this;}else{DestroyImmediate(this);return;}
+
+ QualitySettings.vSyncCount=0;
+
+ Application.targetFrameRate=60;
+
  Directory.CreateDirectory(savePath);
  Directory.CreateDirectory(perChunkSavePath);
  Directory.CreateDirectory(sObjectsSavePath);
@@ -46,6 +51,8 @@ internal class OnDestroyingCoreEventArgs:EventArgs{
 [SerializeField]SimObject DEBUG_CREATE_SIM_OBJECT=null;
 bool initialized;
 void Update(){
+ if(Application.targetFrameRate!=60){Application.targetFrameRate=60;}
+
  if(!initialized){
   initialized=true;
  }
@@ -83,6 +90,20 @@ internal static void DrawBounds(Bounds b,Color color,float duration=0){//[https:
  Debug.DrawLine(p2,p6,color,duration);
  Debug.DrawLine(p3,p7,color,duration);
  Debug.DrawLine(p4,p8,color,duration);
+}
+internal static void DrawRotatedBounds(Vector3[]boundsVertices,Color color,float duration=0){
+ Debug.DrawLine(boundsVertices[0],boundsVertices[1],color,duration);
+ Debug.DrawLine(boundsVertices[1],boundsVertices[2],color,duration);
+ Debug.DrawLine(boundsVertices[2],boundsVertices[3],color,duration);
+ Debug.DrawLine(boundsVertices[3],boundsVertices[0],color,duration);
+ Debug.DrawLine(boundsVertices[4],boundsVertices[5],color,duration);
+ Debug.DrawLine(boundsVertices[5],boundsVertices[6],color,duration);
+ Debug.DrawLine(boundsVertices[6],boundsVertices[7],color,duration);
+ Debug.DrawLine(boundsVertices[7],boundsVertices[4],color,duration);
+ Debug.DrawLine(boundsVertices[0],boundsVertices[4],color,duration);// sides
+ Debug.DrawLine(boundsVertices[1],boundsVertices[5],color,duration);
+ Debug.DrawLine(boundsVertices[2],boundsVertices[6],color,duration);
+ Debug.DrawLine(boundsVertices[3],boundsVertices[7],color,duration);
 }
 #endif
 

@@ -83,7 +83,7 @@ void Update(){
   transform.rotation=Quaternion.Lerp(tgtRotLerpA,tgtRotLerpB,tgtRotLerpVal);
   if(tgtRotLerpTime>tgtRotLerpMaxTime){
    if(tgtRot!=tgtRot_Pre){
-    Debug.Log("get new tgtRot:"+tgtRot+";don't need to lerp all the way to old target before going to a new one");
+    //Debug.Log("get new tgtRot:"+tgtRot+";don't need to lerp all the way to old target before going to a new one");
     tgtRotLerpTime=0;
    }
   }
@@ -96,7 +96,7 @@ void Update(){
  }
  if(tgtPosLerpTime==0){
   if(tgtPos!=tgtPos_Pre){
-   Debug.Log("input movement detected:start going to tgtPos:"+tgtPos);
+   //Debug.Log("input movement detected:start going to tgtPos:"+tgtPos);
    tgtPosLerpVal=0;
    tgtPosLerpA=transform.position;
    tgtPosLerpB=tgtPos;
@@ -111,7 +111,7 @@ void Update(){
   if(tgtPosLerpVal>=1){
    tgtPosLerpVal=1;
    tgtPosLerpTime=0;
-   Debug.Log("tgtPos:"+tgtPos+" reached");
+   //Debug.Log("tgtPos:"+tgtPos+" reached");
   }
   transform.position=Vector3.Lerp(tgtPosLerpA,tgtPosLerpB,tgtPosLerpVal);
   if(tgtPosLerpTime>tgtPosLerpMaxTime){
