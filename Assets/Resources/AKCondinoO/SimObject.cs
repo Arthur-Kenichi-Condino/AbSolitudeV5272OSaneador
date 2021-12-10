@@ -1,7 +1,9 @@
+using AKCondinoO.Voxels;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using UnityEngine;
 using static AKCondinoO.Voxels.VoxelTerrain;
 using static Utils;
@@ -285,6 +287,16 @@ internal void ManualUpdate(){
       Debug.Log("ManualUpdate:DEBUG_UNLOAD:save and unload:"+id,transform);
       OnUnload();
                      
+     }else if(worldBoundsVertices.Any(
+      v=>{
+       Vector2Int cCoord=vecPosTocCoord(v);
+       int cnkIdx=GetcnkIdx(cCoord.x,cCoord.y);
+       return!VoxelTerrain.Singleton.active.TryGetValue(cnkIdx,out VoxelTerrainChunk cnk);
+      }
+     )){
+      Debug.Log("ManualUpdate:sim object has vertice out of active voxel terrain:save and unload:"+id,transform);
+      OnUnload();
+
      }else{
       if(transform.hasChanged){
        transform.hasChanged=false;
