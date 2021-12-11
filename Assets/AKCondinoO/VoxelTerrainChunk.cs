@@ -760,6 +760,8 @@ internal class MarchingCubesMultithreaded:BaseMultithreaded<MarchingCubesBackgro
     random[0]=new System.Random(seed_v);
     random[1]=new System.Random(random[0].Next());
 
+    treeChancePerlin=new Perlin(frequency:Mathf.Pow(2,-2),lacunarity:2.0,persistence:0.5,octaves:6,seed:seed_v,quality:QualityMode.Low);
+
     SetModules();
 
     Debug.Log("seed set: "+seed_v);
@@ -889,12 +891,14 @@ internal class MarchingCubesMultithreaded:BaseMultithreaded<MarchingCubesBackgro
   #endregion
 
   internal class TreeData{
+   internal float chance=1f;
   }
 
   readonly protected Dictionary<Type,TreeData>treesData=new Dictionary<Type,TreeData>(){
    {
     typeof(Pinus_elliottii),
     new TreeData{
+     chance=.125f,
     }
    },
   };
@@ -908,12 +912,19 @@ internal class MarchingCubesMultithreaded:BaseMultithreaded<MarchingCubesBackgro
    },
   };
 
+  protected Perlin treeChancePerlin;
+
   internal (Type tree,TreeData treeData)?Tree(Vector3Int noiseInputRounded){
                                       Vector3 noiseInput=noiseInputRounded+deround;
    if(treePicking.TryGetValue(Select(noiseInput),out Type[]treesPicked)){
     //  To do: random chance to use tree selected
     foreach(Type tree in treesPicked){TreeData treeData=treesData[tree];
-     return(tree,treeData);
+     float chance=treeData.chance/treesPicked.Length;
+     float dicing=((float)treeChancePerlin.GetValue(noiseInput.z,noiseInput.x,0)+1f)/2f;
+     //Debug.Log("dicing:"+dicing+" of chance:"+chance+"; result:"+(dicing<=chance));
+     if(dicing<=chance){
+      return(tree,treeData);
+     }
     }
    }
    return null;
