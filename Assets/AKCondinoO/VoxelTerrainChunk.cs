@@ -930,6 +930,20 @@ internal class MarchingCubesMultithreaded:BaseMultithreaded<MarchingCubesBackgro
    return null;
   }
 
+  internal struct TreeModifiersResults{
+   internal float rotation;
+   internal Vector3 scale;
+  }
+
+  internal virtual TreeModifiersResults TreeModifiers(Vector3Int noiseInputRounded,Perlin treeRotationModifierPerlin){
+                                              Vector3 noiseInput=noiseInputRounded+deround;
+   float rotation=(float)treeRotationModifierPerlin.GetValue(noiseInput.z,noiseInput.x,0)*180f;
+   Vector3 scale=Vector3.one;
+   return new TreeModifiersResults{
+    rotation=rotation,
+   };
+  }
+
  }
 
  internal static class AtlasHelper{
@@ -961,6 +975,10 @@ JobHandle bakingHandle;
         
 internal readonly TreesBackgroundContainer addTreesBG=new TreesBackgroundContainer();
 internal class TreesBackgroundContainer:BackgroundContainer{
+ internal TreesBackgroundContainer(){
+  treeRotationModifierPerlin_bg=new Perlin(frequency:Mathf.Pow(2,-2),lacunarity:2.0,persistence:0.5,octaves:6,seed:0,quality:QualityMode.Low);
+ }
+
  internal ExecutionMode executionMode_bg=ExecutionMode._1;
  internal enum ExecutionMode{
   _1,
@@ -977,8 +995,11 @@ internal class TreesBackgroundContainer:BackgroundContainer{
 
         internal readonly List<(int x,int z)>gotGroundRays_bg=new List<(int,int)>();
  internal readonly Dictionary<int,RaycastHit>gotGroundHits_bg=new Dictionary<int,RaycastHit>(Width*Depth);
+                
+ internal Perlin treeRotationModifierPerlin_bg;
 
  internal readonly Dictionary<(int x,int z),(Type tree,MarchingCubesMultithreaded.BaseBiome.TreeData treeData)>treeAt_bg=new Dictionary<(int,int),(Type,MarchingCubesMultithreaded.BaseBiome.TreeData)>();
+  internal readonly Dictionary<(int x,int z),MarchingCubesMultithreaded.BaseBiome.TreeModifiersResults>treeModifiers_bg=new Dictionary<(int,int),MarchingCubesMultithreaded.BaseBiome.TreeModifiersResults>();
 
  internal readonly SimObjectSpawner.SpawnData toSpawn_bg=new SimObjectSpawner.SpawnData(Width*Depth);
   WaitUntil waitForSpawner;
@@ -1075,6 +1096,8 @@ internal class TreesMultithreaded:BaseMultithreaded<TreesBackgroundContainer>{
 
    current.treeAt_bg.Clear();
 
+   current.treeModifiers_bg.Clear();
+
    string treesAddedFile=string.Format("{0}{1}/{2}",Core.perChunkSavePath,current.cnkIdx_bg,"trees.txt");
    lock(mutex){
     if(File.Exists(treesAddedFile)){
@@ -1082,6 +1105,8 @@ internal class TreesMultithreaded:BaseMultithreaded<TreesBackgroundContainer>{
      return;
     }
    }
+   
+   current.treeRotationModifierPerlin_bg.Seed=current.cnkRgn_bg.x+current.cnkRgn_bg.y;
 
    Vector3Int vCoord1=new Vector3Int(0,Height/2-1,0);
 
@@ -1138,6 +1163,10 @@ internal class TreesMultithreaded:BaseMultithreaded<TreesBackgroundContainer>{
 
      current.treeAt_bg.Add((vCoord1.x,vCoord1.z),treePicked.Value);
 
+     MarchingCubesMultithreaded.BaseBiome.TreeModifiersResults modifiers=MarchingCubesMultithreaded.biome.TreeModifiers(noiseInput,current.treeRotationModifierPerlin_bg);
+
+     current.treeModifiers_bg.Add((vCoord1.x,vCoord1.z),modifiers);
+
      //  To do: instead of the fixed value 10, use radius of the selected tree
      spacingOwnTypeOnly[treePicked.Value.tree]=new Vector2Int(10,10);
     }
@@ -1161,7 +1190,11 @@ internal class TreesMultithreaded:BaseMultithreaded<TreesBackgroundContainer>{
     if(current.gotGroundHits_bg.TryGetValue(index,out RaycastHit floor)){
      (Type tree,MarchingCubesMultithreaded.BaseBiome.TreeData treeData)treeAt=current.treeAt_bg[(vCoord1.x,vCoord1.z)];
 
-     current.toSpawn_bg.at.Add((floor.point,Vector3.zero,Vector3.one,treeAt.tree,null));
+     MarchingCubesMultithreaded.BaseBiome.TreeModifiersResults modifiers=current.treeModifiers_bg[(vCoord1.x,vCoord1.z)];
+
+     Quaternion rotation=Quaternion.FromToRotation(Vector3.up,floor.normal)*Quaternion.Euler(new Vector3(0f,modifiers.rotation,0f));
+
+     current.toSpawn_bg.at.Add((floor.point,rotation.eulerAngles,Vector3.one,treeAt.tree,null));
     }
    }}
    
