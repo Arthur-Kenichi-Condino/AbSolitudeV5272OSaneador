@@ -350,7 +350,9 @@ IEnumerator SpawnCoroutine(){
 
     }else{
      //Debug.Log("SpawnCoroutine:Instantiate from Prefab");
-     gO=Instantiate(Prefabs[at.type],at.position,Quaternion.Euler(at.rotation));
+     gO=Instantiate(Prefabs[at.type]);
+     gO.transform.position=at.position;
+     gO.transform.rotation=Quaternion.Euler(at.rotation);
      gO.transform.localScale=at.scale;
 
      sO=gO.GetComponent<SimObject>();

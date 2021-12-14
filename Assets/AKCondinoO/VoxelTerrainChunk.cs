@@ -892,6 +892,9 @@ internal class MarchingCubesMultithreaded:BaseMultithreaded<MarchingCubesBackgro
 
   internal class TreeData{
    internal float chance=1f;
+   internal Vector3 minScale=Vector3.one;
+   internal Vector3 maxScale=Vector3.one;
+   internal float rootsDepth=1f;
   }
 
   readonly protected Dictionary<Type,TreeData>treesData=new Dictionary<Type,TreeData>(){
@@ -899,6 +902,8 @@ internal class MarchingCubesMultithreaded:BaseMultithreaded<MarchingCubesBackgro
     typeof(Pinus_elliottii),
     new TreeData{
      chance=.125f,
+     minScale=Vector3.one*.5f,
+     maxScale=Vector3.one*1.5f,
     }
    },
   };
@@ -935,12 +940,13 @@ internal class MarchingCubesMultithreaded:BaseMultithreaded<MarchingCubesBackgro
    internal Vector3 scale;
   }
 
-  internal virtual TreeModifiersResults TreeModifiers(Vector3Int noiseInputRounded,Perlin treeRotationModifierPerlin){
+  internal virtual TreeModifiersResults TreeModifiers(Vector3Int noiseInputRounded,TreeData treeData,Perlin treeRotationModifierPerlin,Perlin treeScaleModifierPerlin){
                                               Vector3 noiseInput=noiseInputRounded+deround;
    float rotation=(float)treeRotationModifierPerlin.GetValue(noiseInput.z,noiseInput.x,0)*180f;
-   Vector3 scale=Vector3.one;
+   Vector3 scale=Vector3.Lerp(treeData.minScale,treeData.maxScale,Mathf.Clamp01(((float)treeScaleModifierPerlin.GetValue(noiseInput.z,noiseInput.x,0)+1f)/2f));
    return new TreeModifiersResults{
     rotation=rotation,
+    scale=scale,
    };
   }
 
@@ -977,6 +983,7 @@ internal readonly TreesBackgroundContainer addTreesBG=new TreesBackgroundContain
 internal class TreesBackgroundContainer:BackgroundContainer{
  internal TreesBackgroundContainer(){
   treeRotationModifierPerlin_bg=new Perlin(frequency:Mathf.Pow(2,-2),lacunarity:2.0,persistence:0.5,octaves:6,seed:0,quality:QualityMode.Low);
+   treeScaleModifierPerlin_bg  =new Perlin(frequency:Mathf.Pow(2,-2),lacunarity:2.0,persistence:0.5,octaves:6,seed:0,quality:QualityMode.Low);
  }
 
  internal ExecutionMode executionMode_bg=ExecutionMode._1;
@@ -997,6 +1004,7 @@ internal class TreesBackgroundContainer:BackgroundContainer{
  internal readonly Dictionary<int,RaycastHit>gotGroundHits_bg=new Dictionary<int,RaycastHit>(Width*Depth);
                 
  internal Perlin treeRotationModifierPerlin_bg;
+ internal Perlin  treeScaleModifierPerlin_bg;
 
  internal readonly Dictionary<(int x,int z),(Type tree,MarchingCubesMultithreaded.BaseBiome.TreeData treeData)>treeAt_bg=new Dictionary<(int,int),(Type,MarchingCubesMultithreaded.BaseBiome.TreeData)>();
   internal readonly Dictionary<(int x,int z),MarchingCubesMultithreaded.BaseBiome.TreeModifiersResults>treeModifiers_bg=new Dictionary<(int,int),MarchingCubesMultithreaded.BaseBiome.TreeModifiersResults>();
@@ -1107,6 +1115,7 @@ internal class TreesMultithreaded:BaseMultithreaded<TreesBackgroundContainer>{
    }
    
    current.treeRotationModifierPerlin_bg.Seed=current.cnkRgn_bg.x+current.cnkRgn_bg.y;
+   current. treeScaleModifierPerlin_bg  .Seed=current.cnkRgn_bg.x+current.cnkRgn_bg.y;
 
    Vector3Int vCoord1=new Vector3Int(0,Height/2-1,0);
 
@@ -1163,7 +1172,7 @@ internal class TreesMultithreaded:BaseMultithreaded<TreesBackgroundContainer>{
 
      current.treeAt_bg.Add((vCoord1.x,vCoord1.z),treePicked.Value);
 
-     MarchingCubesMultithreaded.BaseBiome.TreeModifiersResults modifiers=MarchingCubesMultithreaded.biome.TreeModifiers(noiseInput,current.treeRotationModifierPerlin_bg);
+     MarchingCubesMultithreaded.BaseBiome.TreeModifiersResults modifiers=MarchingCubesMultithreaded.biome.TreeModifiers(noiseInput,treePicked.Value.treeData,current.treeRotationModifierPerlin_bg,current.treeScaleModifierPerlin_bg);
 
      current.treeModifiers_bg.Add((vCoord1.x,vCoord1.z),modifiers);
 
@@ -1194,7 +1203,7 @@ internal class TreesMultithreaded:BaseMultithreaded<TreesBackgroundContainer>{
 
      Quaternion rotation=Quaternion.FromToRotation(Vector3.up,floor.normal)*Quaternion.Euler(new Vector3(0f,modifiers.rotation,0f));
 
-     current.toSpawn_bg.at.Add((floor.point,rotation.eulerAngles,Vector3.one,treeAt.tree,null));
+     current.toSpawn_bg.at.Add((floor.point,rotation.eulerAngles,modifiers.scale,treeAt.tree,null));
     }
    }}
    
