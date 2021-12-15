@@ -895,15 +895,18 @@ internal class MarchingCubesMultithreaded:BaseMultithreaded<MarchingCubesBackgro
    internal Vector3 minScale=Vector3.one;
    internal Vector3 maxScale=Vector3.one;
    internal float rootsDepth=1f;
+   internal Vector3 spacing=Vector3.one;
   }
 
   readonly protected Dictionary<Type,TreeData>treesData=new Dictionary<Type,TreeData>(){
    {
     typeof(Pinus_elliottii),
     new TreeData{
-     chance=.125f,
+     chance=.95f,
      minScale=Vector3.one*.5f,
      maxScale=Vector3.one*1.5f,
+     rootsDepth=1.2f,
+     spacing=Vector3.one*1.2f*2f,
     }
    },
   };
@@ -1146,9 +1149,8 @@ internal class TreesMultithreaded:BaseMultithreaded<TreesBackgroundContainer>{
     (Type tree,MarchingCubesMultithreaded.BaseBiome.TreeData treeData)?treePicked=MarchingCubesMultithreaded.biome.Tree(noiseInput);
     if(treePicked!=null){
 
-     //  To do: instead of the fixed value 10, use radius of the selected tree
-     if(vCoord1.x<10||
-        vCoord1.z<10
+     if(vCoord1.x<treePicked.Value.treeData.spacing.x||
+        vCoord1.z<treePicked.Value.treeData.spacing.z
      ){
       continue;
      }
@@ -1176,8 +1178,11 @@ internal class TreesMultithreaded:BaseMultithreaded<TreesBackgroundContainer>{
 
      current.treeModifiers_bg.Add((vCoord1.x,vCoord1.z),modifiers);
 
-     //  To do: instead of the fixed value 10, use radius of the selected tree
-     spacingOwnTypeOnly[treePicked.Value.tree]=new Vector2Int(10,10);
+     Vector3 spacing=treePicked.Value.treeData.spacing;
+             spacing=Vector3.Scale(spacing,modifiers.scale);
+     Debug.Log("spacing:"+spacing);
+
+     spacingOwnTypeOnly[treePicked.Value.tree]=new Vector2Int((int)Math.Ceiling(spacing.x),(int)Math.Ceiling(spacing.z));
     }
 
    }
@@ -1203,7 +1208,9 @@ internal class TreesMultithreaded:BaseMultithreaded<TreesBackgroundContainer>{
 
      Quaternion rotation=Quaternion.FromToRotation(Vector3.up,floor.normal)*Quaternion.Euler(new Vector3(0f,modifiers.rotation,0f));
 
-     current.toSpawn_bg.at.Add((floor.point,rotation.eulerAngles,modifiers.scale,treeAt.tree,null));
+     Vector3 position=new Vector3(floor.point.x,floor.point.y-modifiers.scale.y*treeAt.treeData.rootsDepth,floor.point.z)+rotation*(Vector3.down*modifiers.scale.y);
+
+     current.toSpawn_bg.at.Add((position,rotation.eulerAngles,modifiers.scale,treeAt.tree,null));
     }
    }}
    
