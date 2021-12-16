@@ -892,6 +892,7 @@ internal class MarchingCubesMultithreaded:BaseMultithreaded<MarchingCubesBackgro
 
   internal class TreeData{
    internal float chance=1f;
+   internal float verticalRotationFactor=1f;
    internal Vector3 minScale=Vector3.one;
    internal Vector3 maxScale=Vector3.one;
    internal float rootsDepth=1f;
@@ -903,6 +904,7 @@ internal class MarchingCubesMultithreaded:BaseMultithreaded<MarchingCubesBackgro
     typeof(Pinus_elliottii),
     new TreeData{
      chance=.95f,
+     verticalRotationFactor=.125f,
      minScale=Vector3.one*.5f,
      maxScale=Vector3.one*1.5f,
      rootsDepth=1.2f,
@@ -1206,7 +1208,7 @@ internal class TreesMultithreaded:BaseMultithreaded<TreesBackgroundContainer>{
 
      MarchingCubesMultithreaded.BaseBiome.TreeModifiersResults modifiers=current.treeModifiers_bg[(vCoord1.x,vCoord1.z)];
 
-     Quaternion rotation=Quaternion.FromToRotation(Vector3.up,floor.normal)*Quaternion.Euler(new Vector3(0f,modifiers.rotation,0f));
+     Quaternion rotation=Quaternion.SlerpUnclamped(Quaternion.identity,Quaternion.FromToRotation(Vector3.up,floor.normal),treeAt.treeData.verticalRotationFactor)*Quaternion.Euler(new Vector3(0f,modifiers.rotation,0f));
 
      Vector3 position=new Vector3(floor.point.x,floor.point.y-modifiers.scale.y*treeAt.treeData.rootsDepth,floor.point.z)+rotation*(Vector3.down*modifiers.scale.y);
 
