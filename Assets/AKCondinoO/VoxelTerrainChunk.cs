@@ -15,1444 +15,1464 @@ using System.Runtime.InteropServices;
 using Unity.Collections;
 using Unity.Jobs;
 using UnityEngine;
+using UnityEngine.AI;
 using UnityEngine.Rendering;
 using static AKCondinoO.Voxels.VoxelTerrain;
 using static AKCondinoO.Voxels.VoxelTerrainChunk.MarchingCubesBackgroundContainer;
 
-namespace AKCondinoO.Voxels{internal class VoxelTerrainChunk:MonoBehaviour{
-internal readonly object syn=new object();        
+namespace AKCondinoO.Voxels{
+ internal class VoxelTerrainChunk:MonoBehaviour{
+    internal readonly object syn=new object();        
 
-internal const ushort Height=(256);
-internal const ushort Width=(16);
-internal const ushort Depth=(16);
-internal const ushort FlattenOffset=(Width*Depth);
-internal const int VoxelsPerChunk=(FlattenOffset*Height);
+    internal const ushort Height=(256);
+    internal const ushort Width=(16);
+    internal const ushort Depth=(16);
+    internal const ushort FlattenOffset=(Width*Depth);
+    internal const int VoxelsPerChunk=(FlattenOffset*Height);
         
-internal LinkedListNode<VoxelTerrainChunk>expropriated;
+    internal LinkedListNode<VoxelTerrainChunk>expropriated;
 
-#region Rendering
+    #region Rendering
 
-static readonly VertexAttributeDescriptor[]layout=new[]{
-new VertexAttributeDescriptor(VertexAttribute.Position ,VertexAttributeFormat.Float32,3),
-new VertexAttributeDescriptor(VertexAttribute.Normal   ,VertexAttributeFormat.Float32,3),
-new VertexAttributeDescriptor(VertexAttribute.Color    ,VertexAttributeFormat.Float32,4),
-new VertexAttributeDescriptor(VertexAttribute.TexCoord0,VertexAttributeFormat.Float32,2),
-new VertexAttributeDescriptor(VertexAttribute.TexCoord1,VertexAttributeFormat.Float32,2),
-new VertexAttributeDescriptor(VertexAttribute.TexCoord2,VertexAttributeFormat.Float32,2),
-new VertexAttributeDescriptor(VertexAttribute.TexCoord3,VertexAttributeFormat.Float32,2),
-};
+     static readonly VertexAttributeDescriptor[]layout=new[]{
+      new VertexAttributeDescriptor(VertexAttribute.Position ,VertexAttributeFormat.Float32,3),
+      new VertexAttributeDescriptor(VertexAttribute.Normal   ,VertexAttributeFormat.Float32,3),
+      new VertexAttributeDescriptor(VertexAttribute.Color    ,VertexAttributeFormat.Float32,4),
+      new VertexAttributeDescriptor(VertexAttribute.TexCoord0,VertexAttributeFormat.Float32,2),
+      new VertexAttributeDescriptor(VertexAttribute.TexCoord1,VertexAttributeFormat.Float32,2),
+      new VertexAttributeDescriptor(VertexAttribute.TexCoord2,VertexAttributeFormat.Float32,2),
+      new VertexAttributeDescriptor(VertexAttribute.TexCoord3,VertexAttributeFormat.Float32,2),
+     };
 
-MeshUpdateFlags meshFlags=MeshUpdateFlags.DontValidateIndices|MeshUpdateFlags.DontNotifyMeshUsers|MeshUpdateFlags.DontRecalculateBounds;
+     MeshUpdateFlags meshFlags=MeshUpdateFlags.DontValidateIndices|MeshUpdateFlags.DontNotifyMeshUsers|MeshUpdateFlags.DontRecalculateBounds;
         
-internal Mesh mesh;
+     internal Mesh mesh;
 
-#endregion
+    #endregion
 
-internal Bounds worldBounds;
+    internal Bounds worldBounds;
         
-internal new MeshRenderer renderer;
-internal new MeshCollider collider;
+    internal new MeshRenderer renderer;
+    internal new MeshCollider collider;
 
-#region Marching Cubes
-internal MarchingCubesBackgroundContainer marchingCubesBG;
-internal class MarchingCubesBackgroundContainer:BackgroundContainer{
- internal readonly object syn_bg;
- internal MarchingCubesBackgroundContainer(object syn){
-  syn_bg=syn;
- }
+    #region Marching Cubes
+    internal MarchingCubesBackgroundContainer marchingCubesBG;
+    internal class MarchingCubesBackgroundContainer:BackgroundContainer{
+     internal readonly object syn_bg;
+     internal MarchingCubesBackgroundContainer(object syn){
+      syn_bg=syn;
+     }
 
- internal NativeList<Vertex>TempVer;
- [StructLayout(LayoutKind.Sequential)]internal struct Vertex{
-  internal Vector3 pos;
-  internal Vector3 normal;
-  internal Color color;
-  internal Vector2 texCoord0;
-  internal Vector2 texCoord1;
-  internal Vector2 texCoord2;
-  internal Vector2 texCoord3;
-  internal Vertex(Vector3 p,Vector3 n,Vector2 uv0){
-   pos=p;
-   normal=n;
-   color=new Color(1f,0f,0f,0f);
-   texCoord0=uv0;
-   texCoord1=new Vector2(-1f,-1f);
-   texCoord2=new Vector2(-1f,-1f);
-   texCoord3=new Vector2(-1f,-1f);
-  }
- }
- internal NativeList<UInt32>TempTri;
+     internal NativeList<Vertex>TempVer;
+     [StructLayout(LayoutKind.Sequential)]internal struct Vertex{
+      internal Vector3 pos;
+      internal Vector3 normal;
+      internal Color color;
+      internal Vector2 texCoord0;
+      internal Vector2 texCoord1;
+      internal Vector2 texCoord2;
+      internal Vector2 texCoord3;
+      internal Vertex(Vector3 p,Vector3 n,Vector2 uv0){
+       pos=p;
+       normal=n;
+       color=new Color(1f,0f,0f,0f);
+       texCoord0=uv0;
+       texCoord1=new Vector2(-1f,-1f);
+       texCoord2=new Vector2(-1f,-1f);
+       texCoord3=new Vector2(-1f,-1f);
+      }
+     }
+     internal NativeList<UInt32>TempTri;
 
- internal Vector2Int cCoord_bg;
- internal Vector2Int cnkRgn_bg;
- internal        int cnkIdx_bg;
-}
-internal class MarchingCubesMultithreaded:BaseMultithreaded<MarchingCubesBackgroundContainer>{
+     internal Vector2Int cCoord_bg;
+     internal Vector2Int cnkRgn_bg;
+     internal        int cnkIdx_bg;
+    }
+    internal class MarchingCubesMultithreaded:BaseMultithreaded<MarchingCubesBackgroundContainer>{
 
- readonly Voxel[]voxels=new Voxel[VoxelsPerChunk];
- internal struct Voxel{
-  internal Voxel(double d,Vector3 n,MaterialId m){
-   Density=d;Normal=n;Material=m;IsCreated=true;
-  }
-  internal double Density;
-  internal Vector3 Normal;
-  internal MaterialId Material;
-  internal bool IsCreated;
+     readonly Voxel[]voxels=new Voxel[VoxelsPerChunk];
+     internal struct Voxel{
+      internal Voxel(double d,Vector3 n,MaterialId m){
+       Density=d;Normal=n;Material=m;IsCreated=true;
+      }
+      internal double Density;
+      internal Vector3 Normal;
+      internal MaterialId Material;
+      internal bool IsCreated;
 
-  internal static Voxel Air    {get;}=new Voxel(  0.0,Vector3.zero,MaterialId.Air    );
-  internal static Voxel Bedrock{get;}=new Voxel(101.0,Vector3.zero,MaterialId.Bedrock);
- }
+      internal static Voxel Air    {get;}=new Voxel(  0.0,Vector3.zero,MaterialId.Air    );
+      internal static Voxel Bedrock{get;}=new Voxel(101.0,Vector3.zero,MaterialId.Bedrock);
+     }
 
- readonly Voxel[][][]voxelsCache1=new Voxel[3][][]{new Voxel[1][]{new Voxel[4],},new Voxel[Depth][],new Voxel[FlattenOffset][],};
+     readonly Voxel[][][]voxelsCache1=new Voxel[3][][]{new Voxel[1][]{new Voxel[4],},new Voxel[Depth][],new Voxel[FlattenOffset][],};
 
- readonly Voxel[]polygonCell=new Voxel[8];
+     readonly Voxel[]polygonCell=new Voxel[8];
 
- readonly double[][][]noiseForHeightCache=new double[biome.heightsCacheLength][][];
+     readonly double[][][]noiseForHeightCache=new double[biome.heightsCacheLength][][];
 
- readonly MaterialId[][][]materialIdPerHeightNoiseCache=new MaterialId[biome.heightsCacheLength][][];
+     readonly MaterialId[][][]materialIdPerHeightNoiseCache=new MaterialId[biome.heightsCacheLength][][];
 
- readonly Voxel[][]voxelsCache2=new Voxel[3][]{new Voxel[1],new Voxel[Depth],new Voxel[FlattenOffset],};
+     readonly Voxel[][]voxelsCache2=new Voxel[3][]{new Voxel[1],new Voxel[Depth],new Voxel[FlattenOffset],};
 
- readonly Voxel[]tmpvxl=new Voxel[6];
+     readonly Voxel[]tmpvxl=new Voxel[6];
 
- readonly Vector3[][][]verticesCache=new Vector3[3][][]{new Vector3[1][]{new Vector3[4],},new Vector3[Depth][],new Vector3[FlattenOffset][],};
+     readonly Vector3[][][]verticesCache=new Vector3[3][][]{new Vector3[1][]{new Vector3[4],},new Vector3[Depth][],new Vector3[FlattenOffset][],};
 
- readonly Vector3[]vertices=new Vector3[12];
-  readonly MaterialId[]materials=new MaterialId[12];
-   readonly Vector3[]normals=new Vector3[12];
+     readonly Vector3[]vertices=new Vector3[12];
+      readonly MaterialId[]materials=new MaterialId[12];
+       readonly Vector3[]normals=new Vector3[12];
 
- readonly double[]density=new double[2];
-  readonly Vector3[]vertex=new Vector3[2];
-   readonly MaterialId[]material=new MaterialId[2];
-    readonly float[]distance=new float[2];
+     readonly double[]density=new double[2];
+      readonly Vector3[]vertex=new Vector3[2];
+       readonly MaterialId[]material=new MaterialId[2];
+        readonly float[]distance=new float[2];
 
- static readonly ReadOnlyCollection<Vector3>corners=new ReadOnlyCollection<Vector3>(new Vector3[8]{
-  new Vector3(-.5f,-.5f,-.5f),
-  new Vector3( .5f,-.5f,-.5f),
-  new Vector3( .5f, .5f,-.5f),
-  new Vector3(-.5f, .5f,-.5f),
-  new Vector3(-.5f,-.5f, .5f),
-  new Vector3( .5f,-.5f, .5f),
-  new Vector3( .5f, .5f, .5f),
-  new Vector3(-.5f, .5f, .5f),
- });
+     static readonly ReadOnlyCollection<Vector3>corners=new ReadOnlyCollection<Vector3>(new Vector3[8]{
+      new Vector3(-.5f,-.5f,-.5f),
+      new Vector3( .5f,-.5f,-.5f),
+      new Vector3( .5f, .5f,-.5f),
+      new Vector3(-.5f, .5f,-.5f),
+      new Vector3(-.5f,-.5f, .5f),
+      new Vector3( .5f,-.5f, .5f),
+      new Vector3( .5f, .5f, .5f),
+      new Vector3(-.5f, .5f, .5f),
+     });
 
- readonly int[]idx=new int[3];
-  readonly Vector3[]verPos=new Vector3[3];
+     readonly int[]idx=new int[3];
+      readonly Vector3[]verPos=new Vector3[3];
 
- static Vector3 trianglePosAdj{get;}=new Vector3((Width/2.0f)-0.5f,(Height/2.0f)-0.5f,(Depth/2.0f)-0.5f);
+     static Vector3 trianglePosAdj{get;}=new Vector3((Width/2.0f)-0.5f,(Height/2.0f)-0.5f,(Depth/2.0f)-0.5f);
 
- readonly Dictionary<int,Voxel>[]neighbors=new Dictionary<int,Voxel>[8];
+     readonly Dictionary<int,Voxel>[]neighbors=new Dictionary<int,Voxel>[8];
 
- readonly Dictionary<Vector3,List<Vector2>>vertexUV=new Dictionary<Vector3,List<Vector2>>();
+     readonly Dictionary<Vector3,List<Vector2>>vertexUV=new Dictionary<Vector3,List<Vector2>>();
 
- readonly Dictionary<int,int>weights=new Dictionary<int,int>(4);
+     readonly Dictionary<int,int>weights=new Dictionary<int,int>(4);
 
- static Vector2 emptyUV{get;}=new Vector2(-1,-1);
+     static Vector2 emptyUV{get;}=new Vector2(-1,-1);
 
- internal MarchingCubesMultithreaded(){
-  for(int i=0;i<voxelsCache1[2].Length;++i){
-   voxelsCache1[2][i]=new Voxel[4];
-   if(i<voxelsCache1[1].Length){
-    voxelsCache1[1][i]=new Voxel[4];
-   }
-  }
+     internal MarchingCubesMultithreaded(){
+      for(int i=0;i<voxelsCache1[2].Length;++i){
+       voxelsCache1[2][i]=new Voxel[4];
+       if(i<voxelsCache1[1].Length){
+        voxelsCache1[1][i]=new Voxel[4];
+       }
+      }
 
-  for(int i=0;i<biome.heightsCacheLength;++i){
-   noiseForHeightCache[i]=new double[9][];
+      for(int i=0;i<biome.heightsCacheLength;++i){
+       noiseForHeightCache[i]=new double[9][];
 
-   materialIdPerHeightNoiseCache[i]=new MaterialId[9][];
-  }
+       materialIdPerHeightNoiseCache[i]=new MaterialId[9][];
+      }
 
-  for(int i=0;i<verticesCache[2].Length;++i){
-   verticesCache[2][i]=new Vector3[4];
-   if(i<verticesCache[1].Length){
-    verticesCache[1][i]=new Vector3[4];
-   }
-  }
+      for(int i=0;i<verticesCache[2].Length;++i){
+       verticesCache[2][i]=new Vector3[4];
+       if(i<verticesCache[1].Length){
+        verticesCache[1][i]=new Vector3[4];
+       }
+      }
 
-  for(int i=0;i<neighbors.Length;++i){
-   neighbors[i]=new Dictionary<int,Voxel>();
-  }
- }
+      for(int i=0;i<neighbors.Length;++i){
+       neighbors[i]=new Dictionary<int,Voxel>();
+      }
+     }
 
- protected override void Cleanup(){
-  Array.Clear(voxels,0,voxels.Length);
+     protected override void Cleanup(){
+      Array.Clear(voxels,0,voxels.Length);
 
-  for(int i=0;i<voxelsCache1[0].Length;++i){Array.Clear(voxelsCache1[0][i],0,voxelsCache1[0][i].Length);}
-  for(int i=0;i<voxelsCache1[1].Length;++i){Array.Clear(voxelsCache1[1][i],0,voxelsCache1[1][i].Length);}
-  for(int i=0;i<voxelsCache1[2].Length;++i){Array.Clear(voxelsCache1[2][i],0,voxelsCache1[2][i].Length);}
+      for(int i=0;i<voxelsCache1[0].Length;++i){Array.Clear(voxelsCache1[0][i],0,voxelsCache1[0][i].Length);}
+      for(int i=0;i<voxelsCache1[1].Length;++i){Array.Clear(voxelsCache1[1][i],0,voxelsCache1[1][i].Length);}
+      for(int i=0;i<voxelsCache1[2].Length;++i){Array.Clear(voxelsCache1[2][i],0,voxelsCache1[2][i].Length);}
   
-  for(int i=0;i<biome.heightsCacheLength;++i){
-   for(int j=0;j<noiseForHeightCache[i].Length;++j){
-    if(noiseForHeightCache[i][j]!=null)Array.Clear(noiseForHeightCache[i][j],0,noiseForHeightCache[i][j].Length);
-   }
+      for(int i=0;i<biome.heightsCacheLength;++i){
+       for(int j=0;j<noiseForHeightCache[i].Length;++j){
+        if(noiseForHeightCache[i][j]!=null)Array.Clear(noiseForHeightCache[i][j],0,noiseForHeightCache[i][j].Length);
+       }
    
-   for(int j=0;j<materialIdPerHeightNoiseCache[i].Length;++j){
-    if(materialIdPerHeightNoiseCache[i][j]!=null)Array.Clear(materialIdPerHeightNoiseCache[i][j],0,materialIdPerHeightNoiseCache[i][j].Length);
-   }
-  }
-
-  for(int i=0;i<voxelsCache2.Length;++i){
-   if(voxelsCache2[i]!=null)Array.Clear(voxelsCache2[i],0,voxelsCache2[i].Length);
-  }
-
-  for(int i=0;i<verticesCache[0].Length;++i){Array.Clear(verticesCache[0][i],0,verticesCache[0][i].Length);}
-  for(int i=0;i<verticesCache[1].Length;++i){Array.Clear(verticesCache[1][i],0,verticesCache[1][i].Length);}
-  for(int i=0;i<verticesCache[2].Length;++i){Array.Clear(verticesCache[2][i],0,verticesCache[2][i].Length);}
-
-  for(int i=0;i<neighbors.Length;++i){
-   neighbors[i].Clear();
-  }
-
-  vertexUV.Clear();
- }
- protected override void Execute(){
-  //Debug.Log("MarchingCubesMultithreaded:Execute:"+current.cCoord_bg);
-
-  current.TempVer.Clear();
-  current.TempTri.Clear();
-
-  lock(current.syn_bg){
-   string editsFile=string.Format("{0}{1}/{2}",Core.perChunkSavePath,current.cnkIdx_bg,"edits.MessagePackSerializer");
-   if(File.Exists(editsFile)){
-    Debug.Log("loading voxel terrain edits from file:"+editsFile);
-    using(var file=new FileStream(editsFile,FileMode.Open,FileAccess.Read,FileShare.Read)){
-     if(file.Length>0){
-      Dictionary<Vector3Int,(double density,MaterialId materialId)>fromFileVoxels=(Dictionary<Vector3Int,(double density,MaterialId materialId)>)MessagePackSerializer.Deserialize(typeof(Dictionary<Vector3Int,(double density,MaterialId materialId)>),file);
-      foreach(var voxelData in fromFileVoxels){
-       voxels[GetvxlIdx(voxelData.Key.x,voxelData.Key.y,voxelData.Key.z)]=new Voxel(voxelData.Value.density,Vector3.zero,voxelData.Value.materialId);
+       for(int j=0;j<materialIdPerHeightNoiseCache[i].Length;++j){
+        if(materialIdPerHeightNoiseCache[i][j]!=null)Array.Clear(materialIdPerHeightNoiseCache[i][j],0,materialIdPerHeightNoiseCache[i][j].Length);
+       }
       }
-     }
-    }
-   }
-   for(int x=-1;x<=1;x++){
-   for(int z=-1;z<=1;z++){
-    if(x==0&&z==0){
-     continue;
-    }
-    Vector2Int nCoord1=current.cCoord_bg;
-               nCoord1.x+=x;
-               nCoord1.y+=z;
-    if(Math.Abs(nCoord1.x)>=MaxcCoordx||
-       Math.Abs(nCoord1.y)>=MaxcCoordy){
-     continue;
-    }
-    int ngbIdx1=GetcnkIdx(nCoord1.x,nCoord1.y);
-    editsFile=string.Format("{0}{1}/{2}",Core.perChunkSavePath,ngbIdx1,"edits.MessagePackSerializer");
-    int oftIdx1=GetoftIdx(nCoord1-current.cCoord_bg)-1;
-    if(File.Exists(editsFile)){
-     using(var file=new FileStream(editsFile,FileMode.Open,FileAccess.Read,FileShare.Read)){
-      Dictionary<Vector3Int,(double density,MaterialId materialId)>fromFileVoxels=(Dictionary<Vector3Int,(double density,MaterialId materialId)>)MessagePackSerializer.Deserialize(typeof(Dictionary<Vector3Int,(double density,MaterialId materialId)>),file);
-      foreach(var voxelData in fromFileVoxels){
-       neighbors[oftIdx1][GetvxlIdx(voxelData.Key.x,voxelData.Key.y,voxelData.Key.z)]=new Voxel(voxelData.Value.density,Vector3.zero,voxelData.Value.materialId);
+
+      for(int i=0;i<voxelsCache2.Length;++i){
+       if(voxelsCache2[i]!=null)Array.Clear(voxelsCache2[i],0,voxelsCache2[i].Length);
       }
+
+      for(int i=0;i<verticesCache[0].Length;++i){Array.Clear(verticesCache[0][i],0,verticesCache[0][i].Length);}
+      for(int i=0;i<verticesCache[1].Length;++i){Array.Clear(verticesCache[1][i],0,verticesCache[1][i].Length);}
+      for(int i=0;i<verticesCache[2].Length;++i){Array.Clear(verticesCache[2][i],0,verticesCache[2][i].Length);}
+
+      for(int i=0;i<neighbors.Length;++i){
+       neighbors[i].Clear();
+      }
+
+      vertexUV.Clear();
      }
-    }
-   }}
-  }
+     protected override void Execute(){
+      //Debug.Log("MarchingCubesMultithreaded:Execute:"+current.cCoord_bg);
 
-  UInt32 vertexCount=0;
-                
-  Vector2Int crdOffset=Vector2Int.zero;
+      current.TempVer.Clear();
+      current.TempTri.Clear();
 
-  Vector2Int posOffset=Vector2Int.zero;
-
-  Vector3Int vCoord1;
-  for(vCoord1=new Vector3Int();vCoord1.y<Height;vCoord1.y++){
-  for(vCoord1.x=0             ;vCoord1.x<Width ;vCoord1.x++){
-  for(vCoord1.z=0             ;vCoord1.z<Depth ;vCoord1.z++){
-
-   int corner=0;Vector3Int vCoord2=vCoord1;                                       if(vCoord1.z>0)polygonCell[corner]=voxelsCache1[0][0][0];else if(vCoord1.x>0)polygonCell[corner]=voxelsCache1[1][vCoord1.z][0];else if(vCoord1.y>0)polygonCell[corner]=voxelsCache1[2][vCoord1.z+vCoord1.x*Depth][0];else SetpolygonCellVoxel();
-       corner++;           vCoord2=vCoord1;vCoord2.x+=1;                          if(vCoord1.z>0)polygonCell[corner]=voxelsCache1[0][0][1];                                                                      else if(vCoord1.y>0)polygonCell[corner]=voxelsCache1[2][vCoord1.z+vCoord1.x*Depth][1];else SetpolygonCellVoxel();
-       corner++;           vCoord2=vCoord1;vCoord2.x+=1;vCoord2.y+=1;             if(vCoord1.z>0)polygonCell[corner]=voxelsCache1[0][0][2];                                                                                                                                                            else SetpolygonCellVoxel();
-       corner++;           vCoord2=vCoord1;             vCoord2.y+=1;             if(vCoord1.z>0)polygonCell[corner]=voxelsCache1[0][0][3];else if(vCoord1.x>0)polygonCell[corner]=voxelsCache1[1][vCoord1.z][1];                                                                                      else SetpolygonCellVoxel();
-       corner++;           vCoord2=vCoord1;                          vCoord2.z+=1;                                                              if(vCoord1.x>0)polygonCell[corner]=voxelsCache1[1][vCoord1.z][2];else if(vCoord1.y>0)polygonCell[corner]=voxelsCache1[2][vCoord1.z+vCoord1.x*Depth][2];else SetpolygonCellVoxel();
-       corner++;           vCoord2=vCoord1;vCoord2.x+=1;             vCoord2.z+=1;                                                                                                                                    if(vCoord1.y>0)polygonCell[corner]=voxelsCache1[2][vCoord1.z+vCoord1.x*Depth][3];else SetpolygonCellVoxel();
-       corner++;           vCoord2=vCoord1;vCoord2.x+=1;vCoord2.y+=1;vCoord2.z+=1;                                                                                                                                                                                                                          SetpolygonCellVoxel();
-       corner++;           vCoord2=vCoord1;             vCoord2.y+=1;vCoord2.z+=1;                                                              if(vCoord1.x>0)polygonCell[corner]=voxelsCache1[1][vCoord1.z][3];                                                                                      else SetpolygonCellVoxel();
-   voxelsCache1[0][0][0]=polygonCell[4];
-   voxelsCache1[0][0][1]=polygonCell[5];
-   voxelsCache1[0][0][2]=polygonCell[6];
-   voxelsCache1[0][0][3]=polygonCell[7];
-   voxelsCache1[1][vCoord1.z][0]=polygonCell[1];
-   voxelsCache1[1][vCoord1.z][1]=polygonCell[2];
-   voxelsCache1[1][vCoord1.z][2]=polygonCell[5];
-   voxelsCache1[1][vCoord1.z][3]=polygonCell[6];
-   voxelsCache1[2][vCoord1.z+vCoord1.x*Depth][0]=polygonCell[3];
-   voxelsCache1[2][vCoord1.z+vCoord1.x*Depth][1]=polygonCell[2];
-   voxelsCache1[2][vCoord1.z+vCoord1.x*Depth][2]=polygonCell[7];
-   voxelsCache1[2][vCoord1.z+vCoord1.x*Depth][3]=polygonCell[6];
-
-   void SetpolygonCellVoxel(){
-
-    if(vCoord2.y<=0){/*  :fora do mundo, baixo:  */
-     polygonCell[corner]=Voxel.Bedrock;
-    }else if(vCoord2.y>=Height){/*  :fora do mundo, cima:  */
-     polygonCell[corner]=Voxel.Air;
-    }else{
-
-     Vector2Int cnkRgn2=current.cnkRgn_bg;
-     Vector2Int cCoord2=current.cCoord_bg;
-     if(vCoord2.x<0||vCoord2.x>=Width||
-        vCoord2.z<0||vCoord2.z>=Depth
-     ){
-      ValidateCoord(ref cnkRgn2,ref vCoord2);
-      cCoord2=cnkRgnTocCoord(cnkRgn2);
-     }
-
-     int vxlIdx2=GetvxlIdx(vCoord2.x,vCoord2.y,vCoord2.z);
-
-     int oftIdx2=GetoftIdx(cCoord2-current.cCoord_bg);
-     /*  já construído:  */
-     if(oftIdx2==0&&voxels[vxlIdx2].IsCreated){
-      polygonCell[corner]=voxels[vxlIdx2];
-     }else if(oftIdx2>0&&neighbors[oftIdx2-1].ContainsKey(vxlIdx2)){
-      polygonCell[corner]=neighbors[oftIdx2-1][vxlIdx2];
-     }else{
-
-      //  pegar valor do bioma:
-      Vector3Int noiseInput=vCoord2;noiseInput.x+=cnkRgn2.x;
-                                    noiseInput.z+=cnkRgn2.y;
-      biome.Setvxl(noiseInput,noiseForHeightCache,materialIdPerHeightNoiseCache,oftIdx2,vCoord2.z+vCoord2.x*Depth,ref polygonCell[corner]);
-     }
-
-     if(polygonCell[corner].Material!=MaterialId.Air&&polygonCell[corner].Normal==Vector3.zero){
-
-      //  calcular normal:
-      int tmpIdx=0;Vector3Int vCoord3=vCoord2;vCoord3.x++;                                                                                                                                                                                      SetpolygonCellNormalSettmpvxl();
-          tmpIdx++;           vCoord3=vCoord2;vCoord3.x--;                        if(vCoord2.z>1&&vCoord2.x>1&&vCoord2.y>1&&voxelsCache2[1][vCoord2.z].IsCreated)                tmpvxl[tmpIdx]=voxelsCache2[1][vCoord2.z];                else SetpolygonCellNormalSettmpvxl();
-          tmpIdx++;           vCoord3=vCoord2;            vCoord3.y++;                                                                                                                                                                          SetpolygonCellNormalSettmpvxl();
-          tmpIdx++;           vCoord3=vCoord2;            vCoord3.y--;            if(vCoord2.z>1&&vCoord2.x>1&&vCoord2.y>1&&voxelsCache2[2][vCoord2.z+vCoord2.x*Depth].IsCreated)tmpvxl[tmpIdx]=voxelsCache2[2][vCoord2.z+vCoord2.x*Depth];else SetpolygonCellNormalSettmpvxl();
-          tmpIdx++;           vCoord3=vCoord2;                        vCoord3.z++;                                                                                                                                                              SetpolygonCellNormalSettmpvxl();
-          tmpIdx++;           vCoord3=vCoord2;                        vCoord3.z--;if(vCoord2.z>1&&vCoord2.x>1&&vCoord2.y>1&&voxelsCache2[0][0].IsCreated)                        tmpvxl[tmpIdx]=voxelsCache2[0][0];                        else SetpolygonCellNormalSettmpvxl();
-
-      void SetpolygonCellNormalSettmpvxl(){
- 
-       if(vCoord3.y<=0){
-        tmpvxl[tmpIdx]=Voxel.Bedrock;
-       }else if(vCoord3.y>=Height){
-        tmpvxl[tmpIdx]=Voxel.Air;
-       }else{
-
-        Vector2Int cnkRgn3=cnkRgn2;
-        Vector2Int cCoord3=cCoord2;
-
-        if(vCoord3.x<0||vCoord3.x>=Width||
-           vCoord3.z<0||vCoord3.z>=Depth
-        ){
-         ValidateCoord(ref cnkRgn3,ref vCoord3);
-         cCoord3=cnkRgnTocCoord(cnkRgn3);
+      lock(current.syn_bg){
+       string editsFile=string.Format("{0}{1}/{2}",Core.perChunkSavePath,current.cnkIdx_bg,"edits.MessagePackSerializer");
+       if(File.Exists(editsFile)){
+        Debug.Log("loading voxel terrain edits from file:"+editsFile);
+        using(var file=new FileStream(editsFile,FileMode.Open,FileAccess.Read,FileShare.Read)){
+         if(file.Length>0){
+          Dictionary<Vector3Int,(double density,MaterialId materialId)>fromFileVoxels=(Dictionary<Vector3Int,(double density,MaterialId materialId)>)MessagePackSerializer.Deserialize(typeof(Dictionary<Vector3Int,(double density,MaterialId materialId)>),file);
+          foreach(var voxelData in fromFileVoxels){
+           voxels[GetvxlIdx(voxelData.Key.x,voxelData.Key.y,voxelData.Key.z)]=new Voxel(voxelData.Value.density,Vector3.zero,voxelData.Value.materialId);
+          }
+         }
         }
+       }
+       for(int x=-1;x<=1;x++){
+       for(int z=-1;z<=1;z++){
+        if(x==0&&z==0){
+         continue;
+        }
+        Vector2Int nCoord1=current.cCoord_bg;
+                   nCoord1.x+=x;
+                   nCoord1.y+=z;
+        if(Math.Abs(nCoord1.x)>=MaxcCoordx||
+           Math.Abs(nCoord1.y)>=MaxcCoordy){
+         continue;
+        }
+        int ngbIdx1=GetcnkIdx(nCoord1.x,nCoord1.y);
+        editsFile=string.Format("{0}{1}/{2}",Core.perChunkSavePath,ngbIdx1,"edits.MessagePackSerializer");
+        int oftIdx1=GetoftIdx(nCoord1-current.cCoord_bg)-1;
+        if(File.Exists(editsFile)){
+         using(var file=new FileStream(editsFile,FileMode.Open,FileAccess.Read,FileShare.Read)){
+          Dictionary<Vector3Int,(double density,MaterialId materialId)>fromFileVoxels=(Dictionary<Vector3Int,(double density,MaterialId materialId)>)MessagePackSerializer.Deserialize(typeof(Dictionary<Vector3Int,(double density,MaterialId materialId)>),file);
+          foreach(var voxelData in fromFileVoxels){
+           neighbors[oftIdx1][GetvxlIdx(voxelData.Key.x,voxelData.Key.y,voxelData.Key.z)]=new Voxel(voxelData.Value.density,Vector3.zero,voxelData.Value.materialId);
+          }
+         }
+        }
+       }}
+      }
 
-        int vxlIdx3=GetvxlIdx(vCoord3.x,vCoord3.y,vCoord3.z);
+      UInt32 vertexCount=0;
+                
+      Vector2Int crdOffset=Vector2Int.zero;
 
-        int oftIdx3=GetoftIdx(cCoord3-current.cCoord_bg);
+      Vector2Int posOffset=Vector2Int.zero;
 
-        if(oftIdx3==0&&voxels[vxlIdx3].IsCreated){
-         tmpvxl[tmpIdx]=voxels[vxlIdx3];
-        }else if(oftIdx3>0&&neighbors[oftIdx3-1].ContainsKey(vxlIdx3)){
-         tmpvxl[tmpIdx]=neighbors[oftIdx3-1][vxlIdx3];
+      Vector3Int vCoord1;
+      for(vCoord1=new Vector3Int();vCoord1.y<Height;vCoord1.y++){
+      for(vCoord1.x=0             ;vCoord1.x<Width ;vCoord1.x++){
+      for(vCoord1.z=0             ;vCoord1.z<Depth ;vCoord1.z++){
+
+       int corner=0;Vector3Int vCoord2=vCoord1;                                       if(vCoord1.z>0)polygonCell[corner]=voxelsCache1[0][0][0];else if(vCoord1.x>0)polygonCell[corner]=voxelsCache1[1][vCoord1.z][0];else if(vCoord1.y>0)polygonCell[corner]=voxelsCache1[2][vCoord1.z+vCoord1.x*Depth][0];else SetpolygonCellVoxel();
+           corner++;           vCoord2=vCoord1;vCoord2.x+=1;                          if(vCoord1.z>0)polygonCell[corner]=voxelsCache1[0][0][1];                                                                      else if(vCoord1.y>0)polygonCell[corner]=voxelsCache1[2][vCoord1.z+vCoord1.x*Depth][1];else SetpolygonCellVoxel();
+           corner++;           vCoord2=vCoord1;vCoord2.x+=1;vCoord2.y+=1;             if(vCoord1.z>0)polygonCell[corner]=voxelsCache1[0][0][2];                                                                                                                                                            else SetpolygonCellVoxel();
+           corner++;           vCoord2=vCoord1;             vCoord2.y+=1;             if(vCoord1.z>0)polygonCell[corner]=voxelsCache1[0][0][3];else if(vCoord1.x>0)polygonCell[corner]=voxelsCache1[1][vCoord1.z][1];                                                                                      else SetpolygonCellVoxel();
+           corner++;           vCoord2=vCoord1;                          vCoord2.z+=1;                                                              if(vCoord1.x>0)polygonCell[corner]=voxelsCache1[1][vCoord1.z][2];else if(vCoord1.y>0)polygonCell[corner]=voxelsCache1[2][vCoord1.z+vCoord1.x*Depth][2];else SetpolygonCellVoxel();
+           corner++;           vCoord2=vCoord1;vCoord2.x+=1;             vCoord2.z+=1;                                                                                                                                    if(vCoord1.y>0)polygonCell[corner]=voxelsCache1[2][vCoord1.z+vCoord1.x*Depth][3];else SetpolygonCellVoxel();
+           corner++;           vCoord2=vCoord1;vCoord2.x+=1;vCoord2.y+=1;vCoord2.z+=1;                                                                                                                                                                                                                          SetpolygonCellVoxel();
+           corner++;           vCoord2=vCoord1;             vCoord2.y+=1;vCoord2.z+=1;                                                              if(vCoord1.x>0)polygonCell[corner]=voxelsCache1[1][vCoord1.z][3];                                                                                      else SetpolygonCellVoxel();
+       voxelsCache1[0][0][0]=polygonCell[4];
+       voxelsCache1[0][0][1]=polygonCell[5];
+       voxelsCache1[0][0][2]=polygonCell[6];
+       voxelsCache1[0][0][3]=polygonCell[7];
+       voxelsCache1[1][vCoord1.z][0]=polygonCell[1];
+       voxelsCache1[1][vCoord1.z][1]=polygonCell[2];
+       voxelsCache1[1][vCoord1.z][2]=polygonCell[5];
+       voxelsCache1[1][vCoord1.z][3]=polygonCell[6];
+       voxelsCache1[2][vCoord1.z+vCoord1.x*Depth][0]=polygonCell[3];
+       voxelsCache1[2][vCoord1.z+vCoord1.x*Depth][1]=polygonCell[2];
+       voxelsCache1[2][vCoord1.z+vCoord1.x*Depth][2]=polygonCell[7];
+       voxelsCache1[2][vCoord1.z+vCoord1.x*Depth][3]=polygonCell[6];
+
+       void SetpolygonCellVoxel(){
+
+        if(vCoord2.y<=0){/*  :fora do mundo, baixo:  */
+         polygonCell[corner]=Voxel.Bedrock;
+        }else if(vCoord2.y>=Height){/*  :fora do mundo, cima:  */
+         polygonCell[corner]=Voxel.Air;
         }else{
 
-         //  pegar valor do bioma:
-         Vector3Int noiseInput=vCoord3;noiseInput.x+=cnkRgn3.x;
-                                       noiseInput.z+=cnkRgn3.y;
-         biome.Setvxl(noiseInput,noiseForHeightCache,materialIdPerHeightNoiseCache,oftIdx3,vCoord3.z+vCoord3.x*Depth,ref tmpvxl[tmpIdx]);
-        }
+         Vector2Int cnkRgn2=current.cnkRgn_bg;
+         Vector2Int cCoord2=current.cCoord_bg;
+         if(vCoord2.x<0||vCoord2.x>=Width||
+            vCoord2.z<0||vCoord2.z>=Depth
+         ){
+          ValidateCoord(ref cnkRgn2,ref vCoord2);
+          cCoord2=cnkRgnTocCoord(cnkRgn2);
+         }
 
-        if(oftIdx3==0){
-         voxels[vxlIdx3]=tmpvxl[tmpIdx];
-        }else if(oftIdx3>0){
-         neighbors[oftIdx3-1][vxlIdx3]=tmpvxl[tmpIdx];
+         int vxlIdx2=GetvxlIdx(vCoord2.x,vCoord2.y,vCoord2.z);
+
+         int oftIdx2=GetoftIdx(cCoord2-current.cCoord_bg);
+         /*  já construído:  */
+         if(oftIdx2==0&&voxels[vxlIdx2].IsCreated){
+          polygonCell[corner]=voxels[vxlIdx2];
+         }else if(oftIdx2>0&&neighbors[oftIdx2-1].ContainsKey(vxlIdx2)){
+          polygonCell[corner]=neighbors[oftIdx2-1][vxlIdx2];
+         }else{
+
+          //  pegar valor do bioma:
+          Vector3Int noiseInput=vCoord2;noiseInput.x+=cnkRgn2.x;
+                                        noiseInput.z+=cnkRgn2.y;
+          biome.Setvxl(noiseInput,noiseForHeightCache,materialIdPerHeightNoiseCache,oftIdx2,vCoord2.z+vCoord2.x*Depth,ref polygonCell[corner]);
+         }
+
+         if(polygonCell[corner].Material!=MaterialId.Air&&polygonCell[corner].Normal==Vector3.zero){
+
+          //  calcular normal:
+          int tmpIdx=0;Vector3Int vCoord3=vCoord2;vCoord3.x++;                                                                                                                                                                                      SetpolygonCellNormalSettmpvxl();
+              tmpIdx++;           vCoord3=vCoord2;vCoord3.x--;                        if(vCoord2.z>1&&vCoord2.x>1&&vCoord2.y>1&&voxelsCache2[1][vCoord2.z].IsCreated)                tmpvxl[tmpIdx]=voxelsCache2[1][vCoord2.z];                else SetpolygonCellNormalSettmpvxl();
+              tmpIdx++;           vCoord3=vCoord2;            vCoord3.y++;                                                                                                                                                                          SetpolygonCellNormalSettmpvxl();
+              tmpIdx++;           vCoord3=vCoord2;            vCoord3.y--;            if(vCoord2.z>1&&vCoord2.x>1&&vCoord2.y>1&&voxelsCache2[2][vCoord2.z+vCoord2.x*Depth].IsCreated)tmpvxl[tmpIdx]=voxelsCache2[2][vCoord2.z+vCoord2.x*Depth];else SetpolygonCellNormalSettmpvxl();
+              tmpIdx++;           vCoord3=vCoord2;                        vCoord3.z++;                                                                                                                                                              SetpolygonCellNormalSettmpvxl();
+              tmpIdx++;           vCoord3=vCoord2;                        vCoord3.z--;if(vCoord2.z>1&&vCoord2.x>1&&vCoord2.y>1&&voxelsCache2[0][0].IsCreated)                        tmpvxl[tmpIdx]=voxelsCache2[0][0];                        else SetpolygonCellNormalSettmpvxl();
+
+          void SetpolygonCellNormalSettmpvxl(){
+ 
+           if(vCoord3.y<=0){
+            tmpvxl[tmpIdx]=Voxel.Bedrock;
+           }else if(vCoord3.y>=Height){
+            tmpvxl[tmpIdx]=Voxel.Air;
+           }else{
+
+            Vector2Int cnkRgn3=cnkRgn2;
+            Vector2Int cCoord3=cCoord2;
+
+            if(vCoord3.x<0||vCoord3.x>=Width||
+               vCoord3.z<0||vCoord3.z>=Depth
+            ){
+             ValidateCoord(ref cnkRgn3,ref vCoord3);
+             cCoord3=cnkRgnTocCoord(cnkRgn3);
+            }
+
+            int vxlIdx3=GetvxlIdx(vCoord3.x,vCoord3.y,vCoord3.z);
+
+            int oftIdx3=GetoftIdx(cCoord3-current.cCoord_bg);
+
+            if(oftIdx3==0&&voxels[vxlIdx3].IsCreated){
+             tmpvxl[tmpIdx]=voxels[vxlIdx3];
+            }else if(oftIdx3>0&&neighbors[oftIdx3-1].ContainsKey(vxlIdx3)){
+             tmpvxl[tmpIdx]=neighbors[oftIdx3-1][vxlIdx3];
+            }else{
+
+             //  pegar valor do bioma:
+             Vector3Int noiseInput=vCoord3;noiseInput.x+=cnkRgn3.x;
+                                           noiseInput.z+=cnkRgn3.y;
+             biome.Setvxl(noiseInput,noiseForHeightCache,materialIdPerHeightNoiseCache,oftIdx3,vCoord3.z+vCoord3.x*Depth,ref tmpvxl[tmpIdx]);
+            }
+
+            if(oftIdx3==0){
+             voxels[vxlIdx3]=tmpvxl[tmpIdx];
+            }else if(oftIdx3>0){
+             neighbors[oftIdx3-1][vxlIdx3]=tmpvxl[tmpIdx];
+            }
+
+           }
+ 
+          }
+          Vector3 polygonCellNormal=new Vector3{
+           x=(float)(tmpvxl[1].Density-tmpvxl[0].Density),
+           y=(float)(tmpvxl[3].Density-tmpvxl[2].Density),
+           z=(float)(tmpvxl[5].Density-tmpvxl[4].Density)
+          };
+
+          polygonCell[corner].Normal=polygonCellNormal;
+          if(polygonCell[corner].Normal!=Vector3.zero){
+           polygonCell[corner].Normal.Normalize();
+          }
+
+          if(oftIdx2==0){
+           voxels[vxlIdx2]=polygonCell[corner];
+          }else if(oftIdx2>0){
+           neighbors[oftIdx2-1][vxlIdx2]=polygonCell[corner];
+          }//  :salvar valor construído
+
+         }
+         voxelsCache2[0][0]=polygonCell[corner];
+         voxelsCache2[1][vCoord2.z]=polygonCell[corner];
+         voxelsCache2[2][vCoord2.z+vCoord2.x*Depth]=polygonCell[corner];
+
         }
 
        }
- 
+
+       int edgeIndex;
+       /*
+           Determine the index into the edge table which
+           tells us which vertices are inside of the surface
+       */
+                                           edgeIndex =  0;
+       if(-polygonCell[0].Density<IsoLevel)edgeIndex|=  1;
+       if(-polygonCell[1].Density<IsoLevel)edgeIndex|=  2;
+       if(-polygonCell[2].Density<IsoLevel)edgeIndex|=  4;
+       if(-polygonCell[3].Density<IsoLevel)edgeIndex|=  8;
+       if(-polygonCell[4].Density<IsoLevel)edgeIndex|= 16;
+       if(-polygonCell[5].Density<IsoLevel)edgeIndex|= 32;
+       if(-polygonCell[6].Density<IsoLevel)edgeIndex|= 64;
+       if(-polygonCell[7].Density<IsoLevel)edgeIndex|=128;
+       if(Tables.EdgeTable[edgeIndex]!=0){/*  Cube is not entirely in/out of the surface  */
+
+        //  Use cached data if available
+        vertices[ 0]=(vCoord1.z>0?verticesCache[0][0][0]:(vCoord1.y>0?verticesCache[2][vCoord1.z+vCoord1.x*Depth][0]:Vector3.zero));
+        vertices[ 1]=(vCoord1.z>0?verticesCache[0][0][1]:Vector3.zero);
+        vertices[ 2]=(vCoord1.z>0?verticesCache[0][0][2]:Vector3.zero);
+        vertices[ 3]=(vCoord1.z>0?verticesCache[0][0][3]:(vCoord1.x>0?verticesCache[1][vCoord1.z][0]:Vector3.zero));
+        vertices[ 4]=(vCoord1.y>0?verticesCache[2][vCoord1.z+vCoord1.x*Depth][1]:Vector3.zero);
+        vertices[ 7]=(vCoord1.x>0?verticesCache[1][vCoord1.z][1]:Vector3.zero);
+        vertices[ 8]=(vCoord1.x>0?verticesCache[1][vCoord1.z][2]:(vCoord1.y>0?verticesCache[2][vCoord1.z+vCoord1.x*Depth][3]:Vector3.zero));
+        vertices[ 9]=(vCoord1.y>0?verticesCache[2][vCoord1.z+vCoord1.x*Depth][2]:Vector3.zero);
+        vertices[11]=(vCoord1.x>0?verticesCache[1][vCoord1.z][3]:Vector3.zero);
+                                
+        if(0!=(Tables.EdgeTable[edgeIndex]&   1)){vertexInterp(0,1,ref vertices[ 0],ref normals[ 0],ref materials[ 0]);}
+        if(0!=(Tables.EdgeTable[edgeIndex]&   2)){vertexInterp(1,2,ref vertices[ 1],ref normals[ 1],ref materials[ 1]);}
+        if(0!=(Tables.EdgeTable[edgeIndex]&   4)){vertexInterp(2,3,ref vertices[ 2],ref normals[ 2],ref materials[ 2]);}
+        if(0!=(Tables.EdgeTable[edgeIndex]&   8)){vertexInterp(3,0,ref vertices[ 3],ref normals[ 3],ref materials[ 3]);}
+        if(0!=(Tables.EdgeTable[edgeIndex]&  16)){vertexInterp(4,5,ref vertices[ 4],ref normals[ 4],ref materials[ 4]);}
+        if(0!=(Tables.EdgeTable[edgeIndex]&  32)){vertexInterp(5,6,ref vertices[ 5],ref normals[ 5],ref materials[ 5]);}
+        if(0!=(Tables.EdgeTable[edgeIndex]&  64)){vertexInterp(6,7,ref vertices[ 6],ref normals[ 6],ref materials[ 6]);}
+        if(0!=(Tables.EdgeTable[edgeIndex]& 128)){vertexInterp(7,4,ref vertices[ 7],ref normals[ 7],ref materials[ 7]);}
+        if(0!=(Tables.EdgeTable[edgeIndex]& 256)){vertexInterp(0,4,ref vertices[ 8],ref normals[ 8],ref materials[ 8]);}
+        if(0!=(Tables.EdgeTable[edgeIndex]& 512)){vertexInterp(1,5,ref vertices[ 9],ref normals[ 9],ref materials[ 9]);}
+        if(0!=(Tables.EdgeTable[edgeIndex]&1024)){vertexInterp(2,6,ref vertices[10],ref normals[10],ref materials[10]);}
+        if(0!=(Tables.EdgeTable[edgeIndex]&2048)){vertexInterp(3,7,ref vertices[11],ref normals[11],ref materials[11]);}
+
+        void vertexInterp(int c0,int c1,ref Vector3 p,ref Vector3 n,ref MaterialId m){
+         density[0]=-polygonCell[c0].Density;vertex[0]=corners[c0];material[0]=polygonCell[c0].Material;
+         density[1]=-polygonCell[c1].Density;vertex[1]=corners[c1];material[1]=polygonCell[c1].Material;
+
+         //  p
+         if(Math.Abs(IsoLevel-density[0])<double.Epsilon){p=vertex[0];goto _Normal;}
+         if(Math.Abs(IsoLevel-density[1])<double.Epsilon){p=vertex[1];goto _Normal;}
+         if(Math.Abs(density[0]-density[1])<double.Epsilon){p=vertex[0];goto _Normal;}
+         double marchingUnit=(IsoLevel-density[0])/(density[1]-density[0]);
+         p.x=(float)(vertex[0].x+marchingUnit*(vertex[1].x-vertex[0].x));
+         p.y=(float)(vertex[0].y+marchingUnit*(vertex[1].y-vertex[0].y));
+         p.z=(float)(vertex[0].z+marchingUnit*(vertex[1].z-vertex[0].z));
+
+         //  n
+         _Normal:{
+          distance[0]=Vector3.Distance(vertex[0],vertex[1]);
+          distance[1]=Vector3.Distance(vertex[1],p);
+          n=Vector3.Lerp(
+           polygonCell[c1].Normal,
+           polygonCell[c0].Normal,
+           distance[1]/distance[0]
+          );
+          n=n!=Vector3.zero?n.normalized:Vector3.down;
+         }
+
+         //  m
+         m=material[0];
+         if(density[1]<density[0]){
+          m=material[1];
+         }else if(density[1]==density[0]&&(int)material[1]>(int)material[0]){
+          m=material[1];
+         }
+        }
+
+        /*  Create the triangle  */
+        for(int i=0;Tables.TriangleTable[edgeIndex][i]!=-1;i+=3){
+         idx[0]=Tables.TriangleTable[edgeIndex][i  ];
+         idx[1]=Tables.TriangleTable[edgeIndex][i+1];
+         idx[2]=Tables.TriangleTable[edgeIndex][i+2];
+
+         Vector3 pos=vCoord1-trianglePosAdj;pos.x+=posOffset.x;
+                                            pos.z+=posOffset.y;
+
+         Vector2 materialUV=AtlasHelper.uv[Mathf.Max((int)materials[idx[0]],
+                                                     (int)materials[idx[1]],
+                                                     (int)materials[idx[2]]
+                                                    )];
+
+         current.TempVer.Add(new Vertex(verPos[0]=pos+vertices[idx[0]],normals[idx[0]],materialUV));
+         current.TempVer.Add(new Vertex(verPos[1]=pos+vertices[idx[1]],normals[idx[1]],materialUV));
+         current.TempVer.Add(new Vertex(verPos[2]=pos+vertices[idx[2]],normals[idx[2]],materialUV));
+         current.TempTri.Add(vertexCount+2);
+         current.TempTri.Add(vertexCount+1);
+         current.TempTri.Add(vertexCount  );
+                             vertexCount+=3;
+
+         if(!vertexUV.ContainsKey(verPos[0])){vertexUV.Add(verPos[0],new List<Vector2>());}vertexUV[verPos[0]].Add(materialUV);
+         if(!vertexUV.ContainsKey(verPos[1])){vertexUV.Add(verPos[1],new List<Vector2>());}vertexUV[verPos[1]].Add(materialUV);
+         if(!vertexUV.ContainsKey(verPos[2])){vertexUV.Add(verPos[2],new List<Vector2>());}vertexUV[verPos[2]].Add(materialUV);
+        }
+
+        //  Cache the data
+        verticesCache[0][0][0]=vertices[ 4]+Vector3.back;//  Adiciona um valor "negativo" porque o voxelCoord próximo vai usar esse valor mas precisa obter "uma posição anterior"
+        verticesCache[0][0][1]=vertices[ 5]+Vector3.back;
+        verticesCache[0][0][2]=vertices[ 6]+Vector3.back;
+        verticesCache[0][0][3]=vertices[ 7]+Vector3.back;
+        verticesCache[1][vCoord1.z][0]=vertices[ 1]+Vector3.left;
+        verticesCache[1][vCoord1.z][1]=vertices[ 5]+Vector3.left;
+        verticesCache[1][vCoord1.z][2]=vertices[ 9]+Vector3.left;
+        verticesCache[1][vCoord1.z][3]=vertices[10]+Vector3.left;
+        verticesCache[2][vCoord1.z+vCoord1.x*Depth][0]=vertices[ 2]+Vector3.down;
+        verticesCache[2][vCoord1.z+vCoord1.x*Depth][1]=vertices[ 6]+Vector3.down;
+        verticesCache[2][vCoord1.z+vCoord1.x*Depth][2]=vertices[10]+Vector3.down;
+        verticesCache[2][vCoord1.z+vCoord1.x*Depth][3]=vertices[11]+Vector3.down;
+
+       }
+
+      }}}
+  
+      for(crdOffset.y=0,posOffset.y=0,
+          vCoord1.y=0;vCoord1.y<Height;vCoord1.y++){
+      for(vCoord1.z=0;vCoord1.z<Depth ;vCoord1.z++){
+          vCoord1.x=0;
+       //  east
+       crdOffset.x=1;
+       posOffset.x=Width;
+       AddEdgesvertexUV();
+                        
+          vCoord1.x=Width-1;
+       //  west
+       crdOffset.x=-1;
+       posOffset.x=-Width;
+       AddEdgesvertexUV();
+      }}
+      for(crdOffset.x=0,posOffset.x=0,
+          vCoord1.y=0;vCoord1.y<Height;vCoord1.y++){
+      for(vCoord1.x=0;vCoord1.x<Width ;vCoord1.x++){
+          vCoord1.z=0;
+       //  north
+       crdOffset.y=1;
+       posOffset.y=Depth;
+       AddEdgesvertexUV();
+
+          vCoord1.z=Depth-1;
+       //  south
+       crdOffset.y=-1;
+       posOffset.y=-Depth;
+       AddEdgesvertexUV();
+      }}
+      void AddEdgesvertexUV(){
+       int corner=0;Vector3Int vCoord2=vCoord1;                                       SetpolygonCellVoxel();
+           corner++;           vCoord2=vCoord1;vCoord2.x+=1;                          SetpolygonCellVoxel();
+           corner++;           vCoord2=vCoord1;vCoord2.x+=1;vCoord2.y+=1;             SetpolygonCellVoxel();
+           corner++;           vCoord2=vCoord1;             vCoord2.y+=1;             SetpolygonCellVoxel();
+           corner++;           vCoord2=vCoord1;                          vCoord2.z+=1;SetpolygonCellVoxel();
+           corner++;           vCoord2=vCoord1;vCoord2.x+=1;             vCoord2.z+=1;SetpolygonCellVoxel();
+           corner++;           vCoord2=vCoord1;vCoord2.x+=1;vCoord2.y+=1;vCoord2.z+=1;SetpolygonCellVoxel();
+           corner++;           vCoord2=vCoord1;             vCoord2.y+=1;vCoord2.z+=1;SetpolygonCellVoxel();
+       void SetpolygonCellVoxel(){
+        if(vCoord2.y<=0){
+         polygonCell[corner]=Voxel.Bedrock;/*  :fora do mundo, baixo  */
+        }else if(vCoord2.y>=Height){
+         polygonCell[corner]=Voxel.Air;/*  :fora do mundo, cima  */
+        }else{
+         Vector2Int cnkRgn2=current.cnkRgn_bg+posOffset;
+         Vector2Int cCoord2=current.cCoord_bg+crdOffset;
+         if(vCoord2.x<0||vCoord2.x>=Width||
+            vCoord2.z<0||vCoord2.z>=Depth
+         ){
+          ValidateCoord(ref cnkRgn2,ref vCoord2);
+          cCoord2=cnkRgnTocCoord(cnkRgn2);
+         }
+
+         int vxlIdx2=GetvxlIdx(vCoord2.x,vCoord2.y,vCoord2.z);
+
+         int oftIdx2=GetoftIdx(cCoord2-current.cCoord_bg);
+         /*  já construído:  */
+         if(oftIdx2==0&&voxels[vxlIdx2].IsCreated){
+          polygonCell[corner]=voxels[vxlIdx2];
+         }else if(oftIdx2>0&&neighbors[oftIdx2-1].ContainsKey(vxlIdx2)){
+          polygonCell[corner]=neighbors[oftIdx2-1][vxlIdx2];
+         }else{
+
+          //  pegar valor do bioma:
+          Vector3Int noiseInput=vCoord2;noiseInput.x+=cnkRgn2.x;
+                                        noiseInput.z+=cnkRgn2.y;
+          biome.Setvxl(noiseInput,noiseForHeightCache,materialIdPerHeightNoiseCache,oftIdx2,vCoord2.z+vCoord2.x*Depth,ref polygonCell[corner]);
+         }
+
+        }
+       }
+                    
+       int edgeIndex;
+       /*
+           Determine the index into the edge table which
+           tells us which vertices are inside of the surface
+       */
+                                           edgeIndex =  0;
+       if(-polygonCell[0].Density<IsoLevel)edgeIndex|=  1;
+       if(-polygonCell[1].Density<IsoLevel)edgeIndex|=  2;
+       if(-polygonCell[2].Density<IsoLevel)edgeIndex|=  4;
+       if(-polygonCell[3].Density<IsoLevel)edgeIndex|=  8;
+       if(-polygonCell[4].Density<IsoLevel)edgeIndex|= 16;
+       if(-polygonCell[5].Density<IsoLevel)edgeIndex|= 32;
+       if(-polygonCell[6].Density<IsoLevel)edgeIndex|= 64;
+       if(-polygonCell[7].Density<IsoLevel)edgeIndex|=128;
+       if(Tables.EdgeTable[edgeIndex]!=0){
+                        
+        if(0!=(Tables.EdgeTable[edgeIndex]&   1)){vertexInterp(0,1,ref vertices[ 0],ref materials[ 0]);}
+        if(0!=(Tables.EdgeTable[edgeIndex]&   2)){vertexInterp(1,2,ref vertices[ 1],ref materials[ 1]);}
+        if(0!=(Tables.EdgeTable[edgeIndex]&   4)){vertexInterp(2,3,ref vertices[ 2],ref materials[ 2]);}
+        if(0!=(Tables.EdgeTable[edgeIndex]&   8)){vertexInterp(3,0,ref vertices[ 3],ref materials[ 3]);}
+        if(0!=(Tables.EdgeTable[edgeIndex]&  16)){vertexInterp(4,5,ref vertices[ 4],ref materials[ 4]);}
+        if(0!=(Tables.EdgeTable[edgeIndex]&  32)){vertexInterp(5,6,ref vertices[ 5],ref materials[ 5]);}
+        if(0!=(Tables.EdgeTable[edgeIndex]&  64)){vertexInterp(6,7,ref vertices[ 6],ref materials[ 6]);}
+        if(0!=(Tables.EdgeTable[edgeIndex]& 128)){vertexInterp(7,4,ref vertices[ 7],ref materials[ 7]);}
+        if(0!=(Tables.EdgeTable[edgeIndex]& 256)){vertexInterp(0,4,ref vertices[ 8],ref materials[ 8]);}
+        if(0!=(Tables.EdgeTable[edgeIndex]& 512)){vertexInterp(1,5,ref vertices[ 9],ref materials[ 9]);}
+        if(0!=(Tables.EdgeTable[edgeIndex]&1024)){vertexInterp(2,6,ref vertices[10],ref materials[10]);}
+        if(0!=(Tables.EdgeTable[edgeIndex]&2048)){vertexInterp(3,7,ref vertices[11],ref materials[11]);}
+
+        void vertexInterp(int c0,int c1,ref Vector3 p,ref MaterialId m){
+         density[0]=-polygonCell[c0].Density;vertex[0]=corners[c0];material[0]=polygonCell[c0].Material;
+         density[1]=-polygonCell[c1].Density;vertex[1]=corners[c1];material[1]=polygonCell[c1].Material;
+
+         //  p
+         if(Math.Abs(IsoLevel-density[0])<double.Epsilon){p=vertex[0];goto _Material;}
+         if(Math.Abs(IsoLevel-density[1])<double.Epsilon){p=vertex[1];goto _Material;}
+         if(Math.Abs(density[0]-density[1])<double.Epsilon){p=vertex[0];goto _Material;}
+         double marchingUnit=(IsoLevel-density[0])/(density[1]-density[0]);
+         p.x=(float)(vertex[0].x+marchingUnit*(vertex[1].x-vertex[0].x));
+         p.y=(float)(vertex[0].y+marchingUnit*(vertex[1].y-vertex[0].y));
+         p.z=(float)(vertex[0].z+marchingUnit*(vertex[1].z-vertex[0].z));
+
+         _Material:{
+          m=material[0];
+          if(density[1]<density[0]){
+           m=material[1];
+          }else if(density[1]==density[0]&&(int)material[1]>(int)material[0]){
+           m=material[1];
+          }
+         }
+        }
+
+        /*  Create the triangle  */
+        for(int i=0;Tables.TriangleTable[edgeIndex][i]!=-1;i+=3){
+         idx[0]=Tables.TriangleTable[edgeIndex][i  ];
+         idx[1]=Tables.TriangleTable[edgeIndex][i+1];
+         idx[2]=Tables.TriangleTable[edgeIndex][i+2];
+
+         Vector3 pos=vCoord1-trianglePosAdj;pos.x+=posOffset.x;
+                                            pos.z+=posOffset.y;
+
+         Vector2 materialUV=AtlasHelper.uv[Mathf.Max((int)materials[idx[0]],
+                                                     (int)materials[idx[1]],
+                                                     (int)materials[idx[2]]
+                                                    )];
+
+         verPos[0]=pos+vertices[idx[0]];
+         verPos[1]=pos+vertices[idx[1]];
+         verPos[2]=pos+vertices[idx[2]];
+
+         if(!vertexUV.ContainsKey(verPos[0])){vertexUV.Add(verPos[0],new List<Vector2>());}vertexUV[verPos[0]].Add(materialUV);
+         if(!vertexUV.ContainsKey(verPos[1])){vertexUV.Add(verPos[1],new List<Vector2>());}vertexUV[verPos[1]].Add(materialUV);
+         if(!vertexUV.ContainsKey(verPos[2])){vertexUV.Add(verPos[2],new List<Vector2>());}vertexUV[verPos[2]].Add(materialUV);
+        }
+
+       }
+
       }
-      Vector3 polygonCellNormal=new Vector3{
-       x=(float)(tmpvxl[1].Density-tmpvxl[0].Density),
-       y=(float)(tmpvxl[3].Density-tmpvxl[2].Density),
-       z=(float)(tmpvxl[5].Density-tmpvxl[4].Density)
+
+      for(int i=0;i<current.TempVer.Length/3;i++){
+       idx[0]=i*3;
+       idx[1]=i*3+1;
+       idx[2]=i*3+2;
+       for(int j=0;j<3;j++){
+
+        var materialIdGroupingOrdered=vertexUV[verPos[j]=current.TempVer[idx[j]].pos].ToArray().Select(uv=>{return (MaterialId)Array.IndexOf(AtlasHelper.uv,uv);}).GroupBy(value=>value).OrderByDescending(group=>group.Key).ThenByDescending(group=>group.Count());
+        weights.Clear();
+        int total=0;
+
+        Vector2 uv0=current.TempVer[idx[j]].texCoord0;
+
+        foreach(var materialIdGroup in materialIdGroupingOrdered){
+         Vector2 uv=AtlasHelper.uv[(int)materialIdGroup.First()];
+
+         bool add;
+         if(uv0==uv){
+          total+=weights[0]=materialIdGroup.Count();
+
+         }else if(((add=current.TempVer[idx[j]].texCoord1==emptyUV)&&current.TempVer[idx[j]].texCoord2!=uv&&current.TempVer[idx[j]].texCoord3!=uv)||current.TempVer[idx[j]].texCoord1==uv){
+          if(add){
+           var v1=current.TempVer[idx[0]];v1.texCoord1=uv;current.TempVer[idx[0]]=v1;
+               v1=current.TempVer[idx[1]];v1.texCoord1=uv;current.TempVer[idx[1]]=v1;
+               v1=current.TempVer[idx[2]];v1.texCoord1=uv;current.TempVer[idx[2]]=v1;
+          }
+          total+=weights[1]=materialIdGroup.Count();
+
+         }else if(((add=current.TempVer[idx[j]].texCoord2==emptyUV)&&current.TempVer[idx[j]].texCoord3!=uv                                       )||current.TempVer[idx[j]].texCoord2==uv){
+          if(add){
+           var v1=current.TempVer[idx[0]];v1.texCoord2=uv;current.TempVer[idx[0]]=v1;
+               v1=current.TempVer[idx[1]];v1.texCoord2=uv;current.TempVer[idx[1]]=v1;
+               v1=current.TempVer[idx[2]];v1.texCoord2=uv;current.TempVer[idx[2]]=v1;
+          }
+          total+=weights[2]=materialIdGroup.Count();
+
+         }else if(((add=current.TempVer[idx[j]].texCoord3==emptyUV)                                                                              )||current.TempVer[idx[j]].texCoord3==uv){
+          if(add){
+           var v1=current.TempVer[idx[0]];v1.texCoord3=uv;current.TempVer[idx[0]]=v1;
+               v1=current.TempVer[idx[1]];v1.texCoord3=uv;current.TempVer[idx[1]]=v1;
+               v1=current.TempVer[idx[2]];v1.texCoord3=uv;current.TempVer[idx[2]]=v1;
+          }
+          total+=weights[3]=materialIdGroup.Count();
+
+         }
+        }
+
+        if(weights.Count>1){
+         var v2=current.TempVer[idx[j]];
+
+         Color col=v2.color;
+                                    col.r=(weights[0]/(float)total);
+         if(weights.ContainsKey(1)){col.g=(weights[1]/(float)total);}
+         if(weights.ContainsKey(2)){col.b=(weights[2]/(float)total);}
+         if(weights.ContainsKey(3)){col.a=(weights[3]/(float)total);}
+
+         v2.color=col;
+         current.TempVer[idx[j]]=v2;
+        }
+
+       }
+      }
+  
+      int GetoftIdx(Vector2Int offset){//  ..for neighbors
+       if(offset.x== 0&&offset.y== 0)return 0;
+       if(offset.x==-1&&offset.y== 0)return 1;
+       if(offset.x== 1&&offset.y== 0)return 2;
+       if(offset.x== 0&&offset.y==-1)return 3;
+       if(offset.x==-1&&offset.y==-1)return 4;
+       if(offset.x== 1&&offset.y==-1)return 5;
+       if(offset.x== 0&&offset.y== 1)return 6;
+       if(offset.x==-1&&offset.y== 1)return 7;
+       if(offset.x== 1&&offset.y== 1)return 8;
+       return -1;
+      }
+
+     }
+        
+     internal static readonly BaseBiome biome=new BaseBiome();
+     internal class BaseBiome{
+      protected readonly System.Random[]random=new System.Random[2];
+
+      protected virtual int rndIdx{get{return 1;}}
+
+      int seed_v;
+      internal int Seed{
+       get{
+        return seed_v;
+       }
+       set{
+        seed_v=value;
+
+        random[0]=new System.Random(seed_v);
+        random[1]=new System.Random(random[0].Next());
+
+        treeChancePerlin=new Perlin(frequency:Mathf.Pow(2,-2),lacunarity:2.0,persistence:0.5,octaves:6,seed:seed_v,quality:QualityMode.Low);
+
+        SetModules();
+
+        Debug.Log("seed set: "+seed_v);
+       }
+      }
+
+      protected readonly List<ModuleBase>modules=new List<ModuleBase>();
+
+      protected virtual void SetModules(){
+       modules.Add(new Const( 0));
+       modules.Add(new Const( 1));
+       modules.Add(new Const(-1));
+       modules.Add(new Const(.5));
+       modules.Add(new Const(128));
+
+       ModuleBase module1=new Const(5);
+        // 2
+        ModuleBase module2a=new RidgedMultifractal(frequency:Mathf.Pow(2,-8),lacunarity:2.0,octaves:6,seed:random[rndIdx].Next(),quality:QualityMode.Low);
+        ModuleBase module2b=new Turbulence(input:module2a); 
+        ((Turbulence)module2b).Seed=random[rndIdx].Next();
+        ((Turbulence)module2b).Frequency=Mathf.Pow(2,-2);
+        ((Turbulence)module2b).Power=1;
+        ModuleBase module2c=new ScaleBias(scale:1.0,bias:30.0,input:module2b);  
+         // 3
+         ModuleBase module3a=new Billow(frequency:Mathf.Pow(2,-7)*1.6,lacunarity:2.0,persistence:0.5,octaves:8,seed:random[rndIdx].Next(),quality:QualityMode.Low);
+         ModuleBase module3b=new Turbulence(input:module3a);
+         ((Turbulence)module3b).Seed=random[rndIdx].Next();
+         ((Turbulence)module3b).Frequency=Mathf.Pow(2,-2);  
+         ((Turbulence)module3b).Power=1.8;
+         ModuleBase module3c=new ScaleBias(scale:1.0,bias:31.0,input:module3b);
+          // 4
+          ModuleBase module4a=new Perlin(frequency:Mathf.Pow(2,-6),lacunarity:2.0,persistence:0.5,octaves:6,seed:random[rndIdx].Next(),quality:QualityMode.Low);
+          ModuleBase module4b=new Select(inputA:module2c,inputB:module3c,controller:module4a);
+          ((Select)module4b).SetBounds(min:-.2,max:.2);
+          ((Select)module4b).FallOff=.25;
+          ModuleBase module4c=new Multiply(lhs:module4b,rhs:module1);
+       modules.Add(module4c);
+
+       selectors[0]=(Select)module4b;
+      }
+
+      protected virtual int hgtIdx1{get{return 5;}}//  Base Height Result Module
+
+      internal virtual int heightsCacheLength{get{return 1;}}
+
+      #region Setvxl
+      protected Vector3 deround{get;}=new Vector3(.5f,.5f,.5f);
+      internal void Setvxl(Vector3Int noiseInputRounded,double[][][]noiseForHeightCache,MaterialId[][][]materialIdPerHeightNoiseCache,int oftIdx,int noiseIndex,ref Voxel vxl){
+                   Vector3 noiseInput=noiseInputRounded+deround;
+
+       if(noiseForHeightCache!=null&&noiseForHeightCache[0][oftIdx]==null)noiseForHeightCache[0][oftIdx]=new double[FlattenOffset];
+
+       double noiseValue=(noiseForHeightCache!=null&&noiseForHeightCache[0][oftIdx][noiseIndex]!=0)?
+        noiseForHeightCache[0][oftIdx][noiseIndex]:
+         (noiseForHeightCache!=null?
+          (noiseForHeightCache[0][oftIdx][noiseIndex]=Noise()):
+           Noise());
+                    
+       double Noise(){return modules[hgtIdx1].GetValue(noiseInput.z,noiseInput.x,0);}
+
+       if(materialIdPerHeightNoiseCache!=null&&materialIdPerHeightNoiseCache[0][oftIdx]==null)materialIdPerHeightNoiseCache[0][oftIdx]=new MaterialId[FlattenOffset];
+
+       if(noiseInput.y<=noiseValue){
+        double d;
+
+        vxl=new Voxel(d=Density(100,noiseInput,noiseValue),Vector3.zero,Material(d,noiseInput,materialIdPerHeightNoiseCache,oftIdx,noiseIndex));
+
+        return;
+       }
+
+       vxl=Voxel.Air;
+      }
+
+      protected virtual double Density(double density,Vector3 noiseInput,double noiseValue,float smoothing=3f){
+       double value=density;
+       double delta=noiseValue-noiseInput.y;//  noiseInput.y sempre será menor ou igual a noiseValue
+
+       if(delta<=smoothing){
+        double smoothingValue=(smoothing-delta)/smoothing;
+        value*=1d-smoothingValue;
+        if(value<0)
+           value=0;
+        else if(value>100)
+                value=100;
+       }
+
+       return value;
+      }
+
+      readonly protected MaterialId[]materialIdPicking=new MaterialId[2]{
+       MaterialId.Rock,
+       MaterialId.Dirt,
       };
 
-      polygonCell[corner].Normal=polygonCellNormal;
-      if(polygonCell[corner].Normal!=Vector3.zero){
-       polygonCell[corner].Normal.Normalize();
+      protected virtual MaterialId Material(double density,Vector3 noiseInput,MaterialId[][][]materialIdPerHeightNoiseCache,int oftIdx,int noiseIndex){
+
+       if(-density>=IsoLevel){
+        return MaterialId.Air;
+       }
+
+       if(materialIdPerHeightNoiseCache!=null&&materialIdPerHeightNoiseCache[0][oftIdx][noiseIndex]!=0){
+        return materialIdPerHeightNoiseCache[0][oftIdx][noiseIndex];
+       }
+
+       MaterialId m;
+
+       m=materialIdPicking[Select(noiseInput)];
+
+       return materialIdPerHeightNoiseCache!=null?materialIdPerHeightNoiseCache[0][oftIdx][noiseIndex]=m:m;
       }
 
-      if(oftIdx2==0){
-       voxels[vxlIdx2]=polygonCell[corner];
-      }else if(oftIdx2>0){
-       neighbors[oftIdx2-1][vxlIdx2]=polygonCell[corner];
-      }//  :salvar valor construído
+      readonly protected Select[]selectors=new Select[1];
 
-     }
-     voxelsCache2[0][0]=polygonCell[corner];
-     voxelsCache2[1][vCoord2.z]=polygonCell[corner];
-     voxelsCache2[2][vCoord2.z+vCoord2.x*Depth]=polygonCell[corner];
+      protected virtual int Select(Vector3 noiseInput){
+       double min=selectors[0].Minimum;
+       double max=selectors[0].Maximum;
+       double fallOff=selectors[0].FallOff*.5;
 
-    }
+       var selectValue=selectors[0].Controller.GetValue(noiseInput.z,noiseInput.x,0);
 
-   }
-
-   int edgeIndex;
-   /*
-       Determine the index into the edge table which
-       tells us which vertices are inside of the surface
-   */
-                                       edgeIndex =  0;
-   if(-polygonCell[0].Density<IsoLevel)edgeIndex|=  1;
-   if(-polygonCell[1].Density<IsoLevel)edgeIndex|=  2;
-   if(-polygonCell[2].Density<IsoLevel)edgeIndex|=  4;
-   if(-polygonCell[3].Density<IsoLevel)edgeIndex|=  8;
-   if(-polygonCell[4].Density<IsoLevel)edgeIndex|= 16;
-   if(-polygonCell[5].Density<IsoLevel)edgeIndex|= 32;
-   if(-polygonCell[6].Density<IsoLevel)edgeIndex|= 64;
-   if(-polygonCell[7].Density<IsoLevel)edgeIndex|=128;
-   if(Tables.EdgeTable[edgeIndex]!=0){/*  Cube is not entirely in/out of the surface  */
-
-    //  Use cached data if available
-    vertices[ 0]=(vCoord1.z>0?verticesCache[0][0][0]:(vCoord1.y>0?verticesCache[2][vCoord1.z+vCoord1.x*Depth][0]:Vector3.zero));
-    vertices[ 1]=(vCoord1.z>0?verticesCache[0][0][1]:Vector3.zero);
-    vertices[ 2]=(vCoord1.z>0?verticesCache[0][0][2]:Vector3.zero);
-    vertices[ 3]=(vCoord1.z>0?verticesCache[0][0][3]:(vCoord1.x>0?verticesCache[1][vCoord1.z][0]:Vector3.zero));
-    vertices[ 4]=(vCoord1.y>0?verticesCache[2][vCoord1.z+vCoord1.x*Depth][1]:Vector3.zero);
-    vertices[ 7]=(vCoord1.x>0?verticesCache[1][vCoord1.z][1]:Vector3.zero);
-    vertices[ 8]=(vCoord1.x>0?verticesCache[1][vCoord1.z][2]:(vCoord1.y>0?verticesCache[2][vCoord1.z+vCoord1.x*Depth][3]:Vector3.zero));
-    vertices[ 9]=(vCoord1.y>0?verticesCache[2][vCoord1.z+vCoord1.x*Depth][2]:Vector3.zero);
-    vertices[11]=(vCoord1.x>0?verticesCache[1][vCoord1.z][3]:Vector3.zero);
-                                
-    if(0!=(Tables.EdgeTable[edgeIndex]&   1)){vertexInterp(0,1,ref vertices[ 0],ref normals[ 0],ref materials[ 0]);}
-    if(0!=(Tables.EdgeTable[edgeIndex]&   2)){vertexInterp(1,2,ref vertices[ 1],ref normals[ 1],ref materials[ 1]);}
-    if(0!=(Tables.EdgeTable[edgeIndex]&   4)){vertexInterp(2,3,ref vertices[ 2],ref normals[ 2],ref materials[ 2]);}
-    if(0!=(Tables.EdgeTable[edgeIndex]&   8)){vertexInterp(3,0,ref vertices[ 3],ref normals[ 3],ref materials[ 3]);}
-    if(0!=(Tables.EdgeTable[edgeIndex]&  16)){vertexInterp(4,5,ref vertices[ 4],ref normals[ 4],ref materials[ 4]);}
-    if(0!=(Tables.EdgeTable[edgeIndex]&  32)){vertexInterp(5,6,ref vertices[ 5],ref normals[ 5],ref materials[ 5]);}
-    if(0!=(Tables.EdgeTable[edgeIndex]&  64)){vertexInterp(6,7,ref vertices[ 6],ref normals[ 6],ref materials[ 6]);}
-    if(0!=(Tables.EdgeTable[edgeIndex]& 128)){vertexInterp(7,4,ref vertices[ 7],ref normals[ 7],ref materials[ 7]);}
-    if(0!=(Tables.EdgeTable[edgeIndex]& 256)){vertexInterp(0,4,ref vertices[ 8],ref normals[ 8],ref materials[ 8]);}
-    if(0!=(Tables.EdgeTable[edgeIndex]& 512)){vertexInterp(1,5,ref vertices[ 9],ref normals[ 9],ref materials[ 9]);}
-    if(0!=(Tables.EdgeTable[edgeIndex]&1024)){vertexInterp(2,6,ref vertices[10],ref normals[10],ref materials[10]);}
-    if(0!=(Tables.EdgeTable[edgeIndex]&2048)){vertexInterp(3,7,ref vertices[11],ref normals[11],ref materials[11]);}
-
-    void vertexInterp(int c0,int c1,ref Vector3 p,ref Vector3 n,ref MaterialId m){
-     density[0]=-polygonCell[c0].Density;vertex[0]=corners[c0];material[0]=polygonCell[c0].Material;
-     density[1]=-polygonCell[c1].Density;vertex[1]=corners[c1];material[1]=polygonCell[c1].Material;
-
-     //  p
-     if(Math.Abs(IsoLevel-density[0])<double.Epsilon){p=vertex[0];goto _Normal;}
-     if(Math.Abs(IsoLevel-density[1])<double.Epsilon){p=vertex[1];goto _Normal;}
-     if(Math.Abs(density[0]-density[1])<double.Epsilon){p=vertex[0];goto _Normal;}
-     double marchingUnit=(IsoLevel-density[0])/(density[1]-density[0]);
-     p.x=(float)(vertex[0].x+marchingUnit*(vertex[1].x-vertex[0].x));
-     p.y=(float)(vertex[0].y+marchingUnit*(vertex[1].y-vertex[0].y));
-     p.z=(float)(vertex[0].z+marchingUnit*(vertex[1].z-vertex[0].z));
-
-     //  n
-     _Normal:{
-      distance[0]=Vector3.Distance(vertex[0],vertex[1]);
-      distance[1]=Vector3.Distance(vertex[1],p);
-      n=Vector3.Lerp(
-       polygonCell[c1].Normal,
-       polygonCell[c0].Normal,
-       distance[1]/distance[0]
-      );
-      n=n!=Vector3.zero?n.normalized:Vector3.down;
-     }
-
-     //  m
-     m=material[0];
-     if(density[1]<density[0]){
-      m=material[1];
-     }else if(density[1]==density[0]&&(int)material[1]>(int)material[0]){
-      m=material[1];
-     }
-    }
-
-    /*  Create the triangle  */
-    for(int i=0;Tables.TriangleTable[edgeIndex][i]!=-1;i+=3){
-     idx[0]=Tables.TriangleTable[edgeIndex][i  ];
-     idx[1]=Tables.TriangleTable[edgeIndex][i+1];
-     idx[2]=Tables.TriangleTable[edgeIndex][i+2];
-
-     Vector3 pos=vCoord1-trianglePosAdj;pos.x+=posOffset.x;
-                                        pos.z+=posOffset.y;
-
-     Vector2 materialUV=AtlasHelper.uv[Mathf.Max((int)materials[idx[0]],
-                                                 (int)materials[idx[1]],
-                                                 (int)materials[idx[2]]
-                                                )];
-
-     current.TempVer.Add(new Vertex(verPos[0]=pos+vertices[idx[0]],normals[idx[0]],materialUV));
-     current.TempVer.Add(new Vertex(verPos[1]=pos+vertices[idx[1]],normals[idx[1]],materialUV));
-     current.TempVer.Add(new Vertex(verPos[2]=pos+vertices[idx[2]],normals[idx[2]],materialUV));
-     current.TempTri.Add(vertexCount+2);
-     current.TempTri.Add(vertexCount+1);
-     current.TempTri.Add(vertexCount  );
-                         vertexCount+=3;
-
-     if(!vertexUV.ContainsKey(verPos[0])){vertexUV.Add(verPos[0],new List<Vector2>());}vertexUV[verPos[0]].Add(materialUV);
-     if(!vertexUV.ContainsKey(verPos[1])){vertexUV.Add(verPos[1],new List<Vector2>());}vertexUV[verPos[1]].Add(materialUV);
-     if(!vertexUV.ContainsKey(verPos[2])){vertexUV.Add(verPos[2],new List<Vector2>());}vertexUV[verPos[2]].Add(materialUV);
-    }
-
-    //  Cache the data
-    verticesCache[0][0][0]=vertices[ 4]+Vector3.back;//  Adiciona um valor "negativo" porque o voxelCoord próximo vai usar esse valor mas precisa obter "uma posição anterior"
-    verticesCache[0][0][1]=vertices[ 5]+Vector3.back;
-    verticesCache[0][0][2]=vertices[ 6]+Vector3.back;
-    verticesCache[0][0][3]=vertices[ 7]+Vector3.back;
-    verticesCache[1][vCoord1.z][0]=vertices[ 1]+Vector3.left;
-    verticesCache[1][vCoord1.z][1]=vertices[ 5]+Vector3.left;
-    verticesCache[1][vCoord1.z][2]=vertices[ 9]+Vector3.left;
-    verticesCache[1][vCoord1.z][3]=vertices[10]+Vector3.left;
-    verticesCache[2][vCoord1.z+vCoord1.x*Depth][0]=vertices[ 2]+Vector3.down;
-    verticesCache[2][vCoord1.z+vCoord1.x*Depth][1]=vertices[ 6]+Vector3.down;
-    verticesCache[2][vCoord1.z+vCoord1.x*Depth][2]=vertices[10]+Vector3.down;
-    verticesCache[2][vCoord1.z+vCoord1.x*Depth][3]=vertices[11]+Vector3.down;
-
-   }
-
-  }}}
-  
-  for(crdOffset.y=0,posOffset.y=0,
-      vCoord1.y=0;vCoord1.y<Height;vCoord1.y++){
-  for(vCoord1.z=0;vCoord1.z<Depth ;vCoord1.z++){
-      vCoord1.x=0;
-   //  east
-   crdOffset.x=1;
-   posOffset.x=Width;
-   AddEdgesvertexUV();
-                        
-      vCoord1.x=Width-1;
-   //  west
-   crdOffset.x=-1;
-   posOffset.x=-Width;
-   AddEdgesvertexUV();
-  }}
-  for(crdOffset.x=0,posOffset.x=0,
-      vCoord1.y=0;vCoord1.y<Height;vCoord1.y++){
-  for(vCoord1.x=0;vCoord1.x<Width ;vCoord1.x++){
-      vCoord1.z=0;
-   //  north
-   crdOffset.y=1;
-   posOffset.y=Depth;
-   AddEdgesvertexUV();
-
-      vCoord1.z=Depth-1;
-   //  south
-   crdOffset.y=-1;
-   posOffset.y=-Depth;
-   AddEdgesvertexUV();
-  }}
-  void AddEdgesvertexUV(){
-   int corner=0;Vector3Int vCoord2=vCoord1;                                       SetpolygonCellVoxel();
-       corner++;           vCoord2=vCoord1;vCoord2.x+=1;                          SetpolygonCellVoxel();
-       corner++;           vCoord2=vCoord1;vCoord2.x+=1;vCoord2.y+=1;             SetpolygonCellVoxel();
-       corner++;           vCoord2=vCoord1;             vCoord2.y+=1;             SetpolygonCellVoxel();
-       corner++;           vCoord2=vCoord1;                          vCoord2.z+=1;SetpolygonCellVoxel();
-       corner++;           vCoord2=vCoord1;vCoord2.x+=1;             vCoord2.z+=1;SetpolygonCellVoxel();
-       corner++;           vCoord2=vCoord1;vCoord2.x+=1;vCoord2.y+=1;vCoord2.z+=1;SetpolygonCellVoxel();
-       corner++;           vCoord2=vCoord1;             vCoord2.y+=1;vCoord2.z+=1;SetpolygonCellVoxel();
-   void SetpolygonCellVoxel(){
-    if(vCoord2.y<=0){
-     polygonCell[corner]=Voxel.Bedrock;/*  :fora do mundo, baixo  */
-    }else if(vCoord2.y>=Height){
-     polygonCell[corner]=Voxel.Air;/*  :fora do mundo, cima  */
-    }else{
-     Vector2Int cnkRgn2=current.cnkRgn_bg+posOffset;
-     Vector2Int cCoord2=current.cCoord_bg+crdOffset;
-     if(vCoord2.x<0||vCoord2.x>=Width||
-        vCoord2.z<0||vCoord2.z>=Depth
-     ){
-      ValidateCoord(ref cnkRgn2,ref vCoord2);
-      cCoord2=cnkRgnTocCoord(cnkRgn2);
-     }
-
-     int vxlIdx2=GetvxlIdx(vCoord2.x,vCoord2.y,vCoord2.z);
-
-     int oftIdx2=GetoftIdx(cCoord2-current.cCoord_bg);
-     /*  já construído:  */
-     if(oftIdx2==0&&voxels[vxlIdx2].IsCreated){
-      polygonCell[corner]=voxels[vxlIdx2];
-     }else if(oftIdx2>0&&neighbors[oftIdx2-1].ContainsKey(vxlIdx2)){
-      polygonCell[corner]=neighbors[oftIdx2-1][vxlIdx2];
-     }else{
-
-      //  pegar valor do bioma:
-      Vector3Int noiseInput=vCoord2;noiseInput.x+=cnkRgn2.x;
-                                    noiseInput.z+=cnkRgn2.y;
-      biome.Setvxl(noiseInput,noiseForHeightCache,materialIdPerHeightNoiseCache,oftIdx2,vCoord2.z+vCoord2.x*Depth,ref polygonCell[corner]);
-     }
-
-    }
-   }
-                    
-   int edgeIndex;
-   /*
-       Determine the index into the edge table which
-       tells us which vertices are inside of the surface
-   */
-                                       edgeIndex =  0;
-   if(-polygonCell[0].Density<IsoLevel)edgeIndex|=  1;
-   if(-polygonCell[1].Density<IsoLevel)edgeIndex|=  2;
-   if(-polygonCell[2].Density<IsoLevel)edgeIndex|=  4;
-   if(-polygonCell[3].Density<IsoLevel)edgeIndex|=  8;
-   if(-polygonCell[4].Density<IsoLevel)edgeIndex|= 16;
-   if(-polygonCell[5].Density<IsoLevel)edgeIndex|= 32;
-   if(-polygonCell[6].Density<IsoLevel)edgeIndex|= 64;
-   if(-polygonCell[7].Density<IsoLevel)edgeIndex|=128;
-   if(Tables.EdgeTable[edgeIndex]!=0){
-                        
-    if(0!=(Tables.EdgeTable[edgeIndex]&   1)){vertexInterp(0,1,ref vertices[ 0],ref materials[ 0]);}
-    if(0!=(Tables.EdgeTable[edgeIndex]&   2)){vertexInterp(1,2,ref vertices[ 1],ref materials[ 1]);}
-    if(0!=(Tables.EdgeTable[edgeIndex]&   4)){vertexInterp(2,3,ref vertices[ 2],ref materials[ 2]);}
-    if(0!=(Tables.EdgeTable[edgeIndex]&   8)){vertexInterp(3,0,ref vertices[ 3],ref materials[ 3]);}
-    if(0!=(Tables.EdgeTable[edgeIndex]&  16)){vertexInterp(4,5,ref vertices[ 4],ref materials[ 4]);}
-    if(0!=(Tables.EdgeTable[edgeIndex]&  32)){vertexInterp(5,6,ref vertices[ 5],ref materials[ 5]);}
-    if(0!=(Tables.EdgeTable[edgeIndex]&  64)){vertexInterp(6,7,ref vertices[ 6],ref materials[ 6]);}
-    if(0!=(Tables.EdgeTable[edgeIndex]& 128)){vertexInterp(7,4,ref vertices[ 7],ref materials[ 7]);}
-    if(0!=(Tables.EdgeTable[edgeIndex]& 256)){vertexInterp(0,4,ref vertices[ 8],ref materials[ 8]);}
-    if(0!=(Tables.EdgeTable[edgeIndex]& 512)){vertexInterp(1,5,ref vertices[ 9],ref materials[ 9]);}
-    if(0!=(Tables.EdgeTable[edgeIndex]&1024)){vertexInterp(2,6,ref vertices[10],ref materials[10]);}
-    if(0!=(Tables.EdgeTable[edgeIndex]&2048)){vertexInterp(3,7,ref vertices[11],ref materials[11]);}
-
-    void vertexInterp(int c0,int c1,ref Vector3 p,ref MaterialId m){
-     density[0]=-polygonCell[c0].Density;vertex[0]=corners[c0];material[0]=polygonCell[c0].Material;
-     density[1]=-polygonCell[c1].Density;vertex[1]=corners[c1];material[1]=polygonCell[c1].Material;
-
-     //  p
-     if(Math.Abs(IsoLevel-density[0])<double.Epsilon){p=vertex[0];goto _Material;}
-     if(Math.Abs(IsoLevel-density[1])<double.Epsilon){p=vertex[1];goto _Material;}
-     if(Math.Abs(density[0]-density[1])<double.Epsilon){p=vertex[0];goto _Material;}
-     double marchingUnit=(IsoLevel-density[0])/(density[1]-density[0]);
-     p.x=(float)(vertex[0].x+marchingUnit*(vertex[1].x-vertex[0].x));
-     p.y=(float)(vertex[0].y+marchingUnit*(vertex[1].y-vertex[0].y));
-     p.z=(float)(vertex[0].z+marchingUnit*(vertex[1].z-vertex[0].z));
-
-     _Material:{
-      m=material[0];
-      if(density[1]<density[0]){
-       m=material[1];
-      }else if(density[1]==density[0]&&(int)material[1]>(int)material[0]){
-       m=material[1];
+       if(selectValue<=min-fallOff||selectValue>=max+fallOff){
+        return 1;
+       }else{
+        return 0;
+       }
       }
-     }
-    }
+      #endregion
 
-    /*  Create the triangle  */
-    for(int i=0;Tables.TriangleTable[edgeIndex][i]!=-1;i+=3){
-     idx[0]=Tables.TriangleTable[edgeIndex][i  ];
-     idx[1]=Tables.TriangleTable[edgeIndex][i+1];
-     idx[2]=Tables.TriangleTable[edgeIndex][i+2];
-
-     Vector3 pos=vCoord1-trianglePosAdj;pos.x+=posOffset.x;
-                                        pos.z+=posOffset.y;
-
-     Vector2 materialUV=AtlasHelper.uv[Mathf.Max((int)materials[idx[0]],
-                                                 (int)materials[idx[1]],
-                                                 (int)materials[idx[2]]
-                                                )];
-
-     verPos[0]=pos+vertices[idx[0]];
-     verPos[1]=pos+vertices[idx[1]];
-     verPos[2]=pos+vertices[idx[2]];
-
-     if(!vertexUV.ContainsKey(verPos[0])){vertexUV.Add(verPos[0],new List<Vector2>());}vertexUV[verPos[0]].Add(materialUV);
-     if(!vertexUV.ContainsKey(verPos[1])){vertexUV.Add(verPos[1],new List<Vector2>());}vertexUV[verPos[1]].Add(materialUV);
-     if(!vertexUV.ContainsKey(verPos[2])){vertexUV.Add(verPos[2],new List<Vector2>());}vertexUV[verPos[2]].Add(materialUV);
-    }
-
-   }
-
-  }
-
-  for(int i=0;i<current.TempVer.Length/3;i++){
-   idx[0]=i*3;
-   idx[1]=i*3+1;
-   idx[2]=i*3+2;
-   for(int j=0;j<3;j++){
-
-    var materialIdGroupingOrdered=vertexUV[verPos[j]=current.TempVer[idx[j]].pos].ToArray().Select(uv=>{return (MaterialId)Array.IndexOf(AtlasHelper.uv,uv);}).GroupBy(value=>value).OrderByDescending(group=>group.Key).ThenByDescending(group=>group.Count());
-    weights.Clear();
-    int total=0;
-
-    Vector2 uv0=current.TempVer[idx[j]].texCoord0;
-
-    foreach(var materialIdGroup in materialIdGroupingOrdered){
-     Vector2 uv=AtlasHelper.uv[(int)materialIdGroup.First()];
-
-     bool add;
-     if(uv0==uv){
-      total+=weights[0]=materialIdGroup.Count();
-
-     }else if(((add=current.TempVer[idx[j]].texCoord1==emptyUV)&&current.TempVer[idx[j]].texCoord2!=uv&&current.TempVer[idx[j]].texCoord3!=uv)||current.TempVer[idx[j]].texCoord1==uv){
-      if(add){
-       var v1=current.TempVer[idx[0]];v1.texCoord1=uv;current.TempVer[idx[0]]=v1;
-           v1=current.TempVer[idx[1]];v1.texCoord1=uv;current.TempVer[idx[1]]=v1;
-           v1=current.TempVer[idx[2]];v1.texCoord1=uv;current.TempVer[idx[2]]=v1;
+      internal class TreeData{
+       internal float chance=1f;
+       internal float verticalRotationFactor=1f;
+       internal Vector3 minScale=Vector3.one;
+       internal Vector3 maxScale=Vector3.one;
+       internal float rootsDepth=1f;
+       internal Vector3 spacing=Vector3.one;
       }
-      total+=weights[1]=materialIdGroup.Count();
 
-     }else if(((add=current.TempVer[idx[j]].texCoord2==emptyUV)&&current.TempVer[idx[j]].texCoord3!=uv                                       )||current.TempVer[idx[j]].texCoord2==uv){
-      if(add){
-       var v1=current.TempVer[idx[0]];v1.texCoord2=uv;current.TempVer[idx[0]]=v1;
-           v1=current.TempVer[idx[1]];v1.texCoord2=uv;current.TempVer[idx[1]]=v1;
-           v1=current.TempVer[idx[2]];v1.texCoord2=uv;current.TempVer[idx[2]]=v1;
-      }
-      total+=weights[2]=materialIdGroup.Count();
+      readonly protected Dictionary<Type,TreeData>treesData=new Dictionary<Type,TreeData>(){
+       {
+        typeof(Pinus_elliottii),
+        new TreeData{
+         chance=.95f,
+         verticalRotationFactor=.125f,
+         minScale=Vector3.one*.5f,
+         maxScale=Vector3.one*1.5f,
+         rootsDepth=1.2f,
+         spacing=Vector3.one*1.2f*2f,
+        }
+       },
+      };
 
-     }else if(((add=current.TempVer[idx[j]].texCoord3==emptyUV)                                                                              )||current.TempVer[idx[j]].texCoord3==uv){
-      if(add){
-       var v1=current.TempVer[idx[0]];v1.texCoord3=uv;current.TempVer[idx[0]]=v1;
-           v1=current.TempVer[idx[1]];v1.texCoord3=uv;current.TempVer[idx[1]]=v1;
-           v1=current.TempVer[idx[2]];v1.texCoord3=uv;current.TempVer[idx[2]]=v1;
+      readonly protected Dictionary<int,Type[]>treePicking=new Dictionary<int,Type[]>{
+       {
+        1,
+        new Type[]{
+         typeof(Pinus_elliottii),
+        }
+       },
+      };
+
+      protected Perlin treeChancePerlin;
+
+      internal (Type tree,TreeData treeData)?Tree(Vector3Int noiseInputRounded){
+                                          Vector3 noiseInput=noiseInputRounded+deround;
+       if(treePicking.TryGetValue(Select(noiseInput),out Type[]treesPicked)){
+        //  To do: random chance to use tree selected
+        foreach(Type tree in treesPicked){TreeData treeData=treesData[tree];
+         float chance=treeData.chance/treesPicked.Length;
+         float dicing=((float)treeChancePerlin.GetValue(noiseInput.z,noiseInput.x,0)+1f)/2f;
+         //Debug.Log("dicing:"+dicing+" of chance:"+chance+"; result:"+(dicing<=chance));
+         if(dicing<=chance){
+          return(tree,treeData);
+         }
+        }
+       }
+       return null;
       }
-      total+=weights[3]=materialIdGroup.Count();
+
+      internal struct TreeModifiersResults{
+       internal float rotation;
+       internal Vector3 scale;
+      }
+
+      internal virtual TreeModifiersResults TreeModifiers(Vector3Int noiseInputRounded,TreeData treeData,Perlin treeRotationModifierPerlin,Perlin treeScaleModifierPerlin){
+                                                  Vector3 noiseInput=noiseInputRounded+deround;
+       float rotation=(float)treeRotationModifierPerlin.GetValue(noiseInput.z,noiseInput.x,0)*180f;
+       Vector3 scale=Vector3.Lerp(treeData.minScale,treeData.maxScale,Mathf.Clamp01(((float)treeScaleModifierPerlin.GetValue(noiseInput.z,noiseInput.x,0)+1f)/2f));
+       return new TreeModifiersResults{
+        rotation=rotation,
+        scale=scale,
+       };
+      }
 
      }
-    }
 
-    if(weights.Count>1){
-     var v2=current.TempVer[idx[j]];
+     internal static class AtlasHelper{
 
-     Color col=v2.color;
-                                col.r=(weights[0]/(float)total);
-     if(weights.ContainsKey(1)){col.g=(weights[1]/(float)total);}
-     if(weights.ContainsKey(2)){col.b=(weights[2]/(float)total);}
-     if(weights.ContainsKey(3)){col.a=(weights[3]/(float)total);}
+      internal static Material material{get;private set;}
 
-     v2.color=col;
-     current.TempVer[idx[j]]=v2;
-    }
-
-   }
-  }
-  
-  int GetoftIdx(Vector2Int offset){//  ..for neighbors
-   if(offset.x== 0&&offset.y== 0)return 0;
-   if(offset.x==-1&&offset.y== 0)return 1;
-   if(offset.x== 1&&offset.y== 0)return 2;
-   if(offset.x== 0&&offset.y==-1)return 3;
-   if(offset.x==-1&&offset.y==-1)return 4;
-   if(offset.x== 1&&offset.y==-1)return 5;
-   if(offset.x== 0&&offset.y== 1)return 6;
-   if(offset.x==-1&&offset.y== 1)return 7;
-   if(offset.x== 1&&offset.y== 1)return 8;
-   return -1;
-  }
-
- }
-        
- internal static readonly BaseBiome biome=new BaseBiome();
- internal class BaseBiome{
-  protected readonly System.Random[]random=new System.Random[2];
-
-  protected virtual int rndIdx{get{return 1;}}
-
-  int seed_v;
-  internal int Seed{
-   get{
-    return seed_v;
-   }
-   set{
-    seed_v=value;
-
-    random[0]=new System.Random(seed_v);
-    random[1]=new System.Random(random[0].Next());
-
-    treeChancePerlin=new Perlin(frequency:Mathf.Pow(2,-2),lacunarity:2.0,persistence:0.5,octaves:6,seed:seed_v,quality:QualityMode.Low);
-
-    SetModules();
-
-    Debug.Log("seed set: "+seed_v);
-   }
-  }
-
-  protected readonly List<ModuleBase>modules=new List<ModuleBase>();
-
-  protected virtual void SetModules(){
-   modules.Add(new Const( 0));
-   modules.Add(new Const( 1));
-   modules.Add(new Const(-1));
-   modules.Add(new Const(.5));
-   modules.Add(new Const(128));
-
-   ModuleBase module1=new Const(5);
-    // 2
-    ModuleBase module2a=new RidgedMultifractal(frequency:Mathf.Pow(2,-8),lacunarity:2.0,octaves:6,seed:random[rndIdx].Next(),quality:QualityMode.Low);
-    ModuleBase module2b=new Turbulence(input:module2a); 
-    ((Turbulence)module2b).Seed=random[rndIdx].Next();
-    ((Turbulence)module2b).Frequency=Mathf.Pow(2,-2);
-    ((Turbulence)module2b).Power=1;
-    ModuleBase module2c=new ScaleBias(scale:1.0,bias:30.0,input:module2b);  
-     // 3
-     ModuleBase module3a=new Billow(frequency:Mathf.Pow(2,-7)*1.6,lacunarity:2.0,persistence:0.5,octaves:8,seed:random[rndIdx].Next(),quality:QualityMode.Low);
-     ModuleBase module3b=new Turbulence(input:module3a);
-     ((Turbulence)module3b).Seed=random[rndIdx].Next();
-     ((Turbulence)module3b).Frequency=Mathf.Pow(2,-2);  
-     ((Turbulence)module3b).Power=1.8;
-     ModuleBase module3c=new ScaleBias(scale:1.0,bias:31.0,input:module3b);
-      // 4
-      ModuleBase module4a=new Perlin(frequency:Mathf.Pow(2,-6),lacunarity:2.0,persistence:0.5,octaves:6,seed:random[rndIdx].Next(),quality:QualityMode.Low);
-      ModuleBase module4b=new Select(inputA:module2c,inputB:module3c,controller:module4a);
-      ((Select)module4b).SetBounds(min:-.2,max:.2);
-      ((Select)module4b).FallOff=.25;
-      ModuleBase module4c=new Multiply(lhs:module4b,rhs:module1);
-   modules.Add(module4c);
-
-   selectors[0]=(Select)module4b;
-  }
-
-  protected virtual int hgtIdx1{get{return 5;}}//  Base Height Result Module
-
-  internal virtual int heightsCacheLength{get{return 1;}}
-
-  #region Setvxl
-  protected Vector3 deround{get;}=new Vector3(.5f,.5f,.5f);
-  internal void Setvxl(Vector3Int noiseInputRounded,double[][][]noiseForHeightCache,MaterialId[][][]materialIdPerHeightNoiseCache,int oftIdx,int noiseIndex,ref Voxel vxl){
-               Vector3 noiseInput=noiseInputRounded+deround;
-
-   if(noiseForHeightCache!=null&&noiseForHeightCache[0][oftIdx]==null)noiseForHeightCache[0][oftIdx]=new double[FlattenOffset];
-
-   double noiseValue=(noiseForHeightCache!=null&&noiseForHeightCache[0][oftIdx][noiseIndex]!=0)?
-    noiseForHeightCache[0][oftIdx][noiseIndex]:
-     (noiseForHeightCache!=null?
-      (noiseForHeightCache[0][oftIdx][noiseIndex]=Noise()):
-       Noise());
-                    
-   double Noise(){return modules[hgtIdx1].GetValue(noiseInput.z,noiseInput.x,0);}
-
-   if(materialIdPerHeightNoiseCache!=null&&materialIdPerHeightNoiseCache[0][oftIdx]==null)materialIdPerHeightNoiseCache[0][oftIdx]=new MaterialId[FlattenOffset];
-
-   if(noiseInput.y<=noiseValue){
-    double d;
-
-    vxl=new Voxel(d=Density(100,noiseInput,noiseValue),Vector3.zero,Material(d,noiseInput,materialIdPerHeightNoiseCache,oftIdx,noiseIndex));
-
-    return;
-   }
-
-   vxl=Voxel.Air;
-  }
-
-  protected virtual double Density(double density,Vector3 noiseInput,double noiseValue,float smoothing=3f){
-   double value=density;
-   double delta=noiseValue-noiseInput.y;//  noiseInput.y sempre será menor ou igual a noiseValue
-
-   if(delta<=smoothing){
-    double smoothingValue=(smoothing-delta)/smoothing;
-    value*=1d-smoothingValue;
-    if(value<0)
-       value=0;
-    else if(value>100)
-            value=100;
-   }
-
-   return value;
-  }
-
-  readonly protected MaterialId[]materialIdPicking=new MaterialId[2]{
-   MaterialId.Rock,
-   MaterialId.Dirt,
-  };
-
-  protected virtual MaterialId Material(double density,Vector3 noiseInput,MaterialId[][][]materialIdPerHeightNoiseCache,int oftIdx,int noiseIndex){
-
-   if(-density>=IsoLevel){
-    return MaterialId.Air;
-   }
-
-   if(materialIdPerHeightNoiseCache!=null&&materialIdPerHeightNoiseCache[0][oftIdx][noiseIndex]!=0){
-    return materialIdPerHeightNoiseCache[0][oftIdx][noiseIndex];
-   }
-
-   MaterialId m;
-
-   m=materialIdPicking[Select(noiseInput)];
-
-   return materialIdPerHeightNoiseCache!=null?materialIdPerHeightNoiseCache[0][oftIdx][noiseIndex]=m:m;
-  }
-
-  readonly protected Select[]selectors=new Select[1];
-
-  protected virtual int Select(Vector3 noiseInput){
-   double min=selectors[0].Minimum;
-   double max=selectors[0].Maximum;
-   double fallOff=selectors[0].FallOff*.5;
-
-   var selectValue=selectors[0].Controller.GetValue(noiseInput.z,noiseInput.x,0);
-
-   if(selectValue<=min-fallOff||selectValue>=max+fallOff){
-    return 1;
-   }else{
-    return 0;
-   }
-  }
-  #endregion
-
-  internal class TreeData{
-   internal float chance=1f;
-   internal float verticalRotationFactor=1f;
-   internal Vector3 minScale=Vector3.one;
-   internal Vector3 maxScale=Vector3.one;
-   internal float rootsDepth=1f;
-   internal Vector3 spacing=Vector3.one;
-  }
-
-  readonly protected Dictionary<Type,TreeData>treesData=new Dictionary<Type,TreeData>(){
-   {
-    typeof(Pinus_elliottii),
-    new TreeData{
-     chance=.95f,
-     verticalRotationFactor=.125f,
-     minScale=Vector3.one*.5f,
-     maxScale=Vector3.one*1.5f,
-     rootsDepth=1.2f,
-     spacing=Vector3.one*1.2f*2f,
-    }
-   },
-  };
-
-  readonly protected Dictionary<int,Type[]>treePicking=new Dictionary<int,Type[]>{
-   {
-    1,
-    new Type[]{
-     typeof(Pinus_elliottii),
-    }
-   },
-  };
-
-  protected Perlin treeChancePerlin;
-
-  internal (Type tree,TreeData treeData)?Tree(Vector3Int noiseInputRounded){
-                                      Vector3 noiseInput=noiseInputRounded+deround;
-   if(treePicking.TryGetValue(Select(noiseInput),out Type[]treesPicked)){
-    //  To do: random chance to use tree selected
-    foreach(Type tree in treesPicked){TreeData treeData=treesData[tree];
-     float chance=treeData.chance/treesPicked.Length;
-     float dicing=((float)treeChancePerlin.GetValue(noiseInput.z,noiseInput.x,0)+1f)/2f;
-     //Debug.Log("dicing:"+dicing+" of chance:"+chance+"; result:"+(dicing<=chance));
-     if(dicing<=chance){
-      return(tree,treeData);
-     }
-    }
-   }
-   return null;
-  }
-
-  internal struct TreeModifiersResults{
-   internal float rotation;
-   internal Vector3 scale;
-  }
-
-  internal virtual TreeModifiersResults TreeModifiers(Vector3Int noiseInputRounded,TreeData treeData,Perlin treeRotationModifierPerlin,Perlin treeScaleModifierPerlin){
-                                              Vector3 noiseInput=noiseInputRounded+deround;
-   float rotation=(float)treeRotationModifierPerlin.GetValue(noiseInput.z,noiseInput.x,0)*180f;
-   Vector3 scale=Vector3.Lerp(treeData.minScale,treeData.maxScale,Mathf.Clamp01(((float)treeScaleModifierPerlin.GetValue(noiseInput.z,noiseInput.x,0)+1f)/2f));
-   return new TreeModifiersResults{
-    rotation=rotation,
-    scale=scale,
-   };
-  }
-
- }
-
- internal static class AtlasHelper{
-
-  internal static Material material{get;private set;}
-
-  internal static readonly Vector2[]uv=new Vector2[Enum.GetNames(typeof(MaterialId)).Length];
+      internal static readonly Vector2[]uv=new Vector2[Enum.GetNames(typeof(MaterialId)).Length];
                 
-  internal static void GetAtlasData(Material material){
-   AtlasHelper.material=material;
+      internal static void GetAtlasData(Material material){
+       AtlasHelper.material=material;
 
-   uv[(int)MaterialId.Dirt]=new Vector2(1,0);
-   uv[(int)MaterialId.Rock]=new Vector2(0,0);
-  }
+       uv[(int)MaterialId.Dirt]=new Vector2(1,0);
+       uv[(int)MaterialId.Rock]=new Vector2(0,0);
+      }
 
- }
+     }
 
-}
-#endregion
+    }
+    #endregion
 
-BakerJob bakeJob;
-struct BakerJob:IJob{
- public int meshId;
- public void Execute(){
-  Physics.BakeMesh(meshId,false);
- }
-}
-JobHandle bakingHandle;
+    BakerJob bakeJob;
+    struct BakerJob:IJob{
+     public int meshId;
+     public void Execute(){
+      Physics.BakeMesh(meshId,false);
+     }
+    }
+    JobHandle bakingHandle;
         
-internal readonly TreesBackgroundContainer addTreesBG=new TreesBackgroundContainer();
-internal class TreesBackgroundContainer:BackgroundContainer{
- internal TreesBackgroundContainer(){
-  treeRotationModifierPerlin_bg=new Perlin(frequency:Mathf.Pow(2,-2),lacunarity:2.0,persistence:0.5,octaves:6,seed:0,quality:QualityMode.Low);
-   treeScaleModifierPerlin_bg  =new Perlin(frequency:Mathf.Pow(2,-2),lacunarity:2.0,persistence:0.5,octaves:6,seed:0,quality:QualityMode.Low);
- }
+    internal readonly TreesBackgroundContainer addTreesBG=new TreesBackgroundContainer();
+    internal class TreesBackgroundContainer:BackgroundContainer{
+     internal TreesBackgroundContainer(){
+      treeRotationModifierPerlin_bg=new Perlin(frequency:Mathf.Pow(2,-2),lacunarity:2.0,persistence:0.5,octaves:6,seed:0,quality:QualityMode.Low);
+       treeScaleModifierPerlin_bg  =new Perlin(frequency:Mathf.Pow(2,-2),lacunarity:2.0,persistence:0.5,octaves:6,seed:0,quality:QualityMode.Low);
+     }
 
- internal ExecutionMode executionMode_bg=ExecutionMode._1;
- internal enum ExecutionMode{
-  _1,
-  _2,
-  _3,
- }
+     internal ExecutionMode executionMode_bg=ExecutionMode._1;
+     internal enum ExecutionMode{
+      _1,
+      _2,
+      _3,
+     }
 
- internal Vector2Int cCoord_bg;
- internal Vector2Int cnkRgn_bg;
- internal        int cnkIdx_bg;
+     internal Vector2Int cCoord_bg;
+     internal Vector2Int cnkRgn_bg;
+     internal        int cnkIdx_bg;
 
- internal NativeList<RaycastCommand>GetGroundRays;
- internal NativeList<RaycastHit    >GetGroundHits;
+     internal NativeList<RaycastCommand>GetGroundRays;
+     internal NativeList<RaycastHit    >GetGroundHits;
 
-        internal readonly List<(int x,int z)>gotGroundRays_bg=new List<(int,int)>();
- internal readonly Dictionary<int,RaycastHit>gotGroundHits_bg=new Dictionary<int,RaycastHit>(Width*Depth);
+            internal readonly List<(int x,int z)>gotGroundRays_bg=new List<(int,int)>();
+     internal readonly Dictionary<int,RaycastHit>gotGroundHits_bg=new Dictionary<int,RaycastHit>(Width*Depth);
                 
- internal Perlin treeRotationModifierPerlin_bg;
- internal Perlin  treeScaleModifierPerlin_bg;
+     internal Perlin treeRotationModifierPerlin_bg;
+     internal Perlin  treeScaleModifierPerlin_bg;
 
- internal readonly Dictionary<(int x,int z),(Type tree,MarchingCubesMultithreaded.BaseBiome.TreeData treeData)>treeAt_bg=new Dictionary<(int,int),(Type,MarchingCubesMultithreaded.BaseBiome.TreeData)>();
-  internal readonly Dictionary<(int x,int z),MarchingCubesMultithreaded.BaseBiome.TreeModifiersResults>treeModifiers_bg=new Dictionary<(int,int),MarchingCubesMultithreaded.BaseBiome.TreeModifiersResults>();
+     internal readonly Dictionary<(int x,int z),(Type tree,MarchingCubesMultithreaded.BaseBiome.TreeData treeData)>treeAt_bg=new Dictionary<(int,int),(Type,MarchingCubesMultithreaded.BaseBiome.TreeData)>();
+      internal readonly Dictionary<(int x,int z),MarchingCubesMultithreaded.BaseBiome.TreeModifiersResults>treeModifiers_bg=new Dictionary<(int,int),MarchingCubesMultithreaded.BaseBiome.TreeModifiersResults>();
 
- internal readonly SimObjectSpawner.SpawnData toSpawn_bg=new SimObjectSpawner.SpawnData(Width*Depth);
-  WaitUntil waitForSpawner;
+     internal readonly SimObjectSpawner.SpawnData toSpawn_bg=new SimObjectSpawner.SpawnData(Width*Depth);
+      WaitUntil waitForSpawner;
 
- internal bool findPositionsCoroutineIdleWaiting=true;
+     internal bool findPositionsCoroutineIdleWaiting=true;
 
- internal bool findPositionsCoroutineBeginFlag;
-  WaitUntil waitForBeginFlag;
+     internal bool findPositionsCoroutineBeginFlag;
+      WaitUntil waitForBeginFlag;
 
-  WaitUntil waitForScheduledTask;
+      WaitUntil waitForScheduledTask;
 
- JobHandle doRaycastsHandle;
-  WaitUntil waitForRaycastsHandle;
+     JobHandle doRaycastsHandle;
+      WaitUntil waitForRaycastsHandle;
 
-  internal Coroutine findPositionsCoroutine;
- internal IEnumerator FindPositionsCoroutine(){
+      internal Coroutine findPositionsCoroutine;
+     internal IEnumerator FindPositionsCoroutine(){
 
-  Debug.Log("FindPositionsCoroutine() coroutine started");
+      Debug.Log("FindPositionsCoroutine() coroutine started");
 
-  waitForBeginFlag=new WaitUntil(()=>findPositionsCoroutineBeginFlag);
+      waitForBeginFlag=new WaitUntil(()=>findPositionsCoroutineBeginFlag);
 
-  waitForScheduledTask=new WaitUntil(()=>this.IsCompleted(VoxelTerrain.Singleton.addTreesBGThreads[0].IsRunning));
+      waitForScheduledTask=new WaitUntil(()=>this.IsCompleted(VoxelTerrain.Singleton.addTreesBGThreads[0].IsRunning));
 
-  waitForRaycastsHandle=new WaitUntil(()=>doRaycastsHandle.IsCompleted);
+      waitForRaycastsHandle=new WaitUntil(()=>doRaycastsHandle.IsCompleted);
 
-  waitForSpawner=new WaitUntil(()=>toSpawn_bg.dequeued);
+      waitForSpawner=new WaitUntil(()=>toSpawn_bg.dequeued);
 
-  Loop:{
-   yield return waitForBeginFlag;
-    findPositionsCoroutineBeginFlag=false;
+      Loop:{
+       yield return waitForBeginFlag;
+        findPositionsCoroutineBeginFlag=false;
 
-   //Debug.Log("FindPositionsCoroutine():begin flag was set true:"+cnkRgn_bg);
+       //Debug.Log("FindPositionsCoroutine():begin flag was set true:"+cnkRgn_bg);
 
-   GetGroundRays.Clear();
-   GetGroundHits.Clear();
+       GetGroundRays.Clear();
+       GetGroundHits.Clear();
 
-   gotGroundRays_bg.Clear();
-   gotGroundHits_bg.Clear();
+       gotGroundRays_bg.Clear();
+       gotGroundHits_bg.Clear();
 
-   executionMode_bg=ExecutionMode._1;
-   TreesMultithreaded.Schedule(this);
-   yield return waitForScheduledTask;
+       executionMode_bg=ExecutionMode._1;
+       TreesMultithreaded.Schedule(this);
+       yield return waitForScheduledTask;
 
-   doRaycastsHandle=RaycastCommand.ScheduleBatch(GetGroundRays,GetGroundHits,1,default(JobHandle));
-   yield return waitForRaycastsHandle;
-   doRaycastsHandle.Complete();
+       doRaycastsHandle=RaycastCommand.ScheduleBatch(GetGroundRays,GetGroundHits,1,default(JobHandle));
+       yield return waitForRaycastsHandle;
+       doRaycastsHandle.Complete();
 
-   Vector3Int vCoord1=new Vector3Int(0,0,0);
-   int i=0;
-   for(vCoord1.x=0             ;vCoord1.x<Width;vCoord1.x++){
-   for(vCoord1.z=0             ;vCoord1.z<Depth;vCoord1.z++){
-    if(gotGroundRays_bg.Contains((vCoord1.x,vCoord1.z))){
-     RaycastHit hit=GetGroundHits[i++];
-     if(hit.collider!=null){
-      int index=vCoord1.z+vCoord1.x*Depth;
-      gotGroundHits_bg.Add(index,hit);
+       Vector3Int vCoord1=new Vector3Int(0,0,0);
+       int i=0;
+       for(vCoord1.x=0             ;vCoord1.x<Width;vCoord1.x++){
+       for(vCoord1.z=0             ;vCoord1.z<Depth;vCoord1.z++){
+        if(gotGroundRays_bg.Contains((vCoord1.x,vCoord1.z))){
+         RaycastHit hit=GetGroundHits[i++];
+         if(hit.collider!=null){
+          int index=vCoord1.z+vCoord1.x*Depth;
+          gotGroundHits_bg.Add(index,hit);
 
-      Debug.DrawRay(GetGroundHits[i-1].point,(GetGroundRays[i-1].from-GetGroundHits[i-1].point).normalized,Color.white,5f);
+          Debug.DrawRay(GetGroundHits[i-1].point,(GetGroundRays[i-1].from-GetGroundHits[i-1].point).normalized,Color.white,5f);
 
-     }
-    }
-   }}
+         }
+        }
+       }}
    
-   executionMode_bg=ExecutionMode._2;
-   TreesMultithreaded.Schedule(this);
-   yield return waitForScheduledTask;
+       executionMode_bg=ExecutionMode._2;
+       TreesMultithreaded.Schedule(this);
+       yield return waitForScheduledTask;
 
-   SimObjectSpawner.Singleton.SpawnQueue.Enqueue(toSpawn_bg);
-   yield return waitForSpawner;
+       SimObjectSpawner.Singleton.SpawnQueue.Enqueue(toSpawn_bg);
+       yield return waitForSpawner;
                     
-   executionMode_bg=ExecutionMode._3;
-   TreesMultithreaded.Schedule(this);
-   yield return waitForScheduledTask;
+       executionMode_bg=ExecutionMode._3;
+       TreesMultithreaded.Schedule(this);
+       yield return waitForScheduledTask;
 
-   findPositionsCoroutineIdleWaiting=true;
-  }
-  goto Loop;
- }
-}
-internal class TreesMultithreaded:BaseMultithreaded<TreesBackgroundContainer>{
-
- readonly static object mutex=new object();
-
- readonly Dictionary<Type,Vector2Int>spacingOwnTypeOnly=new Dictionary<Type,Vector2Int>();
-
- protected override void Cleanup(){
-  spacingOwnTypeOnly.Clear();
- }
-
- protected override void Execute(){
-  //Debug.Log("TreesMultithreaded:Execute:");
-  if      (current.executionMode_bg==TreesBackgroundContainer.ExecutionMode._1){
-   //Debug.Log("TreesMultithreaded:Execute:_1:get rays to ground:"+current.cCoord_bg);
-
-   current.treeAt_bg.Clear();
-
-   current.treeModifiers_bg.Clear();
-
-   string treesAddedFile=string.Format("{0}{1}/{2}",Core.perChunkSavePath,current.cnkIdx_bg,"trees.txt");
-   lock(mutex){
-    if(File.Exists(treesAddedFile)){
-     //Debug.Log("TreesMultithreaded:treesAddedFile present:cancel adding trees:"+current.cCoord_bg);
-     return;
+       findPositionsCoroutineIdleWaiting=true;
+      }
+      goto Loop;
+     }
     }
-   }
+    internal class TreesMultithreaded:BaseMultithreaded<TreesBackgroundContainer>{
+
+     readonly static object mutex=new object();
+
+     readonly Dictionary<Type,Vector2Int>spacingOwnTypeOnly=new Dictionary<Type,Vector2Int>();
+
+     protected override void Cleanup(){
+      spacingOwnTypeOnly.Clear();
+     }
+
+     protected override void Execute(){
+      //Debug.Log("TreesMultithreaded:Execute:");
+      if      (current.executionMode_bg==TreesBackgroundContainer.ExecutionMode._1){
+       //Debug.Log("TreesMultithreaded:Execute:_1:get rays to ground:"+current.cCoord_bg);
+
+       current.treeAt_bg.Clear();
+
+       current.treeModifiers_bg.Clear();
+
+       string treesAddedFile=string.Format("{0}{1}/{2}",Core.perChunkSavePath,current.cnkIdx_bg,"trees.txt");
+       lock(mutex){
+        if(File.Exists(treesAddedFile)){
+         //Debug.Log("TreesMultithreaded:treesAddedFile present:cancel adding trees:"+current.cCoord_bg);
+         return;
+        }
+       }
    
-   current.treeRotationModifierPerlin_bg.Seed=current.cnkRgn_bg.x+current.cnkRgn_bg.y;
-   current. treeScaleModifierPerlin_bg  .Seed=current.cnkRgn_bg.x+current.cnkRgn_bg.y;
+       current.treeRotationModifierPerlin_bg.Seed=current.cnkRgn_bg.x+current.cnkRgn_bg.y;
+       current. treeScaleModifierPerlin_bg  .Seed=current.cnkRgn_bg.x+current.cnkRgn_bg.y;
 
-   Vector3Int vCoord1=new Vector3Int(0,Height/2-1,0);
+       Vector3Int vCoord1=new Vector3Int(0,Height/2-1,0);
 
-   for(vCoord1.x=0             ;vCoord1.x<Width;vCoord1.x++){
+       for(vCoord1.x=0             ;vCoord1.x<Width;vCoord1.x++){
 
-    foreach(var tree in spacingOwnTypeOnly.Keys.ToArray()){Vector2Int spaced=spacingOwnTypeOnly[tree];
-     spaced.y=0;
-     spaced.x--;
-     if(spaced.x>0){
-      spacingOwnTypeOnly[tree]=spaced;
-     }else{
-      spacingOwnTypeOnly.Remove(tree);
-     }
-    }
+        foreach(var tree in spacingOwnTypeOnly.Keys.ToArray()){Vector2Int spaced=spacingOwnTypeOnly[tree];
+         spaced.y=0;
+         spaced.x--;
+         if(spaced.x>0){
+          spacingOwnTypeOnly[tree]=spaced;
+         }else{
+          spacingOwnTypeOnly.Remove(tree);
+         }
+        }
 
-   for(vCoord1.z=0             ;vCoord1.z<Depth;vCoord1.z++){
+       for(vCoord1.z=0             ;vCoord1.z<Depth;vCoord1.z++){
 
-    foreach(var tree in spacingOwnTypeOnly.Keys.ToArray()){Vector2Int spaced=spacingOwnTypeOnly[tree];
-     if(spaced.y>0){
-      spaced.y--;
-      spacingOwnTypeOnly[tree]=spaced;
-     }
-    }
+        foreach(var tree in spacingOwnTypeOnly.Keys.ToArray()){Vector2Int spaced=spacingOwnTypeOnly[tree];
+         if(spaced.y>0){
+          spaced.y--;
+          spacingOwnTypeOnly[tree]=spaced;
+         }
+        }
 
-    Vector3Int noiseInput=vCoord1;noiseInput.x+=current.cnkRgn_bg.x;
-                                  noiseInput.z+=current.cnkRgn_bg.y;
+        Vector3Int noiseInput=vCoord1;noiseInput.x+=current.cnkRgn_bg.x;
+                                      noiseInput.z+=current.cnkRgn_bg.y;
 
-    (Type tree,MarchingCubesMultithreaded.BaseBiome.TreeData treeData)?treePicked=MarchingCubesMultithreaded.biome.Tree(noiseInput);
-    if(treePicked!=null){
+        (Type tree,MarchingCubesMultithreaded.BaseBiome.TreeData treeData)?treePicked=MarchingCubesMultithreaded.biome.Tree(noiseInput);
+        if(treePicked!=null){
 
-     if(vCoord1.x<treePicked.Value.treeData.spacing.x||
-        vCoord1.z<treePicked.Value.treeData.spacing.z
-     ){
-      continue;
-     }
+         if(vCoord1.x<treePicked.Value.treeData.spacing.x||
+            vCoord1.z<treePicked.Value.treeData.spacing.z
+         ){
+          continue;
+         }
 
-     if(spacingOwnTypeOnly.TryGetValue(treePicked.Value.tree,out Vector2Int spaced)){
-      if(spaced.x>0||
-         spaced.y>0
-      ){
-       continue;
+         if(spacingOwnTypeOnly.TryGetValue(treePicked.Value.tree,out Vector2Int spaced)){
+          if(spaced.x>0||
+             spaced.y>0
+          ){
+           continue;
+          }
+         }
+
+         Vector3 from=vCoord1;
+                 from.x+=(current.cnkRgn_bg.x-Width/2f)+.5f;
+                 from.z+=(current.cnkRgn_bg.y-Depth/2f)+.5f;
+
+         current.GetGroundRays.AddNoResize(new RaycastCommand(from,Vector3.down,Height,PhysHelper.VoxelTerrain));
+         current.GetGroundHits.AddNoResize(new RaycastHit    ()                                                );
+
+         current.gotGroundRays_bg.Add((vCoord1.x,vCoord1.z));
+
+         current.treeAt_bg.Add((vCoord1.x,vCoord1.z),treePicked.Value);
+
+         MarchingCubesMultithreaded.BaseBiome.TreeModifiersResults modifiers=MarchingCubesMultithreaded.biome.TreeModifiers(noiseInput,treePicked.Value.treeData,current.treeRotationModifierPerlin_bg,current.treeScaleModifierPerlin_bg);
+
+         current.treeModifiers_bg.Add((vCoord1.x,vCoord1.z),modifiers);
+
+         Vector3 spacing=treePicked.Value.treeData.spacing;
+                 spacing=Vector3.Scale(spacing,modifiers.scale);
+         Debug.Log("spacing:"+spacing);
+
+         spacingOwnTypeOnly[treePicked.Value.tree]=new Vector2Int((int)Math.Ceiling(spacing.x),(int)Math.Ceiling(spacing.z));
+        }
+
+       }
+       }
+
+      }else if(current.executionMode_bg==TreesBackgroundContainer.ExecutionMode._2){
+       //Debug.Log("TreesMultithreaded:Execute:_2:got ground hits:"+current.cCoord_bg);
+
+       //Debug.Log("current.gotGroundHits_bg.Count:"+current.gotGroundHits_bg.Count);
+                    
+       current.toSpawn_bg.at.Clear();
+       current.toSpawn_bg.dequeued=false;
+
+       Vector3Int vCoord1=new Vector3Int(0,Height/2-1,0);
+       int i=0;
+       for(vCoord1.x=0             ;vCoord1.x<Width;vCoord1.x++){
+       for(vCoord1.z=0             ;vCoord1.z<Depth;vCoord1.z++){
+        int index=vCoord1.z+vCoord1.x*Depth;
+        if(current.gotGroundHits_bg.TryGetValue(index,out RaycastHit floor)){
+         (Type tree,MarchingCubesMultithreaded.BaseBiome.TreeData treeData)treeAt=current.treeAt_bg[(vCoord1.x,vCoord1.z)];
+
+         MarchingCubesMultithreaded.BaseBiome.TreeModifiersResults modifiers=current.treeModifiers_bg[(vCoord1.x,vCoord1.z)];
+
+         Quaternion rotation=Quaternion.SlerpUnclamped(Quaternion.identity,Quaternion.FromToRotation(Vector3.up,floor.normal),treeAt.treeData.verticalRotationFactor)*Quaternion.Euler(new Vector3(0f,modifiers.rotation,0f));
+
+         Vector3 position=new Vector3(floor.point.x,floor.point.y-modifiers.scale.y*treeAt.treeData.rootsDepth,floor.point.z)+rotation*(Vector3.down*modifiers.scale.y);
+
+         current.toSpawn_bg.at.Add((position,rotation.eulerAngles,modifiers.scale,treeAt.tree,null));
+        }
+       }}
+   
+      }else if(current.executionMode_bg==TreesBackgroundContainer.ExecutionMode._3){
+       //Debug.Log("TreesMultithreaded:Execute:_3:save \"done\" file:"+current.cCoord_bg);
+
+       string treesAddedFile=string.Format("{0}{1}/{2}",Core.perChunkSavePath,current.cnkIdx_bg,"trees.txt");
+       string treesAddedPath=Path.GetDirectoryName(treesAddedFile).Replace("\\","/");
+       Directory.CreateDirectory(treesAddedPath);
+       lock(mutex){
+        using(var file=new FileStream(treesAddedFile,FileMode.OpenOrCreate,FileAccess.ReadWrite,FileShare.None)){
+        }
+       }
       }
      }
-
-     Vector3 from=vCoord1;
-             from.x+=(current.cnkRgn_bg.x-Width/2f)+.5f;
-             from.z+=(current.cnkRgn_bg.y-Depth/2f)+.5f;
-
-     current.GetGroundRays.AddNoResize(new RaycastCommand(from,Vector3.down,Height,PhysHelper.VoxelTerrain));
-     current.GetGroundHits.AddNoResize(new RaycastHit    ()                                                );
-
-     current.gotGroundRays_bg.Add((vCoord1.x,vCoord1.z));
-
-     current.treeAt_bg.Add((vCoord1.x,vCoord1.z),treePicked.Value);
-
-     MarchingCubesMultithreaded.BaseBiome.TreeModifiersResults modifiers=MarchingCubesMultithreaded.biome.TreeModifiers(noiseInput,treePicked.Value.treeData,current.treeRotationModifierPerlin_bg,current.treeScaleModifierPerlin_bg);
-
-     current.treeModifiers_bg.Add((vCoord1.x,vCoord1.z),modifiers);
-
-     Vector3 spacing=treePicked.Value.treeData.spacing;
-             spacing=Vector3.Scale(spacing,modifiers.scale);
-     Debug.Log("spacing:"+spacing);
-
-     spacingOwnTypeOnly[treePicked.Value.tree]=new Vector2Int((int)Math.Ceiling(spacing.x),(int)Math.Ceiling(spacing.z));
     }
 
-   }
-   }
+    void Awake(){
+     marchingCubesBG=new MarchingCubesBackgroundContainer(syn);
 
-  }else if(current.executionMode_bg==TreesBackgroundContainer.ExecutionMode._2){
-   //Debug.Log("TreesMultithreaded:Execute:_2:got ground hits:"+current.cCoord_bg);
+     renderer=GetComponent<MeshRenderer>();
+     collider=GetComponent<MeshCollider>();
 
-   //Debug.Log("current.gotGroundHits_bg.Count:"+current.gotGroundHits_bg.Count);
-                    
-   current.toSpawn_bg.at.Clear();
-   current.toSpawn_bg.dequeued=false;
+     mesh=new Mesh(){
+      bounds=worldBounds=new Bounds(Vector3.zero,new Vector3(Width,Height,Depth)),
+     };
 
-   Vector3Int vCoord1=new Vector3Int(0,Height/2-1,0);
-   int i=0;
-   for(vCoord1.x=0             ;vCoord1.x<Width;vCoord1.x++){
-   for(vCoord1.z=0             ;vCoord1.z<Depth;vCoord1.z++){
-    int index=vCoord1.z+vCoord1.x*Depth;
-    if(current.gotGroundHits_bg.TryGetValue(index,out RaycastHit floor)){
-     (Type tree,MarchingCubesMultithreaded.BaseBiome.TreeData treeData)treeAt=current.treeAt_bg[(vCoord1.x,vCoord1.z)];
+     GetComponent<MeshFilter>().mesh=mesh;
 
-     MarchingCubesMultithreaded.BaseBiome.TreeModifiersResults modifiers=current.treeModifiers_bg[(vCoord1.x,vCoord1.z)];
+     bakeJob=new BakerJob(){
+      meshId=mesh.GetInstanceID(),
+     };
 
-     Quaternion rotation=Quaternion.SlerpUnclamped(Quaternion.identity,Quaternion.FromToRotation(Vector3.up,floor.normal),treeAt.treeData.verticalRotationFactor)*Quaternion.Euler(new Vector3(0f,modifiers.rotation,0f));
-
-     Vector3 position=new Vector3(floor.point.x,floor.point.y-modifiers.scale.y*treeAt.treeData.rootsDepth,floor.point.z)+rotation*(Vector3.down*modifiers.scale.y);
-
-     current.toSpawn_bg.at.Add((position,rotation.eulerAngles,modifiers.scale,treeAt.tree,null));
+     VoxelTerrain.Singleton.navMeshSources[gameObject]=new NavMeshBuildSource{
+      transform=transform.localToWorldMatrix,//  Deve ser atualizado sempre que o chunk se move
+      shape=NavMeshBuildSourceShape.Mesh,
+      sourceObject=mesh,
+      component=collider,
+      area=0,//  walkable
+     };
+     VoxelTerrain.Singleton.navMeshMarkups[gameObject]=new NavMeshBuildMarkup{
+      root=transform,
+      area=0,//  walkable
+      overrideArea=false,
+      ignoreFromBuild=false,
+     };
     }
-   }}
-   
-  }else if(current.executionMode_bg==TreesBackgroundContainer.ExecutionMode._3){
-   //Debug.Log("TreesMultithreaded:Execute:_3:save \"done\" file:"+current.cCoord_bg);
 
-   string treesAddedFile=string.Format("{0}{1}/{2}",Core.perChunkSavePath,current.cnkIdx_bg,"trees.txt");
-   string treesAddedPath=Path.GetDirectoryName(treesAddedFile).Replace("\\","/");
-   Directory.CreateDirectory(treesAddedPath);
-   lock(mutex){
-    using(var file=new FileStream(treesAddedFile,FileMode.OpenOrCreate,FileAccess.ReadWrite,FileShare.None)){
+    internal void OnActivated(){
+     Debug.Log("VoxelTerrainChunk:OnActivated");
+     marchingCubesBG.TempVer=new NativeList<Vertex>(Allocator.Persistent);
+     marchingCubesBG.TempTri=new NativeList<UInt32>(Allocator.Persistent);
+
+     addTreesBG.GetGroundRays=new NativeList<RaycastCommand>(Width*Depth,Allocator.Persistent);
+     addTreesBG.GetGroundHits=new NativeList<RaycastHit    >(Width*Depth,Allocator.Persistent);
+     addTreesBG.findPositionsCoroutine=StartCoroutine(addTreesBG.FindPositionsCoroutine());
     }
-   }
-  }
- }
-}
 
-void Awake(){
- marchingCubesBG=new MarchingCubesBackgroundContainer(syn);
+    internal void OnExit(){
+     Debug.Log("VoxelTerrainChunk:OnExit");
+     marchingCubesBG.IsCompleted(VoxelTerrain.Singleton.marchingCubesBGThreads[0].IsRunning,-1);
+     if(marchingCubesBG.TempVer.IsCreated)marchingCubesBG.TempVer.Dispose();
+     if(marchingCubesBG.TempTri.IsCreated)marchingCubesBG.TempTri.Dispose();
 
- renderer=GetComponent<MeshRenderer>();
- collider=GetComponent<MeshCollider>();
-
- mesh=new Mesh(){
-  bounds=worldBounds=new Bounds(Vector3.zero,new Vector3(Width,Height,Depth)),
- };
-
- GetComponent<MeshFilter>().mesh=mesh;
-
- bakeJob=new BakerJob(){
-  meshId=mesh.GetInstanceID(),
- };
-}
-
-internal void OnActivated(){
- Debug.Log("VoxelTerrainChunk:OnActivated");
- marchingCubesBG.TempVer=new NativeList<Vertex>(Allocator.Persistent);
- marchingCubesBG.TempTri=new NativeList<UInt32>(Allocator.Persistent);
-
- addTreesBG.GetGroundRays=new NativeList<RaycastCommand>(Width*Depth,Allocator.Persistent);
- addTreesBG.GetGroundHits=new NativeList<RaycastHit    >(Width*Depth,Allocator.Persistent);
- addTreesBG.findPositionsCoroutine=StartCoroutine(addTreesBG.FindPositionsCoroutine());
-}
-
-internal void OnExit(){
- Debug.Log("VoxelTerrainChunk:OnExit");
- marchingCubesBG.IsCompleted(VoxelTerrain.Singleton.marchingCubesBGThreads[0].IsRunning,-1);
- if(marchingCubesBG.TempVer.IsCreated)marchingCubesBG.TempVer.Dispose();
- if(marchingCubesBG.TempTri.IsCreated)marchingCubesBG.TempTri.Dispose();
-
- if(this!=null){
-  StopCoroutine(addTreesBG.findPositionsCoroutine);
- }
- addTreesBG.IsCompleted(VoxelTerrain.Singleton.addTreesBGThreads[0].IsRunning,-1);
- if(addTreesBG.GetGroundRays.IsCreated)addTreesBG.GetGroundRays.Dispose();
- if(addTreesBG.GetGroundHits.IsCreated)addTreesBG.GetGroundHits.Dispose();
-}
+     if(this!=null){
+      StopCoroutine(addTreesBG.findPositionsCoroutine);
+     }
+     addTreesBG.IsCompleted(VoxelTerrain.Singleton.addTreesBGThreads[0].IsRunning,-1);
+     if(addTreesBG.GetGroundRays.IsCreated)addTreesBG.GetGroundRays.Dispose();
+     if(addTreesBG.GetGroundHits.IsCreated)addTreesBG.GetGroundHits.Dispose();
+    }
         
-bool initialization=true;
+    bool initialization=true;
         
-Vector2Int cCoord;
-Vector2Int cnkRgn;
-internal int?cnkIdx=null;
+    Vector2Int cCoord;
+    Vector2Int cnkRgn;
+    internal int?cnkIdx=null;
         
-internal void OncCoordChanged(Vector2Int cCoord1){
- if(initialization||cCoord1!=cCoord){
-  cCoord=cCoord1;
-  cnkRgn=cCoordTocnkRgn(cCoord);
-  //Debug.Log("VoxelTerrainChunk:OncCoordChanged:"+cCoord1);
-  moveRequired=true;
- }
- initialization=false;
-}
+    internal void OncCoordChanged(Vector2Int cCoord1){
+     if(initialization||cCoord1!=cCoord){
+      cCoord=cCoord1;
+      cnkRgn=cCoordTocnkRgn(cCoord);
+      //Debug.Log("VoxelTerrainChunk:OncCoordChanged:"+cCoord1);
+      moveRequired=true;
+     }
+     initialization=false;
+    }
 
-internal void OnEdited(){
- rebuildFlag=true;
+    internal void OnEdited(){
+     rebuildFlag=true;
 
- rebuildRequired=true;
-}
+     rebuildRequired=true;
+    }
 
-bool addingTrees;
-bool addTreesRequired;
-bool addTreesRequested;
-bool bakingMesh;
-bool bakeRequested;
-bool runningMarchingCubes;
-bool buildRequested;
-bool rebuildFlag;
-bool rebuildRequired;
-bool moveRequired;
-internal void ManualUpdate(){
- if(addingTrees){
-  if(addTreesRequested&&OnAddedTrees()){
-   addTreesRequested=false;
-   //Debug.Log("ManualUpdate:added trees:they'll be spawned shortly:"+cnkRgn);
-   addingTrees=false;
-  }else if(addTreesRequired&&OnAddingTrees()){
-   addTreesRequired=false;
-   //Debug.Log("ManualUpdate:adding trees:find positions:"+cnkRgn);
-   addTreesRequested=true;
-  }
+    bool addingTrees;
+    bool addTreesRequired;
+    bool addTreesRequested;
+    bool bakingMesh;
+    bool bakeRequested;
+    bool runningMarchingCubes;
+    bool buildRequested;
+    bool rebuildFlag;
+    bool rebuildRequired;
+    bool moveRequired;
+    internal void ManualUpdate(){
+     if(addingTrees){
+      if(addTreesRequested&&OnAddedTrees()){
+       addTreesRequested=false;
+       //Debug.Log("ManualUpdate:added trees:they'll be spawned shortly:"+cnkRgn);
+       addingTrees=false;
+      }else if(addTreesRequired&&OnAddingTrees()){
+       addTreesRequired=false;
+       //Debug.Log("ManualUpdate:adding trees:find positions:"+cnkRgn);
+       addTreesRequested=true;
+      }
 
- }else{
-  if(bakingMesh){
-   if(bakeRequested&&OnBakedMesh()){
-    bakeRequested=false;
-    //Debug.Log("ManualUpdate:mesh baked:assigned mesh collider data:"+cnkRgn);
-    bakingMesh=false;
-    OnAddTrees();
-   }
+     }else{
+      if(bakingMesh){
+       if(bakeRequested&&OnBakedMesh()){
+        bakeRequested=false;
+        //Debug.Log("ManualUpdate:mesh baked:assigned mesh collider data:"+cnkRgn);
+        bakingMesh=false;
+        OnAddTrees();
+       }
     
-  }else{
-   if(runningMarchingCubes){
-    if(buildRequested&&OnBuilt()){
-     buildRequested=false;
-     //Debug.Log("ManualUpdate:build finished:assigned built mesh data:"+cnkRgn);
-     runningMarchingCubes=false;
-     OnReadyToBakeMesh();
-    }
+      }else{
+       if(runningMarchingCubes){
+        if(buildRequested&&OnBuilt()){
+         buildRequested=false;
+         //Debug.Log("ManualUpdate:build finished:assigned built mesh data:"+cnkRgn);
+         runningMarchingCubes=false;
+         OnReadyToBakeMesh();
+        }
 
-   }else{
-    if(rebuildFlag){
-     if(rebuildRequired&&OnRebuild()){
-      rebuildRequired=false;
-      Debug.Log("ManualUpdate:rebuildRequired:"+cnkRgn);
-      rebuildFlag=false;
-      OnRebuilding();
-     }
+       }else{
+        if(rebuildFlag){
+         if(rebuildRequired&&OnRebuild()){
+          rebuildRequired=false;
+          Debug.Log("ManualUpdate:rebuildRequired:"+cnkRgn);
+          rebuildFlag=false;
+          OnRebuilding();
+         }
 
-    }else{
-     if(moveRequired&&OnMoving()){
-      moveRequired=false;
-      //Debug.Log("ManualUpdate:moveRequired:"+cnkRgn);
-      OnMoved();
-     }
+        }else{
+         if(moveRequired&&OnMoving()){
+          moveRequired=false;
+          //Debug.Log("ManualUpdate:moveRequired:"+cnkRgn);
+          OnMoved();
+         }
 
-    }
+        }
      
-   }
+       }
  
-  }
+      }
+
+     }
+    }
+
+    bool OnMoving(){
+     if(marchingCubesBG.IsCompleted(VoxelTerrain.Singleton.marchingCubesBGThreads[0].IsRunning)){
+      worldBounds.center=transform.position=new Vector3(cnkRgn.x,0,cnkRgn.y);
+      var navMeshSource=VoxelTerrain.Singleton.navMeshSources[gameObject];
+          navMeshSource.transform=transform.localToWorldMatrix;
+      VoxelTerrain.Singleton.navMeshSources[gameObject]=navMeshSource;
+      marchingCubesBG.cCoord_bg=cCoord;
+      marchingCubesBG.cnkRgn_bg=cnkRgn;
+      marchingCubesBG.cnkIdx_bg=cnkIdx.Value;
+      MarchingCubesMultithreaded.Schedule(marchingCubesBG);
+      return true;
+     }
+     return false;
+    }
+    void OnMoved(){
+     runningMarchingCubes=true;
+     //Debug.Log("OnMoved:chunk moved:running Marching Cubes");
+     buildRequested=true;
+    }
+
+    bool OnBuilt(){
+     if(marchingCubesBG.IsCompleted(VoxelTerrain.Singleton.marchingCubesBGThreads[0].IsRunning)){
+      bool resize;
+      if(resize=marchingCubesBG.TempVer.Length>mesh.vertexCount){
+       mesh.SetVertexBufferParams(marchingCubesBG.TempVer.Length,layout);
+      }
+      mesh.SetVertexBufferData(marchingCubesBG.TempVer.AsArray(),0,0,marchingCubesBG.TempVer.Length,0,meshFlags);
+      if(resize){
+       mesh.SetIndexBufferParams(marchingCubesBG.TempTri.Length,IndexFormat.UInt32);
+      }
+      mesh.SetIndexBufferData(marchingCubesBG.TempTri.AsArray(),0,0,marchingCubesBG.TempTri.Length,meshFlags);
+      mesh.subMeshCount=1;
+      mesh.SetSubMesh(0,new SubMeshDescriptor(0,marchingCubesBG.TempTri.Length){firstVertex=0,vertexCount=marchingCubesBG.TempVer.Length},meshFlags);
+      return true;
+     }
+     return false;
+    }
+    void OnReadyToBakeMesh(){
+     bakingHandle.Complete();
+     bakingHandle=bakeJob.Schedule();
+     bakingMesh=true;
+     //Debug.Log("OnReadyToBakeMesh:chunk has a valid mesh:bake mesh for mesh collider");
+     bakeRequested=true;
+    }
+
+    bool OnBakedMesh(){
+     if(bakingHandle.IsCompleted){
+      bakingHandle.Complete();
+      collider.sharedMesh=null;
+      collider.sharedMesh=mesh;
+      return true;
+     }
+     return false;
+    }
+    void OnAddTrees(){
+     addingTrees=true;
+     //Debug.Log("OnAddTrees:chunk has a valid collider:add trees");
+     addTreesRequired=true;
+    }
+
+    bool OnAddingTrees(){
+     if(addTreesBG.IsCompleted(VoxelTerrain.Singleton.addTreesBGThreads[0].IsRunning)&&addTreesBG.findPositionsCoroutineIdleWaiting){
+      addTreesBG.cCoord_bg=cCoord;
+      addTreesBG.cnkRgn_bg=cnkRgn;
+      addTreesBG.cnkIdx_bg=cnkIdx.Value;
+      addTreesBG.findPositionsCoroutineIdleWaiting=false;
+      addTreesBG.findPositionsCoroutineBeginFlag=true;
+      return true;
+     }
+     return false;
+    }
+    bool OnAddedTrees(){
+     if(addTreesBG.IsCompleted(VoxelTerrain.Singleton.addTreesBGThreads[0].IsRunning)&&addTreesBG.findPositionsCoroutineIdleWaiting){
+      return true;
+     }
+     return false;
+    }
+
+    bool OnRebuild(){
+     if(marchingCubesBG.IsCompleted(VoxelTerrain.Singleton.marchingCubesBGThreads[0].IsRunning)){
+      MarchingCubesMultithreaded.Schedule(marchingCubesBG);
+      return true;
+     }
+     return false;
+    }
+    void OnRebuilding(){
+     runningMarchingCubes=true;
+     Debug.Log("OnRebuilding:chunk edited:running Marching Cubes");
+     buildRequested=true;
+    }
+
+    #if UNITY_EDITOR
+    void OnDrawGizmos(){
+     //Core.DrawBounds(worldBounds,Color.white);
+    }
+    #endif
 
  }
 }
-
-bool OnMoving(){
- if(marchingCubesBG.IsCompleted(VoxelTerrain.Singleton.marchingCubesBGThreads[0].IsRunning)){
-  worldBounds.center=transform.position=new Vector3(cnkRgn.x,0,cnkRgn.y);
-  marchingCubesBG.cCoord_bg=cCoord;
-  marchingCubesBG.cnkRgn_bg=cnkRgn;
-  marchingCubesBG.cnkIdx_bg=cnkIdx.Value;
-  MarchingCubesMultithreaded.Schedule(marchingCubesBG);
-  return true;
- }
- return false;
-}
-void OnMoved(){
- runningMarchingCubes=true;
- //Debug.Log("OnMoved:chunk moved:running Marching Cubes");
- buildRequested=true;
-}
-
-bool OnBuilt(){
- if(marchingCubesBG.IsCompleted(VoxelTerrain.Singleton.marchingCubesBGThreads[0].IsRunning)){
-  bool resize;
-  if(resize=marchingCubesBG.TempVer.Length>mesh.vertexCount){
-   mesh.SetVertexBufferParams(marchingCubesBG.TempVer.Length,layout);
-  }
-  mesh.SetVertexBufferData(marchingCubesBG.TempVer.AsArray(),0,0,marchingCubesBG.TempVer.Length,0,meshFlags);
-  if(resize){
-   mesh.SetIndexBufferParams(marchingCubesBG.TempTri.Length,IndexFormat.UInt32);
-  }
-  mesh.SetIndexBufferData(marchingCubesBG.TempTri.AsArray(),0,0,marchingCubesBG.TempTri.Length,meshFlags);
-  mesh.subMeshCount=1;
-  mesh.SetSubMesh(0,new SubMeshDescriptor(0,marchingCubesBG.TempTri.Length){firstVertex=0,vertexCount=marchingCubesBG.TempVer.Length},meshFlags);
-  return true;
- }
- return false;
-}
-void OnReadyToBakeMesh(){
- bakingHandle.Complete();
- bakingHandle=bakeJob.Schedule();
- bakingMesh=true;
- //Debug.Log("OnReadyToBakeMesh:chunk has a valid mesh:bake mesh for mesh collider");
- bakeRequested=true;
-}
-
-bool OnBakedMesh(){
- if(bakingHandle.IsCompleted){
-  bakingHandle.Complete();
-  collider.sharedMesh=null;
-  collider.sharedMesh=mesh;
-  return true;
- }
- return false;
-}
-void OnAddTrees(){
- addingTrees=true;
- //Debug.Log("OnAddTrees:chunk has a valid collider:add trees");
- addTreesRequired=true;
-}
-
-bool OnAddingTrees(){
- if(addTreesBG.IsCompleted(VoxelTerrain.Singleton.addTreesBGThreads[0].IsRunning)&&addTreesBG.findPositionsCoroutineIdleWaiting){
-  addTreesBG.cCoord_bg=cCoord;
-  addTreesBG.cnkRgn_bg=cnkRgn;
-  addTreesBG.cnkIdx_bg=cnkIdx.Value;
-  addTreesBG.findPositionsCoroutineIdleWaiting=false;
-  addTreesBG.findPositionsCoroutineBeginFlag=true;
-  return true;
- }
- return false;
-}
-bool OnAddedTrees(){
- if(addTreesBG.IsCompleted(VoxelTerrain.Singleton.addTreesBGThreads[0].IsRunning)&&addTreesBG.findPositionsCoroutineIdleWaiting){
-  return true;
- }
- return false;
-}
-
-bool OnRebuild(){
- if(marchingCubesBG.IsCompleted(VoxelTerrain.Singleton.marchingCubesBGThreads[0].IsRunning)){
-  MarchingCubesMultithreaded.Schedule(marchingCubesBG);
-  return true;
- }
- return false;
-}
-void OnRebuilding(){
- runningMarchingCubes=true;
- Debug.Log("OnRebuilding:chunk edited:running Marching Cubes");
- buildRequested=true;
-}
-
-#if UNITY_EDITOR
-void OnDrawGizmos(){
- //Core.DrawBounds(worldBounds,Color.white);
-}
-#endif
-
-}}
 
 namespace paulbourke.MarchingCubes{
     internal static class Tables{
