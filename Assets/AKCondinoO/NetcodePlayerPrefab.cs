@@ -1,5 +1,6 @@
 using AKCondinoO.Sims;
 using AKCondinoO.Voxels;
+using System;
 using UnityEngine;
 using UnityEngine.AI;
 using static AKCondinoO.Voxels.VoxelTerrain;
@@ -11,10 +12,12 @@ namespace AKCondinoO{
         
     internal Bounds worldBounds;
 
-    internal NavMeshDataInstance navMesh;
-     internal NavMeshData navMeshData;
+    internal NavMeshData navMeshData;
+     internal NavMeshDataInstance navMeshInstance;
 
     void Awake(){
+     Core.Singleton.OnDestroyingCoreEvent+=OnDestroyingCoreEvent;
+
      cCoord_Pre=cCoord=vecPosTocCoord(transform.position);
      worldBounds=new Bounds(Vector3.zero,
       new Vector3(
@@ -25,6 +28,24 @@ namespace AKCondinoO{
      );
      var navMeshValidation=Core.Singleton.navMeshBuildSettings.ValidationReport(worldBounds);
      foreach(var s in navMeshValidation){Debug.LogError(s);}
+     navMeshData=new NavMeshData(0){//  Humanoid agent: 0
+      hideFlags=HideFlags.None,
+     };
+     navMeshInstance=NavMesh.AddNavMeshData(navMeshData);
+    }
+
+    void OnDestroyingCoreEvent(object sender,EventArgs e){
+     Debug.Log("OnDestroyingCoreEvent");
+     OnDestroyingDependents();
+    }
+
+    void OnDestroy(){
+     OnDestroyingDependents();
+    }
+
+    void OnDestroyingDependents(){
+     Debug.Log("NetcodePlayerPrefab:OnDestroyingDependents");
+     NavMesh.RemoveNavMeshData(navMeshInstance);
     }
 
     [SerializeField]float loadInterval=1f;
@@ -51,7 +72,7 @@ namespace AKCondinoO{
        loadTimer=0;
        Debug.Log("NetcodePlayerPrefab:changed to cCoord:"+cCoord+"!",this);
        SimObjectSpawner.Singleton.playersMovement.Add(cCoord);
-       VoxelTerrain.Singleton.playersMovement.Add(this,(cCoord,cCoord_Pre));
+       VoxelTerrain.Singleton.playersMovement[this]=(cCoord,cCoord_Pre,true);
        cnkRgn=cCoordTocnkRgn(cCoord);
        Debug.Log("NetcodePlayerPrefab:changed to cnkRgn:"+cnkRgn+"!",this);
        worldBounds.center=new Vector3(cnkRgn.x,0,cnkRgn.y);

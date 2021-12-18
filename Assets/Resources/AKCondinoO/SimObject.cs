@@ -213,6 +213,8 @@ namespace AKCondinoO.Sims{
     }
 
     internal void OnActivated(bool load){
+     worldBoundsVerticesTransformed=false;
+
      container.id_bg=id.Value;
      loading=load;
      if(!loading){
@@ -294,7 +296,7 @@ namespace AKCondinoO.Sims{
           Debug.Log("ManualUpdate:DEBUG_UNLOAD:save and unload:"+id,transform);
           OnUnload();
                      
-         }else if(worldBoundsVertices.Any(
+         }else if(worldBoundsVerticesTransformed&&worldBoundsVertices.Any(
           v=>{
            Vector2Int cCoord=vecPosTocCoord(v);
            int cnkIdx=GetcnkIdx(cCoord.x,cCoord.y);
@@ -313,6 +315,8 @@ namespace AKCondinoO.Sims{
            OnTransformHasChanged();
 
           }else{
+           worldBoundsVerticesTransformed=false;
+
            sleeping=true;
           }
          }

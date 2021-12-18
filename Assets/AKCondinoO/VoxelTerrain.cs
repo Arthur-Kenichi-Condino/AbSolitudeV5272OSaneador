@@ -79,7 +79,8 @@ namespace AKCondinoO.Voxels{
      readonly List<NavMeshBuildSource>sources=new List<NavMeshBuildSource>();
      readonly List<NavMeshBuildMarkup>markups=new List<NavMeshBuildMarkup>();
 
-    internal readonly Dictionary<NetcodePlayerPrefab,(Vector2Int cCoord,Vector2Int cCoord_Pre)>playersMovement=new Dictionary<NetcodePlayerPrefab,(Vector2Int,Vector2Int)>();
+    internal readonly Dictionary<NetcodePlayerPrefab,(Vector2Int cCoord,Vector2Int cCoord_Pre,bool instantiationRequested)>playersMovement=new Dictionary<NetcodePlayerPrefab,(Vector2Int,Vector2Int,bool)>();
+     readonly List<NetcodePlayerPrefab>playersMoved=new List<NetcodePlayerPrefab>();
 
     internal VoxelTerrainChunk[]all;
      readonly Dictionary<VoxelTerrainChunk,object>syn=new Dictionary<VoxelTerrainChunk,object>();
@@ -340,7 +341,7 @@ namespace AKCondinoO.Voxels{
 
     bool initialization=true;
 
-    int maxConnections=1;
+    int maxConnections=2;
 
     bool editRequired;
     bool editRequested;
@@ -385,11 +386,15 @@ namespace AKCondinoO.Voxels{
       OnEditing();
      }
 
-     if(playersMovement.Count>0){
-      foreach(var movement in playersMovement){var moved=movement.Value;
+      foreach(var player in playersMovement.Keys){var movement=playersMovement[player];
+       if(!movement.instantiationRequested){
+        //Debug.Log("player didn't request instantiation");
+        continue;
+       }
+       playersMoved.Add(player);
        Debug.Log("player movement:"+movement);
-       Vector2Int pCoord=moved.cCoord;
-       Vector2Int pCoord_Pre=moved.cCoord_Pre;
+       Vector2Int pCoord=movement.cCoord;
+       Vector2Int pCoord_Pre=movement.cCoord_Pre;
 
        #region expropriation
        for(Vector2Int eCoord=new Vector2Int(),cCoord1=new Vector2Int();eCoord.y<=expropriationDistance.y;eCoord.y++){for(cCoord1.y=-eCoord.y+pCoord_Pre.y;cCoord1.y<=eCoord.y+pCoord_Pre.y;cCoord1.y+=eCoord.y*2){
@@ -464,8 +469,11 @@ namespace AKCondinoO.Voxels{
        #endregion
 
       }
-      playersMovement.Clear();
-     }
+      foreach(var player in playersMoved){var movement=playersMovement[player];
+       Debug.Log("reset player movement flag to false");
+       playersMovement[player]=(movement.cCoord,movement.cCoord_Pre,false);
+      }
+      playersMoved.Clear();
 
      foreach(var a in active){var cnk=a.Value;
       cnk.ManualUpdate();

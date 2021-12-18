@@ -1098,7 +1098,7 @@ namespace AKCondinoO.Voxels{
 
      readonly static object mutex=new object();
 
-     readonly Dictionary<Type,Vector2Int>spacingOwnTypeOnly=new Dictionary<Type,Vector2Int>();
+     readonly Dictionary<(Type type,int z),Vector2Int>spacingOwnTypeOnly=new Dictionary<(Type,int),Vector2Int>();
 
      protected override void Cleanup(){
       spacingOwnTypeOnly.Clear();
@@ -1159,7 +1159,7 @@ namespace AKCondinoO.Voxels{
           continue;
          }
 
-         if(spacingOwnTypeOnly.TryGetValue(treePicked.Value.tree,out Vector2Int spaced)){
+         if(spacingOwnTypeOnly.TryGetValue((treePicked.Value.tree,vCoord1.z),out Vector2Int spaced)){
           if(spaced.x>0||
              spaced.y>0
           ){
@@ -1186,7 +1186,7 @@ namespace AKCondinoO.Voxels{
                  spacing=Vector3.Scale(spacing,modifiers.scale);
          Debug.Log("spacing:"+spacing);
 
-         spacingOwnTypeOnly[treePicked.Value.tree]=new Vector2Int((int)Math.Ceiling(spacing.x),(int)Math.Ceiling(spacing.z));
+         spacingOwnTypeOnly[(treePicked.Value.tree,vCoord1.z)]=new Vector2Int((int)Math.Ceiling(spacing.x),(int)Math.Ceiling(spacing.z));
         }
 
        }
