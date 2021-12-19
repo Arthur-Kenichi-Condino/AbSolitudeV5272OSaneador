@@ -339,9 +339,14 @@ namespace AKCondinoO.Voxels{
     [SerializeField]MaterialId                          DEBUG_EDIT_MATERIAL_ID=MaterialId.Dirt;
     [SerializeField]int                                 DEBUG_EDIT_SMOOTHNESS=5;
 
+    [SerializeField]bool DEBUG_BAKE_NAV_MESH=false;
+
     bool initialization=true;
 
     int maxConnections=2;
+
+    internal bool navMeshDirty;
+     AsyncOperation[]navMeshAsyncOperations;
 
     bool editRequired;
     bool editRequested;
@@ -360,6 +365,8 @@ namespace AKCondinoO.Voxels{
       }
 
       editingBG.syn_bg=syn.Values.ToArray();
+
+      navMeshAsyncOperations=new AsyncOperation[maxConnections];
      }
  
      if(DEBUG_EDIT){
@@ -479,6 +486,26 @@ namespace AKCondinoO.Voxels{
       cnk.ManualUpdate();
      }
 
+     if(DEBUG_BAKE_NAV_MESH){
+      DEBUG_BAKE_NAV_MESH=false;
+      navMeshDirty=true;
+     }
+     if(navMeshDirty){
+      Debug.Log("navMeshDirty");
+      if(navMeshAsyncOperations.All(o=>o==null||o.isDone)){
+       navMeshDirty=false;
+       Debug.Log("navMeshDirty:ready to start navMeshAsyncOperations");
+       sources.Clear();
+       markups.Clear();
+       sources.AddRange(navMeshSources.Values);
+       markups.AddRange(navMeshMarkups.Values);
+       NavMeshBuilder.CollectSources(null,PhysHelper.NavMesh,NavMeshCollectGeometry.PhysicsColliders,0,markups,sources);
+       int i=0;
+       foreach(var player in playersMovement.Keys){
+        navMeshAsyncOperations[i++]=player.BuildNavMesh(sources);
+       }
+      }
+     }
     }
 
     bool OnEdit(){

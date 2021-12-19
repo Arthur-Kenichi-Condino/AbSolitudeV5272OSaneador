@@ -1,6 +1,7 @@
 using AKCondinoO.Sims;
 using AKCondinoO.Voxels;
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
 using static AKCondinoO.Voxels.VoxelTerrain;
@@ -83,6 +84,10 @@ namespace AKCondinoO{
       SimObjectSpawner.Singleton.playersMovement.Add(cCoord);
      }
      initialization=false;
+    }
+
+    internal AsyncOperation BuildNavMesh(List<NavMeshBuildSource>sources){
+     return NavMeshBuilder.UpdateNavMeshDataAsync(navMeshData,Core.Singleton.navMeshBuildSettings,sources,worldBounds);
     }
         
     #if UNITY_EDITOR

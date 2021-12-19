@@ -435,10 +435,6 @@ PrefabInstance:
       propertyPath: m_Name
       value: Core
       objectReference: {fileID: 0}
-    - target: {fileID: 7355805200245561110, guid: 5dfc5ec621a9bfa498d6da1e90e349c0, type: 3}
-      propertyPath: instantiationMaxExecutionTime
-      value: 30
-      objectReference: {fileID: 0}
     - target: {fileID: 7355805200245561111, guid: 5dfc5ec621a9bfa498d6da1e90e349c0, type: 3}
       propertyPath: m_RootOrder
       value: 3
