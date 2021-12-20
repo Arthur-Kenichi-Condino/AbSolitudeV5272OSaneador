@@ -901,16 +901,18 @@ namespace AKCondinoO.Voxels{
        internal Vector3 spacing=Vector3.one;
       }
 
-      readonly protected Dictionary<Type,TreeData>treesData=new Dictionary<Type,TreeData>(){
+      readonly protected Dictionary<Type,TreeData[]>treesData=new Dictionary<Type,TreeData[]>(){
        {
         typeof(Pinus_elliottii),
-        new TreeData{
-         chance=.125f,
-         verticalRotationFactor=.125f,
-         minScale=Vector3.one*.5f,
-         maxScale=Vector3.one*1.5f,
-         rootsDepth=1.2f,
-         spacing=Vector3.one*1.2f*2f,
+        new TreeData[]{
+         new TreeData{
+          chance=.125f,
+          verticalRotationFactor=.125f,
+          minScale=Vector3.one*.5f,
+          maxScale=Vector3.one*1.5f,
+          rootsDepth=1.2f,
+          spacing=Vector3.one*1.2f*2f,
+         },
         }
        },
       };
@@ -930,7 +932,7 @@ namespace AKCondinoO.Voxels{
                                           Vector3 noiseInput=noiseInputRounded+deround;
        if(treePicking.TryGetValue(Select(noiseInput),out Type[]treesPicked)){
         //  To do: random chance to use tree selected
-        foreach(Type tree in treesPicked){TreeData treeData=treesData[tree];
+        foreach(Type tree in treesPicked){TreeData treeData=treesData[tree][0];
          float chance=treeData.chance/treesPicked.Length;
          float dicing=((float)treeChancePerlin.GetValue(noiseInput.z,noiseInput.x,0)+1f)/2f;
          //Debug.Log("dicing:"+dicing+" of chance:"+chance+"; result:"+(dicing<=chance));
