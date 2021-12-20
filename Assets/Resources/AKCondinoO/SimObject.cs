@@ -212,7 +212,7 @@ namespace AKCondinoO.Sims{
        DisableRendering();
     }
 
-    internal void OnActivated(bool load){
+    internal virtual void OnActivated(bool load){
      worldBoundsVerticesTransformed=false;
 
      container.id_bg=id.Value;
@@ -274,7 +274,7 @@ namespace AKCondinoO.Sims{
     bool loadRequired;
     bool loadRequested;
     bool saveRequired;
-    internal void ManualUpdate(){
+    internal virtual void ManualUpdate(){
      if(!unplacing){
       if(!unloading){
        if(!loading){
@@ -283,7 +283,7 @@ namespace AKCondinoO.Sims{
          Debug.Log("ManualUpdate:DEBUG_UNPLACE:save and UNPLACE:"+id,transform);
          OnUnplace();
    
-        }else if(!sleeping&&IsOverlappingNonAlloc()){
+        }else if(!sleeping&&!(this is SimActor)&&IsOverlappingNonAlloc()){
 
          OnOverlapperUnplacing(this);
 
@@ -542,7 +542,7 @@ namespace AKCondinoO.Sims{
        var overlapping=overlappedColliders[j];
        if(overlapping.transform.root!=transform.root){
         SimObject sO;
-        if((sO=overlapping.transform.root.GetComponent<SimObject>())!=null){
+        if((sO=overlapping.transform.root.GetComponent<SimObject>())!=null&&!(sO is SimActor)){
          if(!overlappersUnplacing.Contains(sO)){
           Debug.Log("IsOverlappingNonAlloc():I'm overlapping another simObject:"+overlappedColliders[j].transform.root.name,this);
           result=true;
