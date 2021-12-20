@@ -11,7 +11,10 @@ using static AKCondinoO.Voxels.VoxelTerrain;
 namespace AKCondinoO.Sims{
  internal class SimObjectSpawner:MonoBehaviour{internal static SimObjectSpawner Singleton;
 
-    internal readonly HashSet<Vector2Int>playersMovement=new HashSet<Vector2Int>();
+    internal readonly HashSet<Vector2Int>playersCoordChange=new HashSet<Vector2Int>();
+
+    internal readonly Dictionary<NetcodePlayerPrefab,(Vector2Int cCoord,Vector2Int cCoord_Pre,bool worldBoundsMoved)>playersMovement=new Dictionary<NetcodePlayerPrefab,(Vector2Int,Vector2Int,bool)>();
+     readonly List<NetcodePlayerPrefab>playersMoved=new List<NetcodePlayerPrefab>();
         
     internal Dictionary<Type,ulong>ids;
     internal Dictionary<Type,List<ulong>>releasedIds;
@@ -88,18 +91,18 @@ namespace AKCondinoO.Sims{
     internal GetPersistentDataFilesBackgroundContainer getPersistentDataFilesBG;
     internal class GetPersistentDataFilesBackgroundContainer:BackgroundContainer{
      internal object[]syn_bg;
-     internal HashSet<Vector2Int>playersMovement_bg;
+     internal HashSet<Vector2Int>playersCoordChange_bg;
      internal SpawnData toSpawn_bg;
     }
     internal GetPersistentDataFilesMultithreaded getPersistentDataFilesBGThread;
     internal class GetPersistentDataFilesMultithreaded:BaseMultithreaded<GetPersistentDataFilesBackgroundContainer>{
      protected override void Execute(){
-      Debug.Log("GetPersistentDataFilesMultithreaded:Execute:current.playersMovement_bg.Count:"+current.playersMovement_bg.Count);
+      Debug.Log("GetPersistentDataFilesMultithreaded:Execute:current.playersCoordChange_bg.Count:"+current.playersCoordChange_bg.Count);
       foreach(var syn in current.syn_bg)Monitor.Enter(syn);
       try{
 
        current.toSpawn_bg=new SpawnData();
-       foreach(Vector2Int pCoord in current.playersMovement_bg){
+       foreach(Vector2Int pCoord in current.playersCoordChange_bg){
         for(Vector2Int iCoord=new Vector2Int(),cCoord1=new Vector2Int();iCoord.y<=instantiationDistance.y-1;iCoord.y++){for(cCoord1.y=-iCoord.y+pCoord.y;cCoord1.y<=iCoord.y+pCoord.y;cCoord1.y+=iCoord.y*2){
         for(           iCoord.x=0                                      ;iCoord.x<=instantiationDistance.x-1;iCoord.x++){for(cCoord1.x=-iCoord.x+pCoord.x;cCoord1.x<=iCoord.x+pCoord.x;cCoord1.x+=iCoord.x*2){
          if(Math.Abs(cCoord1.x)>=MaxcCoordx||
@@ -224,15 +227,29 @@ namespace AKCondinoO.Sims{
      }
     }
                 
+    internal bool anyPlayerBoundsMoved;
+
     bool loadFilesRequested;
     void Update(){
      if(loadFilesRequested&&OnGotFiles()){
       loadFilesRequested=false;
       Debug.Log("SimObjectSpawner:Update:player movement:got files to load");
-     }else if(playersMovement.Count>0&&OnGetFiles()){
-      playersMovement.Clear();
+     }else if(playersCoordChange.Count>0&&OnGetFiles()){
+      playersCoordChange.Clear();
       Debug.Log("SimObjectSpawner:Update:player movement:loading required");
       loadFilesRequested=true;
+     }
+
+     foreach(var player in playersMovement.Keys){var movement=playersMovement[player];
+      if(!movement.worldBoundsMoved){
+       //Debug.Log("player didn't move");
+       continue;
+      }
+      playersMoved.Add(player);
+      Debug.Log("player movement:"+movement);
+
+      anyPlayerBoundsMoved=true;
+
      }
      foreach(var a in active){var sO=a.Value;
       //Debug.Log("Update:active sO.id:"+sO.id);
@@ -244,12 +261,20 @@ namespace AKCondinoO.Sims{
      while(DespawnReleaseIdQueue.Count>0){var toDespawnReleaseId=DespawnReleaseIdQueue.Dequeue();
       OnDeactivatedReleaseId(toDespawnReleaseId);
      }
+     foreach(var player in playersMoved){var movement=playersMovement[player];
+      Debug.Log("reset player movement flag to false");
+      playersMovement[player]=(movement.cCoord,movement.cCoord_Pre,false);
+     }
+     playersMoved.Clear();
+
+     anyPlayerBoundsMoved=false;
+
     }
 
     bool OnGetFiles(){
      if(getPersistentDataFilesBG.IsCompleted(getPersistentDataFilesBGThread.IsRunning)){
       getPersistentDataFilesBG.syn_bg=syn.Values.ToArray();
-      getPersistentDataFilesBG.playersMovement_bg=new HashSet<Vector2Int>(playersMovement,playersMovement.Comparer);
+      getPersistentDataFilesBG.playersCoordChange_bg=new HashSet<Vector2Int>(playersCoordChange,playersCoordChange.Comparer);
       GetPersistentDataFilesMultithreaded.Schedule(getPersistentDataFilesBG);
       return true;
      }

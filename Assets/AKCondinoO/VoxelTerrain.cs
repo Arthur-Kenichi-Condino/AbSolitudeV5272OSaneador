@@ -508,6 +508,41 @@ namespace AKCondinoO.Voxels{
      }
     }
 
+    internal void OnPlayerDisconnected(NetcodePlayerPrefab player){
+     Debug.Log("OnPlayerDisconnected:");
+
+     playersMovement.Remove(player);
+
+     Vector2Int pCoord=player.cCoord;
+     for(Vector2Int iCoord=new Vector2Int(),cCoord1=new Vector2Int();iCoord.y<=instantiationDistance.y;iCoord.y++){for(cCoord1.y=-iCoord.y+pCoord.y;cCoord1.y<=iCoord.y+pCoord.y;cCoord1.y+=iCoord.y*2){
+     for(           iCoord.x=0                                      ;iCoord.x<=instantiationDistance.x;iCoord.x++){for(cCoord1.x=-iCoord.x+pCoord.x;cCoord1.x<=iCoord.x+pCoord.x;cCoord1.x+=iCoord.x*2){
+                            
+      if(Math.Abs(cCoord1.x)>=MaxcCoordx||
+         Math.Abs(cCoord1.y)>=MaxcCoordy){
+       goto _skip;
+      }
+
+      if(playersMovement.All(
+       p=>{
+        return Mathf.Abs(cCoord1.x-p.Key.cCoord.x)>instantiationDistance.x||
+               Mathf.Abs(cCoord1.y-p.Key.cCoord.y)>instantiationDistance.y;
+       })
+      ){
+       int cnkIdx1=GetcnkIdx(cCoord1.x,cCoord1.y);
+       if(active.TryGetValue(cnkIdx1,out VoxelTerrainChunk cnk)){
+        if(cnk.expropriated==null){
+         cnk.expropriated=pool.AddLast(cnk);
+        }
+       }
+      }
+
+      _skip:{}
+      if(iCoord.x==0){break;}
+     }}
+      if(iCoord.y==0){break;}
+     }}
+    }
+
     bool OnEdit(){
      if(editingBG.IsCompleted(editingBGThread.IsRunning)){
       editingBG.editingRequests_bg=new Queue<EditRequest>(editingRequests);

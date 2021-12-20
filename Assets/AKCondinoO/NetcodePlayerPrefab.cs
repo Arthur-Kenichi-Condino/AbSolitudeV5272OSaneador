@@ -42,6 +42,9 @@ namespace AKCondinoO{
 
     void OnDestroy(){
      OnDestroyingDependents();
+     if(VoxelTerrain.Singleton!=null){
+      VoxelTerrain.Singleton.OnPlayerDisconnected(this);
+     }
     }
 
     void OnDestroyingDependents(){
@@ -72,7 +75,10 @@ namespace AKCondinoO{
       if(cCoord!=cCoord_Pre||initialization){
        loadTimer=0;
        Debug.Log("NetcodePlayerPrefab:changed to cCoord:"+cCoord+"!",this);
-       SimObjectSpawner.Singleton.playersMovement.Add(cCoord);
+
+       SimObjectSpawner.Singleton.playersMovement[this]=(cCoord,cCoord_Pre,true);
+       SimObjectSpawner.Singleton.playersCoordChange.Add(cCoord);
+
        VoxelTerrain.Singleton.playersMovement[this]=(cCoord,cCoord_Pre,true);
        cnkRgn=cCoordTocnkRgn(cCoord);
        Debug.Log("NetcodePlayerPrefab:changed to cnkRgn:"+cnkRgn+"!",this);
@@ -81,7 +87,8 @@ namespace AKCondinoO{
      }else if(loadTimer>=loadInterval){
       loadTimer=0;
       Debug.Log("NetcodePlayerPrefab:reload time reached",this);
-      SimObjectSpawner.Singleton.playersMovement.Add(cCoord);
+
+      SimObjectSpawner.Singleton.playersCoordChange.Add(cCoord);
      }
      initialization=false;
     }

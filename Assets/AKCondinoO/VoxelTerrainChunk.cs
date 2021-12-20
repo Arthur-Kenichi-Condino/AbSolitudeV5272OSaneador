@@ -905,7 +905,7 @@ namespace AKCondinoO.Voxels{
        {
         typeof(Pinus_elliottii),
         new TreeData{
-         chance=.95f,
+         chance=.125f,
          verticalRotationFactor=.125f,
          minScale=Vector3.one*.5f,
          maxScale=Vector3.one*1.5f,
