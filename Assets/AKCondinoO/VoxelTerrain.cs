@@ -346,7 +346,7 @@ namespace AKCondinoO.Voxels{
     int maxConnections=2;
 
     internal bool navMeshDirty;
-     AsyncOperation[]navMeshAsyncOperations;
+     internal AsyncOperation[]navMeshAsyncOperations;
 
     bool editRequired;
     bool editRequested;

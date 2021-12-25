@@ -264,13 +264,13 @@ namespace AKCondinoO.Sims{
         
     protected bool sleeping;
 
-    bool unplacing;
+    protected bool unplacing;
     bool unplaceRequired;
     bool unplaceRequested;
-    bool unloading;
+    protected bool unloading;
     bool unloadRequired;
     bool unloadRequested;
-    bool loading; 
+    protected bool loading; 
     bool loadRequired;
     bool loadRequested;
     bool saveRequired;
@@ -488,16 +488,20 @@ namespace AKCondinoO.Sims{
      sleeping=false;
     }
 
+    internal bool InteractionsEnabled=false;
+
     void EnableInteractions(){
      foreach(Collider collider in colliders){
       collider.enabled=true;
      }
+     InteractionsEnabled=true;
     }
 
     void DisableInteractions(){
      foreach(Collider collider in colliders){
       collider.enabled=false;
      }
+     InteractionsEnabled=false;
     }
 
     void EnableRendering(){
