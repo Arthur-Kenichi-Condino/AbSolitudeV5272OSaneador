@@ -8,6 +8,8 @@ namespace AKCondinoO.Sims.Actors{
       internal override void OnIDLE_ST(){
 
        base.OnIDLE_ST();
+
+       bool destReached=DestinationReached();
             
        //Debug.Log("OnIDLE_ST_data.timerToRandomMove:"+OnIDLE_ST_data.timerToRandomMove);
        if(OnIDLE_ST_data.timerToRandomMove<=0f){
@@ -16,7 +18,7 @@ namespace AKCondinoO.Sims.Actors{
          Debug.Log("RandomPoint:result:"+result);
          navMeshAgent.destination=result;
         }
-       }else{
+       }else if(destReached){
         OnIDLE_ST_data.timerToRandomMove-=Time.deltaTime;
        }
 

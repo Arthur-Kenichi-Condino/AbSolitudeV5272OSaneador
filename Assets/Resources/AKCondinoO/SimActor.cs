@@ -117,6 +117,28 @@ namespace AKCondinoO.Sims{
      return false;
     }
 
+    internal bool DestinationReached(){
+     if(!navMeshAgent.enabled){
+      return false;
+     }
+     if(navMeshAgent.pathPending){
+      return false;
+     }
+     if(!navMeshAgent.hasPath){
+      return true;
+     }
+     if(navMeshAgent.remainingDistance==Mathf.Infinity){
+      return true;
+     }
+     if(navMeshAgent.remainingDistance>navMeshAgent.stoppingDistance){
+      return false;
+     }
+     if(Mathf.Approximately(navMeshAgent.velocity.sqrMagnitude,0f)){
+      return true;
+     }
+     return false;
+    }
+
     internal void EnableNavMeshAgent(){
      if(!navMeshAgent.enabled){
       if(VoxelTerrain.Singleton.navMeshAsyncOperations.Any(o=>o!=null&&o.isDone)){
