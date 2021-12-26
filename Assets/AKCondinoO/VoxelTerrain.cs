@@ -474,7 +474,8 @@ namespace AKCondinoO.Voxels{
         if(iCoord.y==0){break;}
        }}
        #endregion
-
+       
+       navMeshDirty=true;
       }
       foreach(var player in playersMoved){var movement=playersMovement[player];
        Debug.Log("reset player movement flag to false");

@@ -1449,6 +1449,7 @@ namespace AKCondinoO.Voxels{
     }
     bool OnAddedTrees(){
      if(addTreesBG.IsCompleted(VoxelTerrain.Singleton.addTreesBGThreads[0].IsRunning)&&addTreesBG.findPositionsCoroutineIdleWaiting){
+      VoxelTerrain.Singleton.navMeshDirty=true;
       return true;
      }
      return false;
