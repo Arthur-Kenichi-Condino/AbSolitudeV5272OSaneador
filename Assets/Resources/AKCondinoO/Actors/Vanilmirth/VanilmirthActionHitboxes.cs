@@ -5,13 +5,13 @@ using UnityEngine;
 namespace AKCondinoO.Sims.Actors{
  internal class VanilmirthActionHitboxes:ActionHitboxes{
         
-    protected override void Update(){
+    internal override void ManualUpdate(){
      
-     base.Update();
+     base.ManualUpdate();
 
     }
 
-    internal override Vector3[]MOTION_STAND_bodyPositions{get;}=new Vector3[]{
+    internal override Vector3[]bodyPos_MOTION_STAND{get;}=new Vector3[]{
      Vector3.down*.25f,
      Vector3.down*.45f,
      Vector3.down*.55f,
@@ -24,7 +24,7 @@ namespace AKCondinoO.Sims.Actors{
 
     }
 
-    internal override Vector3[]MOTION_MOVE_bodyPositions{get;}=new Vector3[]{
+    internal override Vector3[]bodyPos_MOTION_MOVE{get;}=new Vector3[]{
      new Vector3(0,-.25f,1.20f),
      new Vector3(0,-.45f,.750f),
      new Vector3(0,-.55f,1.20f),

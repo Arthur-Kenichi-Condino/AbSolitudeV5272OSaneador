@@ -5,13 +5,13 @@ using UnityEngine;
 namespace AKCondinoO.Sims.Actors{
  internal class HauntedCorpseActionHitboxes:ActionHitboxes{
         
-    protected override void Update(){
+    internal override void ManualUpdate(){
      
-     base.Update();
+     base.ManualUpdate();
 
     }
 
-    internal override Vector3[]MOTION_MOVE_bodyPositions{get;}=new Vector3[]{
+    internal override Vector3[]bodyPos_MOTION_MOVE{get;}=new Vector3[]{
      new Vector3(0,0,1.0f),
     };
         

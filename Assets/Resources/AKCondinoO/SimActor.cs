@@ -1,3 +1,4 @@
+using AKCondinoO.Sims.Actors;
 using AKCondinoO.Voxels;
 using System;
 using System.Collections;
@@ -13,9 +14,13 @@ namespace AKCondinoO.Sims{
 
     internal CharacterController characterController;
 
+    internal ActionHitboxes hitboxes;
+
     protected override void Awake(){
 
      base.Awake();
+
+     hitboxes=GetComponentInChildren<ActionHitboxes>();
 
      characterController=GetComponentInChildren<CharacterController>();
      localBounds=new Bounds(transform.position,
@@ -78,6 +83,8 @@ namespace AKCondinoO.Sims{
 
          UpdateMotion();
 
+         hitboxes.ManualUpdate();
+
         }
 
        }
@@ -108,13 +115,17 @@ namespace AKCondinoO.Sims{
 
     internal virtual void UpdateMotion(){
      if(!Mathf.Approximately(navMeshAgent.velocity.sqrMagnitude,0f)){
-      if(MyMotion!=Motion.MOTION_MOVE){OnChangedMotion(MyMotion,Motion.MOTION_MOVE);}
-      MyMotion=Motion.MOTION_MOVE;
+      SetMotion(Motion.MOTION_MOVE);
       return;
      }
-     if(MyMotion!=Motion.MOTION_STAND){OnChangedMotion(MyMotion,Motion.MOTION_STAND);}
-     MyMotion=Motion.MOTION_STAND;
+     SetMotion(Motion.MOTION_STAND);
     }
+
+    void SetMotion(Motion nextMotion){
+     if(MyMotion!=nextMotion){OnChangedMotion(MyMotion,nextMotion);}
+     MyMotion=nextMotion;
+    }
+
     void OnChangedMotion(Motion fromMotion,Motion toMotion){
      EventHandler handler=OnChangedMotionEvent;handler?.Invoke(this,new OnChangedMotionEventArgs(){
       fromMotion=fromMotion,toMotion=toMotion,
@@ -129,7 +140,7 @@ namespace AKCondinoO.Sims{
     [Serializable]
     internal class OnIDLE_ST_Data{
      [SerializeField]internal float timeToRandomMove=8f;
-      internal float timerToRandomMove=8f;
+      internal float timerToRandomMove=1f;
     }
     internal virtual void OnIDLE_ST(){
      //Debug.Log("OnIDLE_ST");
