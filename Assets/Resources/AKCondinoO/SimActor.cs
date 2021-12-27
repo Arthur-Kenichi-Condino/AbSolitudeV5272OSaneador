@@ -82,11 +82,19 @@ namespace AKCondinoO.Sims{
      }
     }
 
+    internal enum Motion:int{
+     MOTION_STAND=0,
+    }
+
+    protected Motion MyMotion=Motion.MOTION_STAND;
+     internal Motion GetV_Motion{get{return MyMotion;}}
+
     internal enum State:int{
      IDLE_ST=0,
     }
 
-    internal State MyState=State.IDLE_ST;
+    protected State MyState=State.IDLE_ST;
+     internal State GetV_State{get{return MyState;}}
 
     internal virtual void AI(){
      if(MyState==State.IDLE_ST){
@@ -94,10 +102,10 @@ namespace AKCondinoO.Sims{
      }
     }
 
-    [SerializeField]public OnIDLE_ST_Data OnIDLE_ST_data=new OnIDLE_ST_Data();
+    [SerializeField]internal OnIDLE_ST_Data OnIDLE_ST_data=new OnIDLE_ST_Data();
     [Serializable]
     internal class OnIDLE_ST_Data{
-     [SerializeField]public float timeToRandomMove=8f;
+     [SerializeField]internal float timeToRandomMove=8f;
       internal float timerToRandomMove=8f;
     }
     internal virtual void OnIDLE_ST(){
