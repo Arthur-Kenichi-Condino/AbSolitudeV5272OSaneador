@@ -75,6 +75,9 @@ namespace AKCondinoO.Sims{
           DisableNavMeshAgent();
    
          }
+
+         UpdateMotion();
+
         }
 
        }
@@ -84,6 +87,7 @@ namespace AKCondinoO.Sims{
 
     internal enum Motion:int{
      MOTION_STAND=0,
+     MOTION_MOVE =1,
     }
 
     protected Motion MyMotion=Motion.MOTION_STAND;
@@ -100,6 +104,25 @@ namespace AKCondinoO.Sims{
      if(MyState==State.IDLE_ST){
       OnIDLE_ST();
      }
+    }
+
+    internal virtual void UpdateMotion(){
+     if(!Mathf.Approximately(navMeshAgent.velocity.sqrMagnitude,0f)){
+      if(MyMotion!=Motion.MOTION_MOVE){OnChangedMotion(MyMotion,Motion.MOTION_MOVE);}
+      MyMotion=Motion.MOTION_MOVE;
+      return;
+     }
+     if(MyMotion!=Motion.MOTION_STAND){OnChangedMotion(MyMotion,Motion.MOTION_STAND);}
+     MyMotion=Motion.MOTION_STAND;
+    }
+    void OnChangedMotion(Motion fromMotion,Motion toMotion){
+     EventHandler handler=OnChangedMotionEvent;handler?.Invoke(this,new OnChangedMotionEventArgs(){
+      fromMotion=fromMotion,toMotion=toMotion,
+     });
+    }
+    internal event EventHandler OnChangedMotionEvent;
+    internal class OnChangedMotionEventArgs:EventArgs{
+     internal Motion fromMotion;internal Motion toMotion;
     }
 
     [SerializeField]internal OnIDLE_ST_Data OnIDLE_ST_data=new OnIDLE_ST_Data();

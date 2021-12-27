@@ -3,15 +3,15 @@ using System.Collections.Generic;
 using UnityEngine;
 
 namespace AKCondinoO.Sims.Actors{
- internal class Homunculus:SimActor{
-
+ internal class MindlessMonster:SimActor{
+        
       internal override void OnIDLE_ST(){
 
        base.OnIDLE_ST();
 
        bool destReached=DestinationReached();
-            
-       if(destReached){  
+           
+       if(destReached){            
         //Debug.Log("OnIDLE_ST_data.timerToRandomMove:"+OnIDLE_ST_data.timerToRandomMove);
         if(OnIDLE_ST_data.timerToRandomMove<=0f){
          OnIDLE_ST_data.timerToRandomMove+=OnIDLE_ST_data.timeToRandomMove;

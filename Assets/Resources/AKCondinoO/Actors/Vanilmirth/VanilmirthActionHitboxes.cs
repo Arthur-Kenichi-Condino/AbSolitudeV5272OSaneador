@@ -24,5 +24,12 @@ namespace AKCondinoO.Sims.Actors{
 
     }
 
+    internal override Vector3[]body_MOTION_MOVE_positions{get;}=new Vector3[]{
+     new Vector3(0,-.25f,1.20f),
+     new Vector3(0,-.45f,.750f),
+     new Vector3(0,-.55f,1.20f),
+     new Vector3(0,-.45f,.750f),
+    };
+
  }
 }
