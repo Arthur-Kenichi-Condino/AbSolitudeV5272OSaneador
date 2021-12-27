@@ -24,17 +24,17 @@ namespace AKCondinoO.Sims.Actors{
     }
     
     [SerializeField]internal GameObject body;
-     protected int body_currentPositionIndex=0;
-      protected float body_position_lerpVal=0f;
-       protected bool body_position_lerping=false;
-        protected float body_position_lerpSpeed;
-         protected Vector3 body_startPosition;
-          protected Vector3 body_desiredPosition;
+     protected int bodyCurrentPositionIndex=0;
+      protected float bodyPositionLerpVal=0f;
+       protected bool bodyPositionLerping=false;
+        protected float bodyPositionLerpSpeed;
+         protected Vector3 bodyStartPosition;
+          protected Vector3 bodyDesiredPosition;
 
     void OnChangedMotionEvent(object sender,EventArgs e){
-     body_currentPositionIndex=0;
-     body_position_lerpVal=0f;
-     body_position_lerping=false;
+     bodyCurrentPositionIndex=0;
+     bodyPositionLerpVal=0f;
+     bodyPositionLerping=false;
     }
 
     protected virtual void Update(){
@@ -46,68 +46,68 @@ namespace AKCondinoO.Sims.Actors{
       OnMOTION_MOVE();
      }
      
-     Debug.Log("body_desiredPosition:"+body_desiredPosition);
+     Debug.Log("body_desiredPosition:"+bodyDesiredPosition);
 
-     if(body_position_lerping){
-      body_position_lerpVal+=body_position_lerpSpeed;
-      if(body_position_lerpVal>=1f){
-       body_position_lerpVal=1f;
+     if(bodyPositionLerping){
+      bodyPositionLerpVal+=bodyPositionLerpSpeed;
+      if(bodyPositionLerpVal>=1f){
+       bodyPositionLerpVal=1f;
       }
      }
 
-     body.transform.position=Vector3.Lerp(body_startPosition,body_desiredPosition,body_position_lerpVal);
+     body.transform.position=Vector3.Lerp(bodyStartPosition,bodyDesiredPosition,bodyPositionLerpVal);
 
     }
 
-    internal virtual Vector3[]body_MOTION_STAND_positions{get;}=new Vector3[]{
+    internal virtual Vector3[]MOTION_STAND_bodyPositions{get;}=new Vector3[]{
      Vector3.zero,
     };
 
     internal virtual void OnMOTION_STAND(){
      Debug.Log("OnMOTION_STAND");
             
-     SetBodyNextPositionIndex(body_MOTION_STAND_positions);
+     SetBodyNextPositionIndex(MOTION_STAND_bodyPositions);
             
-     BeginLerpingBodyPosition(body_MOTION_STAND_positions);
+     BeginLerpingBodyPosition(MOTION_STAND_bodyPositions);
 
     }
 
-    internal virtual Vector3[]body_MOTION_MOVE_positions{get;}=new Vector3[]{
+    internal virtual Vector3[]MOTION_MOVE_bodyPositions{get;}=new Vector3[]{
      Vector3.zero,
     };
 
     internal virtual void OnMOTION_MOVE(){
      Debug.Log("OnMOTION_MOVE");
 
-     SetBodyNextPositionIndex(body_MOTION_MOVE_positions);
+     SetBodyNextPositionIndex(MOTION_MOVE_bodyPositions);
 
-     BeginLerpingBodyPosition(body_MOTION_MOVE_positions);
+     BeginLerpingBodyPosition(MOTION_MOVE_bodyPositions);
 
     }
 
     void SetBodyNextPositionIndex(Vector3[]positions){
-     if(body_position_lerpVal>=1f){
-      body_position_lerping=false;
-      body_currentPositionIndex++;
-      if(body_currentPositionIndex>=positions.Length){
-       body_currentPositionIndex=0;
+     if(bodyPositionLerpVal>=1f){
+      bodyPositionLerping=false;
+      bodyCurrentPositionIndex++;
+      if(bodyCurrentPositionIndex>=positions.Length){
+       bodyCurrentPositionIndex=0;
       }
      }
     }
 
     void BeginLerpingBodyPosition(Vector3[]positions,float lerpSpeed=.05f){
-     if(!body_position_lerping){
+     if(!bodyPositionLerping){
       Quaternion rotation;
       if(actor.navMeshAgent.desiredVelocity.sqrMagnitude!=0f){
        rotation=Quaternion.LookRotation(actor.navMeshAgent.velocity.normalized);
       }else{
        rotation=transform.root.rotation;
       }
-      body_startPosition=body.transform.position;
-      body_desiredPosition=transform.root.position+rotation*positions[body_currentPositionIndex];
-      body_position_lerpSpeed=lerpSpeed;
-      body_position_lerpVal=0f;
-      body_position_lerping=true;
+      bodyStartPosition=body.transform.position;
+      bodyDesiredPosition=transform.root.position+rotation*positions[bodyCurrentPositionIndex];
+      bodyPositionLerpSpeed=lerpSpeed;
+      bodyPositionLerpVal=0f;
+      bodyPositionLerping=true;
      }
     }
 

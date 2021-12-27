@@ -10,6 +10,10 @@ namespace AKCondinoO.Sims.Actors{
      base.Update();
 
     }
+
+    internal override Vector3[]MOTION_MOVE_bodyPositions{get;}=new Vector3[]{
+     new Vector3(0,0,1.0f),
+    };
         
  }
 }
