@@ -97,7 +97,7 @@ namespace AKCondinoO.Sims.Actors{
 
      SetBodyNextPositionIndex(bodyPos_MOTION_MOVE);
 
-     BeginLerpingBodyPosition(bodyPos_MOTION_MOVE,.2f);
+     BeginLerpingBodyPosition(bodyPos_MOTION_MOVE,.1f);
 
     }
 
