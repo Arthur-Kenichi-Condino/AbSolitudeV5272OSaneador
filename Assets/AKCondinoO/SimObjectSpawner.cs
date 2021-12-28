@@ -301,7 +301,7 @@ namespace AKCondinoO.Sims{
      }
     }
 
-    [SerializeField]double instantiationMaxExecutionTime=30.0;
+    [SerializeField]double instantiationMaxExecutionTime=.05;
 
     WaitUntil waitSpawnQueue;
     WaitUntil waitPersistentUniqueIdsBGIsCompleted;

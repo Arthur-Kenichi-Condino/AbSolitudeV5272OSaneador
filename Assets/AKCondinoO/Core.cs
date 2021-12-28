@@ -33,13 +33,14 @@ namespace AKCondinoO{
      debug=new NavMeshBuildDebugSettings{
       flags=NavMeshBuildDebugFlags.None,
      },
+     maxJobWorkers=1,
     };
 
     void Awake(){if(Singleton==null){Singleton=this;}else{DestroyImmediate(this);return;}
 
      QualitySettings.vSyncCount=0;
 
-     Application.targetFrameRate=75;
+     Application.targetFrameRate=74;
 
      Directory.CreateDirectory(savePath);
      Directory.CreateDirectory(perChunkSavePath);
@@ -70,7 +71,7 @@ namespace AKCondinoO{
     [SerializeField]SimObject DEBUG_CREATE_SIM_OBJECT=null;
     bool initialized;
     void Update(){
-     if(Application.targetFrameRate!=75){Application.targetFrameRate=75;}
+     if(Application.targetFrameRate!=74){Application.targetFrameRate=74;}
 
      if(!initialized){
       initialized=true;

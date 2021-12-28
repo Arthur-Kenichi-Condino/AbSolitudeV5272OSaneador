@@ -343,7 +343,7 @@ namespace AKCondinoO.Sims{
        SimObjectSpawner.Singleton.DespawnReleaseIdQueue.Enqueue(this);
       }else if(unplaceRequired&&OnUnplacing()){
        unplaceRequired=false;
-       Debug.Log("ManualUpdate:unplacing started:"+id,transform);
+       //Debug.Log("ManualUpdate:unplacing started:"+id,transform);
        unplaceRequested=true;
       }
 
@@ -548,7 +548,7 @@ namespace AKCondinoO.Sims{
         SimObject sO;
         if((sO=overlapping.transform.root.GetComponent<SimObject>())!=null&&!(sO is SimActor)){
          if(!overlappersUnplacing.Contains(sO)){
-          Debug.Log("IsOverlappingNonAlloc():I'm overlapping another simObject:"+overlappedColliders[j].transform.root.name,this);
+          //Debug.Log("IsOverlappingNonAlloc():I'm overlapping another simObject:"+overlappedColliders[j].transform.root.name,this);
           result=true;
          }
         }

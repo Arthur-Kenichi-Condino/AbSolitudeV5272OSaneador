@@ -64,14 +64,14 @@ namespace AKCondinoO.Sims.Actors{
      
      //Debug.Log("bodyPosLerpB:"+bodyPosLerpB);
 
+     body.transform.position=Vector3.Lerp(bodyPosLerpA,bodyPosLerpB,bodyPosLerpVal);
+
      if(bodyPosLerping){
       bodyPosLerpVal+=bodyPosLerpSpeed;
       if(bodyPosLerpVal>=1f){
        bodyPosLerpVal=1f;
       }
      }
-
-     body.transform.position=Vector3.Lerp(bodyPosLerpA,bodyPosLerpB,bodyPosLerpVal);
 
     }
 
@@ -97,7 +97,7 @@ namespace AKCondinoO.Sims.Actors{
 
      SetBodyNextPositionIndex(bodyPos_MOTION_MOVE);
 
-     BeginLerpingBodyPosition(bodyPos_MOTION_MOVE,.1f);
+     BeginLerpingBodyPosition(bodyPos_MOTION_MOVE,.2f);
 
     }
 

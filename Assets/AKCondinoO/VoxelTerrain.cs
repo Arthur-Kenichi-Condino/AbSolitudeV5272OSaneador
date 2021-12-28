@@ -347,6 +347,8 @@ namespace AKCondinoO.Voxels{
 
     internal bool navMeshDirty;
      internal AsyncOperation[]navMeshAsyncOperations;
+      internal float navMeshBuildInterval=2f;
+       internal float navMeshBuildTimer=0f;
 
     bool editRequired;
     bool editRequested;
@@ -492,18 +494,23 @@ namespace AKCondinoO.Voxels{
       navMeshDirty=true;
      }
      if(navMeshDirty){
-      Debug.Log("navMeshDirty");
-      if(navMeshAsyncOperations.All(o=>o==null||o.isDone)){
-       navMeshDirty=false;
-       Debug.Log("navMeshDirty:ready to start navMeshAsyncOperations");
-       sources.Clear();
-       markups.Clear();
-       sources.AddRange(navMeshSources.Values);
-       markups.AddRange(navMeshMarkups.Values);
-       NavMeshBuilder.CollectSources(null,PhysHelper.NavMesh,NavMeshCollectGeometry.PhysicsColliders,0,markups,sources);
-       int i=0;
-       foreach(var player in playersMovement.Keys){
-        navMeshAsyncOperations[i++]=player.BuildNavMesh(sources);
+      //Debug.Log("navMeshDirty");
+      if(navMeshBuildTimer>0f){
+       navMeshBuildTimer-=Time.deltaTime;
+      }else{
+       navMeshBuildTimer=navMeshBuildInterval;
+       if(navMeshAsyncOperations.All(o=>o==null||o.isDone)){
+        navMeshDirty=false;
+        Debug.Log("navMeshDirty:ready to start navMeshAsyncOperations");
+        sources.Clear();
+        markups.Clear();
+        sources.AddRange(navMeshSources.Values);
+        markups.AddRange(navMeshMarkups.Values);
+        NavMeshBuilder.CollectSources(null,PhysHelper.NavMesh,NavMeshCollectGeometry.PhysicsColliders,0,markups,sources);
+        int i=0;
+        foreach(var player in playersMovement.Keys){
+         navMeshAsyncOperations[i++]=player.BuildNavMesh(sources);
+        }
        }
       }
      }

@@ -191,7 +191,7 @@ namespace AKCondinoO.Sims{
         transform.position=hitResult.position+Vector3.up*navMeshAgent.height/2f;
         navMeshAgent.enabled=true;
        }
-       Debug.Log("hitResult.hit:"+hitResult.hit);
+       //Debug.Log("hitResult.hit:"+hitResult.hit);
       }else{
        //Debug.LogWarning("EnableNavMeshAgent:cancel:no NavMesh built yet");
       }

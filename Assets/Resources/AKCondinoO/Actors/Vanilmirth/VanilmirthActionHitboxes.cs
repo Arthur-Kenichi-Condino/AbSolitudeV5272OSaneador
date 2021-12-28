@@ -19,7 +19,7 @@ namespace AKCondinoO.Sims.Actors{
     internal override Vector3[]bodyPos_MOTION_MOVE{
      get{
       if(bodyPos_MOTION_MOVE_v==null){
-       GenerateMovementCycle(ref bodyPos_MOTION_MOVE_v,new Vector3(0,-.25f,0),new Vector3(0,-.85f,.6f),2);
+       GenerateMovementCycle(ref bodyPos_MOTION_MOVE_v,new Vector3(0,-.25f,0),new Vector3(0,-.85f,.6f),4);
       }
       return bodyPos_MOTION_MOVE_v;
      }
