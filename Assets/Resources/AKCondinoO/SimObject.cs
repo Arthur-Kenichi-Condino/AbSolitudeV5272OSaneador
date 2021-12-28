@@ -203,7 +203,7 @@ namespace AKCondinoO.Sims{
      }
 
      localBounds.center=transform.InverseTransformPoint(localBounds.center);
-     Debug.Log("localBounds.center:"+localBounds.center+";localBounds.size:"+localBounds.size,this);
+     //Debug.Log("localBounds.center:"+localBounds.center+";localBounds.size:"+localBounds.size,this);
 
      foreach(Renderer renderer in renderers=GetComponentsInChildren<Renderer>()){
      }

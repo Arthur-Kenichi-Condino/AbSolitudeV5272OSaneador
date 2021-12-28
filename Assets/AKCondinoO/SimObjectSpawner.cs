@@ -188,11 +188,11 @@ namespace AKCondinoO.Sims{
     }
 
     void OnExitSave(){
-     Debug.Log("SimObjectSpawner:OnExitSave");
+     //Debug.Log("SimObjectSpawner:OnExitSave");
 
      List<(Type simType,ulong number)>unplacedIds=new List<(Type,ulong)>();
      foreach(var a in active){var sO=a.Value;
-      Debug.Log("SimObjectSpawner:OnExitSave:save active sO.id:"+sO.id);
+      //Debug.Log("SimObjectSpawner:OnExitSave:save active sO.id:"+sO.id);
       sO.OnExitSave(unplacedIds);
      }
      foreach(var id in unplacedIds){

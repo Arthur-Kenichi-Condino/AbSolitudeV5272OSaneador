@@ -305,7 +305,7 @@ namespace AKCondinoO.Voxels{
 
      if(all!=null){
       for(int i=0;i<all.Length;++i){
-       Debug.Log("OnDestroyingCoreEvent:VoxelTerrain:delete chunk");
+       //Debug.Log("OnDestroyingCoreEvent:VoxelTerrain:delete chunk");
        all[i].OnExit();
       }
      }

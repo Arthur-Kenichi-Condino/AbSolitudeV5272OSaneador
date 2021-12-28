@@ -22,6 +22,20 @@ namespace AKCondinoO.Sims.Actors{
      }
 
     }
+
+    protected void GenerateMovementCycle(ref Vector3[]positions,Vector3 startPoint,Vector3 middlePoint,int numberOfPointsUntilMiddle){
+     int numberOfPoints=numberOfPointsUntilMiddle*2;
+     positions=new Vector3[numberOfPoints];
+     Vector3 increaseValue=(middlePoint-startPoint)/numberOfPoints;
+     for(int i=0;i<numberOfPoints;++i){
+      if(i>=numberOfPointsUntilMiddle){
+       positions[i]=middlePoint-increaseValue*i;
+      }else{
+       positions[i]=startPoint+increaseValue*i;
+      }
+      Debug.Log("GenerateMovementCycle:positions[i]:"+positions[i]);
+     }
+    }
     
     [SerializeField]internal GameObject body;
      protected int bodyPosIdx=0;
@@ -40,7 +54,7 @@ namespace AKCondinoO.Sims.Actors{
     }
 
     internal virtual void ManualUpdate(){
-     Debug.Log("actor.GetV_Motion:"+actor.GetV_Motion);
+     //Debug.Log("actor.GetV_Motion:"+actor.GetV_Motion);
      if(actor.GetV_Motion==SimActor.Motion.MOTION_STAND){
       OnMOTION_STAND();
      }
@@ -66,11 +80,11 @@ namespace AKCondinoO.Sims.Actors{
     };
 
     internal virtual void OnMOTION_STAND(){
-     Debug.Log("OnMOTION_STAND");
+     //Debug.Log("OnMOTION_STAND");
             
      SetBodyNextPositionIndex(bodyPos_MOTION_STAND);
             
-     BeginLerpingBodyPosition(bodyPos_MOTION_STAND);
+     BeginLerpingBodyPosition(bodyPos_MOTION_STAND,.1f);
 
     }
 
@@ -79,15 +93,15 @@ namespace AKCondinoO.Sims.Actors{
     };
 
     internal virtual void OnMOTION_MOVE(){
-     Debug.Log("OnMOTION_MOVE");
+     //Debug.Log("OnMOTION_MOVE");
 
      SetBodyNextPositionIndex(bodyPos_MOTION_MOVE);
 
-     BeginLerpingBodyPosition(bodyPos_MOTION_MOVE);
+     BeginLerpingBodyPosition(bodyPos_MOTION_MOVE,.2f);
 
     }
 
-    void SetBodyNextPositionIndex(Vector3[]positions){
+    protected void SetBodyNextPositionIndex(Vector3[]positions){
      if(bodyPosLerpVal>=1f){
       bodyPosLerping=false;
       bodyPosIdx++;
@@ -97,11 +111,18 @@ namespace AKCondinoO.Sims.Actors{
      }
     }
 
-    void BeginLerpingBodyPosition(Vector3[]positions,float lerpSpeed=.05f){
+    protected void BeginLerpingBodyPosition(Vector3[]positions,float lerpSpeed=.05f){
      if(!bodyPosLerping){
       Quaternion rotation;
       if(actor.GetV_Motion==SimActor.Motion.MOTION_MOVE){
-       rotation=Quaternion.LookRotation(actor.navMeshAgent.velocity.normalized);
+       Vector3 horizontalVelocity=actor.navMeshAgent.velocity;
+               horizontalVelocity.y=0f;
+       Vector3 normalized=horizontalVelocity.normalized;
+       if(Mathf.Approximately(normalized.sqrMagnitude,0f)){
+        rotation=transform.root.rotation;
+       }else{
+        rotation=Quaternion.LookRotation(normalized);
+       }
       }else{
        rotation=transform.root.rotation;
       }

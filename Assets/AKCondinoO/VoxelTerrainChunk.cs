@@ -1034,7 +1034,7 @@ namespace AKCondinoO.Voxels{
       internal Coroutine findPositionsCoroutine;
      internal IEnumerator FindPositionsCoroutine(){
 
-      Debug.Log("FindPositionsCoroutine() coroutine started");
+      //Debug.Log("FindPositionsCoroutine() coroutine started");
 
       waitForBeginFlag=new WaitUntil(()=>findPositionsCoroutineBeginFlag);
 
@@ -1266,7 +1266,7 @@ namespace AKCondinoO.Voxels{
     }
 
     internal void OnActivated(){
-     Debug.Log("VoxelTerrainChunk:OnActivated");
+     //Debug.Log("VoxelTerrainChunk:OnActivated");
      marchingCubesBG.TempVer=new NativeList<Vertex>(Allocator.Persistent);
      marchingCubesBG.TempTri=new NativeList<UInt32>(Allocator.Persistent);
 

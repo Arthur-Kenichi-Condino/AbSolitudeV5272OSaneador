@@ -4,32 +4,26 @@ using UnityEngine;
 
 namespace AKCondinoO.Sims.Actors{
  internal class VanilmirthActionHitboxes:ActionHitboxes{
+
+    Vector3[]bodyPos_MOTION_STAND_v;
+    internal override Vector3[]bodyPos_MOTION_STAND{
+     get{
+      if(bodyPos_MOTION_STAND_v==null){
+       GenerateMovementCycle(ref bodyPos_MOTION_STAND_v,new Vector3(0,-.25f,0),new Vector3(0,-.85f,0),2);
+      }
+      return bodyPos_MOTION_STAND_v;
+     }
+    }
         
-    internal override void ManualUpdate(){
-     
-     base.ManualUpdate();
-
+    Vector3[]bodyPos_MOTION_MOVE_v;
+    internal override Vector3[]bodyPos_MOTION_MOVE{
+     get{
+      if(bodyPos_MOTION_MOVE_v==null){
+       GenerateMovementCycle(ref bodyPos_MOTION_MOVE_v,new Vector3(0,-.25f,0),new Vector3(0,-.85f,.6f),4);
+      }
+      return bodyPos_MOTION_MOVE_v;
+     }
     }
-
-    internal override Vector3[]bodyPos_MOTION_STAND{get;}=new Vector3[]{
-     Vector3.down*.25f,
-     Vector3.down*.45f,
-     Vector3.down*.55f,
-     Vector3.down*.45f,
-    };
-
-    internal override void OnMOTION_STAND(){
-
-     base.OnMOTION_STAND();
-
-    }
-
-    internal override Vector3[]bodyPos_MOTION_MOVE{get;}=new Vector3[]{
-     new Vector3(0,-.25f,1.20f),
-     new Vector3(0,-.45f,.750f),
-     new Vector3(0,-.55f,1.20f),
-     new Vector3(0,-.45f,.750f),
-    };
 
  }
 }

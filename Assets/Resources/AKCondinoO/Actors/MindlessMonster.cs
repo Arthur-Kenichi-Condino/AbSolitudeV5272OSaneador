@@ -16,7 +16,7 @@ namespace AKCondinoO.Sims.Actors{
         if(OnIDLE_ST_data.timerToRandomMove<=0f){
          OnIDLE_ST_data.timerToRandomMove+=OnIDLE_ST_data.timeToRandomMove;
          if(RandomPoint(transform.position,8f,out Vector3 result)){
-          Debug.Log("RandomPoint:result:"+result);
+          //Debug.Log("RandomPoint:result:"+result);
           navMeshAgent.destination=result;
          }
         }else{

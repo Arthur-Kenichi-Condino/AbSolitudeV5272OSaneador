@@ -225,7 +225,7 @@ MonoBehaviour:
   DEBUG_UNPLACE: 0
   DEBUG_UNLOAD: 0
   OnIDLE_ST_data:
-    timeToRandomMove: 8
+    timeToRandomMove: 3
 --- !u!195 &7216098700908255679
 NavMeshAgent:
   m_ObjectHideFlags: 0
