@@ -74,6 +74,7 @@ namespace AKCondinoO.Sims.Actors{
      }
 
     }
+    internal event EventHandler OnMotionCycleEndEvent;
 
     internal virtual Vector3[]bodyPos_MOTION_STAND{get;}=new Vector3[]{
      Vector3.zero,

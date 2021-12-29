@@ -93,8 +93,9 @@ namespace AKCondinoO.Sims{
     }
 
     internal enum Motion:int{
-     MOTION_STAND=0,
-     MOTION_MOVE =1,
+     MOTION_STAND =0,
+     MOTION_MOVE  =1,
+     MOTION_ATTACK=2,
     }
 
     protected Motion MyMotion=Motion.MOTION_STAND;
@@ -112,18 +113,31 @@ namespace AKCondinoO.Sims{
       OnIDLE_ST();
      }
     }
+        
+    [SerializeField]bool DEBUG_MOTION_ATTACK=false;
+
+    protected bool isMotionLocked=false;
 
     internal virtual void UpdateMotion(){
      if(!Mathf.Approximately(navMeshAgent.velocity.sqrMagnitude,0f)){
       SetMotion(Motion.MOTION_MOVE);
       return;
      }
+     if(DEBUG_MOTION_ATTACK){
+      DEBUG_MOTION_ATTACK=false;
+      SetMotion(Motion.MOTION_ATTACK,true);
+      return;
+     }
      SetMotion(Motion.MOTION_STAND);
     }
 
-    void SetMotion(Motion nextMotion){
+    void SetMotion(Motion nextMotion,bool lockMotion=false){
+     if(isMotionLocked){
+      return;
+     }
      if(MyMotion!=nextMotion){OnChangedMotion(MyMotion,nextMotion);}
      MyMotion=nextMotion;
+     isMotionLocked=lockMotion;
     }
 
     void OnChangedMotion(Motion fromMotion,Motion toMotion){
