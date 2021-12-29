@@ -951,7 +951,7 @@ namespace AKCondinoO.Voxels{
 
       internal virtual TreeModifiersResults TreeModifiers(Vector3Int noiseInputRounded,TreeData treeData,Perlin treeRotationModifierPerlin,Perlin treeScaleModifierPerlin){
                                                   Vector3 noiseInput=noiseInputRounded+deround;
-       float rotation=(float)treeRotationModifierPerlin.GetValue(noiseInput.z,noiseInput.x,0)*360f;
+       float rotation=(float)treeRotationModifierPerlin.GetValue(noiseInput.z,noiseInput.x,0)*720f;
        Vector3 scale=Vector3.Lerp(treeData.minScale,treeData.maxScale,Mathf.Clamp01(((float)treeScaleModifierPerlin.GetValue(noiseInput.z,noiseInput.x,0)+1f)/2f));
        return new TreeModifiersResults{
         rotation=rotation,
@@ -991,8 +991,8 @@ namespace AKCondinoO.Voxels{
     internal readonly TreesBackgroundContainer addTreesBG=new TreesBackgroundContainer();
     internal class TreesBackgroundContainer:BackgroundContainer{
      internal TreesBackgroundContainer(){
-      treeRotationModifierPerlin_bg=new Perlin(frequency:Mathf.Pow(2,-16),lacunarity:2.0,persistence:0.5,octaves:6,seed:0,quality:QualityMode.Low);
-       treeScaleModifierPerlin_bg  =new Perlin(frequency:Mathf.Pow(2,-16),lacunarity:2.0,persistence:0.5,octaves:6,seed:0,quality:QualityMode.Low);
+      treeRotationModifierPerlin_bg=new Perlin(frequency:Mathf.Pow(2,-.25f),lacunarity:3.5,persistence:0.8,octaves:6,seed:0,quality:QualityMode.Low);
+       treeScaleModifierPerlin_bg  =new Perlin(frequency:Mathf.Pow(2,-.5f ),lacunarity:3.5,persistence:0.8,octaves:6,seed:0,quality:QualityMode.Low);
      }
 
      internal ExecutionMode executionMode_bg=ExecutionMode._1;
