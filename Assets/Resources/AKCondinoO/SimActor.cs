@@ -21,6 +21,7 @@ namespace AKCondinoO.Sims{
      base.Awake();
 
      hitboxes=GetComponentInChildren<ActionHitboxes>();
+     hitboxes.OnMotionCycleEndEvent+=OnMotionCycleEndEvent;
 
      characterController=GetComponentInChildren<CharacterController>();
      localBounds=new Bounds(transform.position,
@@ -42,6 +43,20 @@ namespace AKCondinoO.Sims{
 
      base.OnActivated(load);
 
+    }
+
+    protected override void OnDestroy(){
+
+     base.OnDestroy();
+            
+     if(hitboxes!=null){
+      hitboxes.OnMotionCycleEndEvent-=OnMotionCycleEndEvent;
+     }
+    }
+
+    void OnMotionCycleEndEvent(object sender,EventArgs e){
+     Debug.Log("OnMotionCycleEndEvent");
+     isMotionLocked=false;
     }
 
     internal bool isUsingAI=true;
@@ -81,7 +96,15 @@ namespace AKCondinoO.Sims{
    
          }
 
+         if(doAttack>=0){
+          StopMovement();
+         }
+
          UpdateMotion();
+
+         if(isMotionLocked){
+          StopMovement();
+         }
 
          hitboxes.ManualUpdate();
 
@@ -107,15 +130,21 @@ namespace AKCondinoO.Sims{
 
     protected State MyState=State.IDLE_ST;
      internal State GetV_State{get{return MyState;}}
+        
+    [SerializeField]bool DEBUG_ATTACK=false;
 
     internal virtual void AI(){
      if(MyState==State.IDLE_ST){
       OnIDLE_ST();
      }
+
+     if(DEBUG_ATTACK){
+      DEBUG_ATTACK=false;
+      Attack();
+     }
+
     }
         
-    [SerializeField]bool DEBUG_MOTION_ATTACK=false;
-
     protected bool isMotionLocked=false;
 
     internal virtual void UpdateMotion(){
@@ -123,21 +152,23 @@ namespace AKCondinoO.Sims{
       SetMotion(Motion.MOTION_MOVE);
       return;
      }
-     if(DEBUG_MOTION_ATTACK){
-      DEBUG_MOTION_ATTACK=false;
-      SetMotion(Motion.MOTION_ATTACK,true);
+     if(doAttack>=0){
+      if(SetMotion(Motion.MOTION_ATTACK,true)){
+       doAttack=-1;
+      }
       return;
      }
      SetMotion(Motion.MOTION_STAND);
     }
 
-    void SetMotion(Motion nextMotion,bool lockMotion=false){
+    bool SetMotion(Motion nextMotion,bool lockMotion=false){
      if(isMotionLocked){
-      return;
+      return false;
      }
      if(MyMotion!=nextMotion){OnChangedMotion(MyMotion,nextMotion);}
      MyMotion=nextMotion;
      isMotionLocked=lockMotion;
+     return true;
     }
 
     void OnChangedMotion(Motion fromMotion,Motion toMotion){
@@ -158,6 +189,20 @@ namespace AKCondinoO.Sims{
     }
     internal virtual void OnIDLE_ST(){
      //Debug.Log("OnIDLE_ST");
+    }
+
+    int doAttack=-1;
+    protected virtual void Attack(){
+     doAttack=0;
+    }
+
+    protected virtual void StopMovement(){
+     if(navMeshAgent.enabled){
+      if(navMeshAgent.hasPath||navMeshAgent.pathPending){
+       Debug.Log("stop movement");
+       navMeshAgent.ResetPath();
+      }
+     }
     }
 
     //  [https://docs.unity3d.com/ScriptReference/AI.NavMesh.SamplePosition.html]

@@ -257,6 +257,9 @@ namespace AKCondinoO.Sims{
       Debug.Log("SimObject:OnExitSave:data loading was in progress:no need to save");
      }
     }
+
+    protected virtual void OnDestroy(){
+    }
        
     [SerializeField]bool DEBUG_UNPLACE=false;
 

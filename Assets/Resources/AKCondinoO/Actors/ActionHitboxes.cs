@@ -61,6 +61,9 @@ namespace AKCondinoO.Sims.Actors{
      if(actor.GetV_Motion==SimActor.Motion.MOTION_MOVE){
       OnMOTION_MOVE();
      }
+     if(actor.GetV_Motion==SimActor.Motion.MOTION_ATTACK){
+      OnMOTION_ATTACK();
+     }
      
      //Debug.Log("bodyPosLerpB:"+bodyPosLerpB);
 
@@ -74,7 +77,14 @@ namespace AKCondinoO.Sims.Actors{
      }
 
     }
+        
+    void OnMotionCycleEnd(){
+     EventHandler handler=OnMotionCycleEndEvent;handler?.Invoke(this,new OnMotionCycleEndEventArgs(){
+     });
+    }
     internal event EventHandler OnMotionCycleEndEvent;
+    internal class OnMotionCycleEndEventArgs:EventArgs{
+    }
 
     internal virtual Vector3[]bodyPos_MOTION_STAND{get;}=new Vector3[]{
      Vector3.zero,
@@ -101,6 +111,19 @@ namespace AKCondinoO.Sims.Actors{
      BeginLerpingBodyPosition(bodyPos_MOTION_MOVE,.2f);
 
     }
+        
+    internal virtual Vector3[]bodyPos_MOTION_ATTACK{get;}=new Vector3[]{
+     Vector3.zero,
+    };
+
+    internal virtual void OnMOTION_ATTACK(){
+     Debug.Log("OnMOTION_ATTACK");
+
+     SetBodyNextPositionIndex(bodyPos_MOTION_ATTACK);
+
+     BeginLerpingBodyPosition(bodyPos_MOTION_ATTACK,.05f);
+
+    }
 
     protected void SetBodyNextPositionIndex(Vector3[]positions){
      if(bodyPosLerpVal>=1f){
@@ -108,6 +131,9 @@ namespace AKCondinoO.Sims.Actors{
       bodyPosIdx++;
       if(bodyPosIdx>=positions.Length){
        bodyPosIdx=0;
+
+       OnMotionCycleEnd();
+
       }
      }
     }
