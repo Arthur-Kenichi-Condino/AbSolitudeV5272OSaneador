@@ -23,15 +23,14 @@ namespace AKCondinoO.Sims.Actors{
 
     }
 
-    protected void GenerateMovementCycle(ref Vector3[]positions,Vector3 startPoint,Vector3 middlePoint,int numberOfPointsUntilMiddle){
+    protected void GenerateMovementCycle(ref List<Vector3>positions,Vector3 startPoint,Vector3 middlePoint,int numberOfPointsUntilMiddle){
      int numberOfPoints=numberOfPointsUntilMiddle*2;
-     positions=new Vector3[numberOfPoints];
      Vector3 increaseValue=(middlePoint-startPoint)/numberOfPoints;
      for(int i=0;i<numberOfPoints;++i){
       if(i>=numberOfPointsUntilMiddle){
-       positions[i]=middlePoint-increaseValue*i;
+       positions.Add(middlePoint-increaseValue*i);
       }else{
-       positions[i]=startPoint+increaseValue*i;
+       positions.Add(startPoint+increaseValue*i);
       }
       Debug.Log("GenerateMovementCycle:positions[i]:"+positions[i]);
      }
@@ -121,7 +120,7 @@ namespace AKCondinoO.Sims.Actors{
 
      SetBodyNextPositionIndex(bodyPos_MOTION_ATTACK);
 
-     BeginLerpingBodyPosition(bodyPos_MOTION_ATTACK,.05f);
+     BeginLerpingBodyPosition(bodyPos_MOTION_ATTACK,.2f);
 
     }
 

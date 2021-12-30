@@ -9,7 +9,9 @@ namespace AKCondinoO.Sims.Actors{
     internal override Vector3[]bodyPos_MOTION_STAND{
      get{
       if(bodyPos_MOTION_STAND_v==null){
-       GenerateMovementCycle(ref bodyPos_MOTION_STAND_v,new Vector3(0,-.25f,0),new Vector3(0,-.85f,0),2);
+       List<Vector3>bodyPos=new List<Vector3>();
+       GenerateMovementCycle(ref bodyPos,new Vector3(0,-.25f,0),new Vector3(0,-.85f,0),2);
+       bodyPos_MOTION_STAND_v=bodyPos.ToArray();
       }
       return bodyPos_MOTION_STAND_v;
      }
@@ -19,9 +21,23 @@ namespace AKCondinoO.Sims.Actors{
     internal override Vector3[]bodyPos_MOTION_MOVE{
      get{
       if(bodyPos_MOTION_MOVE_v==null){
-       GenerateMovementCycle(ref bodyPos_MOTION_MOVE_v,new Vector3(0,-.25f,0),new Vector3(0,-.85f,.7f),4);
+       List<Vector3>bodyPos=new List<Vector3>();
+       GenerateMovementCycle(ref bodyPos,new Vector3(0,-.25f,0),new Vector3(0,-.85f,.7f),4);
+       bodyPos_MOTION_MOVE_v=bodyPos.ToArray();
       }
       return bodyPos_MOTION_MOVE_v;
+     }
+    }
+        
+    Vector3[]bodyPos_MOTION_ATTACK_v;
+    internal override Vector3[]bodyPos_MOTION_ATTACK{
+     get{
+      if(bodyPos_MOTION_ATTACK_v==null){
+       List<Vector3>bodyPos=new List<Vector3>();
+       GenerateMovementCycle(ref bodyPos,new Vector3(0,-.25f,0),new Vector3(0,-.95f,0),2);
+       bodyPos_MOTION_ATTACK_v=bodyPos.ToArray();
+      }
+      return bodyPos_MOTION_ATTACK_v;
      }
     }
 
