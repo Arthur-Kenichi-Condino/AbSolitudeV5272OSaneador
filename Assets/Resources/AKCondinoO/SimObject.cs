@@ -98,6 +98,8 @@ namespace AKCondinoO.Sims{
          }
         }
 
+        //Debug.Log("specsData_cur:"+specsData_cur.GetType());
+
         string transformFile=specsData_cur.transformFile;
                         
         PersistentDataBackgroundContainer.SerializableTransform transform_cur=null;

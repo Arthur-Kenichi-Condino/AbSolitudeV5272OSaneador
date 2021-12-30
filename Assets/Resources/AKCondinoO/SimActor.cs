@@ -16,7 +16,14 @@ namespace AKCondinoO.Sims{
 
     internal ActionHitboxes hitboxes;
 
+    [Serializable]internal class ActorSerializableSpecsData:PersistentDataBackgroundContainer.SerializableSpecsData{
+     public float stamina=1000;
+    }
+
     protected override void Awake(){
+     if(container==null){container=new PersistentDataBackgroundContainer(syn);}
+     if(container.specsData_bg==null){container.specsData_bg=new ActorSerializableSpecsData();}
+     if(container.transform_bg==null){container.transform_bg=new PersistentDataBackgroundContainer.SerializableTransform();}
 
      base.Awake();
 
