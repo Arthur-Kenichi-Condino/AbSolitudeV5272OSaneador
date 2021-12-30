@@ -201,6 +201,7 @@ namespace AKCondinoO.Sims{
       if(navMeshAgent.hasPath||navMeshAgent.pathPending){
        Debug.Log("stop movement");
        navMeshAgent.ResetPath();
+       navMeshAgent.velocity=Vector3.zero;
       }
      }
     }
