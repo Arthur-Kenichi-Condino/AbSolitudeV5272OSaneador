@@ -18,6 +18,7 @@ namespace AKCondinoO.Sims{
 
     [Serializable]internal class ActorSerializableSpecsData:PersistentDataBackgroundContainer.SerializableSpecsData{
      public float stamina=1000;
+     public float focus  =1000;
     }
 
     protected override void Awake(){
