@@ -418,6 +418,9 @@ namespace AKCondinoO.Sims{
      if(container.IsCompleted(SimObjectSpawner.Singleton.persistentDataBGThreads[0].IsRunning)){
       if(!float.IsNaN(container.transform_bg.position.x)){
        container.GetDeserialized(transform);
+
+       GetPersistentData();
+
        validData=true;
       }
       return true;
@@ -425,15 +428,24 @@ namespace AKCondinoO.Sims{
      return false;
     }
 
+    protected virtual void GetPersistentData(){
+    }
+
     bool OnSaving(){
      if(container.IsCompleted(SimObjectSpawner.Singleton.persistentDataBGThreads[0].IsRunning)){
       container.executionMode_bg=PersistentDataBackgroundContainer.ExecutionMode.Save;
       container.id_bg=id.Value;
+
+      SetPersistentData();
+
       container.SetSerializable(transform);
       PersistentDataMultithreaded.Schedule(container);
       return true;
      }
      return false;
+    }
+
+    protected virtual void SetPersistentData(){
     }
 
     void OnUnload(){

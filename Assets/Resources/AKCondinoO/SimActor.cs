@@ -15,10 +15,16 @@ namespace AKCondinoO.Sims{
     internal CharacterController characterController;
 
     internal ActionHitboxes hitboxes;
-
+        
+    internal float maxStamina;
+     internal float stamina;
+    internal float maxFocus;
+     internal float focus;
     [Serializable]internal class ActorSerializableSpecsData:PersistentDataBackgroundContainer.SerializableSpecsData{
-     public float stamina=1000;
-     public float focus  =1000;
+     public float maxStamina;
+      public float stamina;
+     public float maxFocus;
+      public float focus;
     }
 
     protected override void Awake(){
@@ -60,6 +66,40 @@ namespace AKCondinoO.Sims{
      if(hitboxes!=null){
       hitboxes.OnMotionCycleEndEvent-=OnMotionCycleEndEvent;
      }
+    }
+
+    protected override void GetPersistentData(){
+
+     base.GetPersistentData();
+
+     if(container.specsData_bg is ActorSerializableSpecsData specsData){
+      Debug.Log("ActorSerializableSpecsData");
+      maxStamina=specsData.maxStamina;
+       stamina=specsData.stamina;
+      if(maxStamina<stamina){
+       maxStamina=stamina;
+      }
+      maxFocus=specsData.maxFocus;
+       focus=specsData.focus;
+      if(maxFocus<focus){
+       maxFocus=focus;
+      }
+     }
+
+    }
+
+    protected override void SetPersistentData(){
+
+     if(container.specsData_bg is ActorSerializableSpecsData specsData){
+      Debug.Log("ActorSerializableSpecsData");
+      specsData.maxStamina=maxStamina;
+       specsData.stamina=stamina;
+      specsData.maxFocus=maxFocus;
+       specsData.focus=focus;
+     }
+
+     base.SetPersistentData();
+
     }
 
     void OnMotionCycleEndEvent(object sender,EventArgs e){

@@ -22,7 +22,7 @@ namespace AKCondinoO.Sims.Actors{
      get{
       if(bodyPos_MOTION_MOVE_v==null){
        List<Vector3>bodyPos=new List<Vector3>();
-       GenerateMovementCycle(ref bodyPos,new Vector3(0,-.25f,0),new Vector3(0,-.85f,.7f),4);
+       GenerateMovementCycle(ref bodyPos,new Vector3(0,-.25f,0),new Vector3(0,-.85f,.95f),4);
        bodyPos_MOTION_MOVE_v=bodyPos.ToArray();
       }
       return bodyPos_MOTION_MOVE_v;
