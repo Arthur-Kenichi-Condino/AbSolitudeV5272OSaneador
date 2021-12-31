@@ -15,9 +15,9 @@ TagManager:
   - VoxelTerrain
   - SimObjectVolume
   - ActionHitboxes
-  - 
-  - 
-  - 
+  - SimObject
+  - SimActor
+  - GlobalPostProcess
   - 
   - 
   - 

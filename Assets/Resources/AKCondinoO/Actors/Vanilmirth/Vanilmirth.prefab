@@ -187,7 +187,7 @@ GameObject:
   - component: {fileID: 868651543135674192}
   - component: {fileID: -6580788361884028295}
   - component: {fileID: 7216098700908255679}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: Vanilmirth
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -224,6 +224,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   DEBUG_UNPLACE: 0
   DEBUG_UNLOAD: 0
+  DEBUG_ATTACK: 0
   OnIDLE_ST_data:
     timeToRandomMove: 3
 --- !u!195 &7216098700908255679
