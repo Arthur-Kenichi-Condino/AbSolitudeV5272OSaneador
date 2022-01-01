@@ -171,10 +171,12 @@ namespace AKCondinoO.Voxels{
             }
             if(!fromFilesData.ContainsKey(cnkIdx3)){
              string editsFile=string.Format("{0}{1}/{2}",Core.perChunkSavePath,cnkIdx3,"edits.MessagePackSerializer");
-             using(var file=new FileStream(editsFile,FileMode.Open,FileAccess.Read,FileShare.Read)){
-              if(file.Length>0){
-               Dictionary<Vector3Int,(double density,MaterialId materialId)>fromFileVoxels=(Dictionary<Vector3Int,(double density,MaterialId materialId)>)MessagePackSerializer.Deserialize(typeof(Dictionary<Vector3Int,(double density,MaterialId materialId)>),file);
-               fromFilesData.Add(cnkIdx3,fromFileVoxels);
+             if(File.Exists(editsFile)){
+              using(var file=new FileStream(editsFile,FileMode.Open,FileAccess.Read,FileShare.Read)){
+               if(file.Length>0){
+                Dictionary<Vector3Int,(double density,MaterialId materialId)>fromFileVoxels=(Dictionary<Vector3Int,(double density,MaterialId materialId)>)MessagePackSerializer.Deserialize(typeof(Dictionary<Vector3Int,(double density,MaterialId materialId)>),file);
+                fromFilesData.Add(cnkIdx3,fromFileVoxels);
+               }
               }
              }
             }
