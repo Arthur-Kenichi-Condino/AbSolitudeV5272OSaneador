@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 33065013992664210}
   - component: {fileID: 23466419510729776}
   - component: {fileID: 5612408781453271971}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: Pinus_elliottii 1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -118,6 +118,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6912294879299482397}
   - component: {fileID: 1008280741332881345}
+  - component: {fileID: 7648472618081497858}
   m_Layer: 7
   m_Name: Volume
   m_TagString: SimObjectVolume
@@ -153,6 +154,22 @@ CapsuleCollider:
   m_Height: 13.07
   m_Direction: 1
   m_Center: {x: -0.04, y: 5.46, z: 0.06}
+--- !u!208 &7648472618081497858
+NavMeshObstacle:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8676416308804289484}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Shape: 0
+  m_Extents: {x: 1.09, y: 6.535, z: 1.09}
+  m_MoveThreshold: 0.1
+  m_Carve: 1
+  m_CarveOnlyStationary: 1
+  m_Center: {x: -0.04, y: 5.46, z: 0.06}
+  m_TimeToStationary: 0.5
 --- !u!21 &21440639111565978
 Material:
   serializedVersion: 6

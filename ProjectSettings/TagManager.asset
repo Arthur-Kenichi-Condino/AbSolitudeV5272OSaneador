@@ -14,10 +14,10 @@ TagManager:
   - UI
   - VoxelTerrain
   - SimObjectVolume
-  - 
-  - 
-  - 
-  - 
+  - ActionHitboxes
+  - SimObject
+  - SimActor
+  - GlobalPostProcess
   - 
   - 
   - 
