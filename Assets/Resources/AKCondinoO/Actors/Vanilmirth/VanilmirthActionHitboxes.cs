@@ -4,6 +4,17 @@ using UnityEngine;
 
 namespace AKCondinoO.Sims.Actors{
  internal class VanilmirthActionHitboxes:ActionHitboxes{
+        
+    protected override void Awake(){
+
+     base.Awake();
+
+     
+
+    }
+
+    [SerializeField]internal GameObject tentacle;
+     internal GameObject[]tentacles;
 
     Vector3[]bodyPos_MOTION_STAND_v;
     internal override Vector3[]bodyPos_MOTION_STAND{

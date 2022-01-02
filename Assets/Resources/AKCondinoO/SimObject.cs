@@ -232,7 +232,7 @@ namespace AKCondinoO.Sims{
     }
 
     internal void OnExitSave(List<(Type simType,ulong number)>unplacedIds){
-     Debug.Log("SimObject:OnExitSave");
+     Debug.Log("SimObject:OnExitSave:this!=null:"+(this!=null));
      container.IsCompleted(SimObjectSpawner.Singleton.persistentDataBGThreads[0].IsRunning,-1);
      if(unplacing){
       Debug.Log("SimObject:OnExitSave:unplacing:"+id);
@@ -253,6 +253,12 @@ namespace AKCondinoO.Sims{
 
      }else if(!loading){
       container.executionMode_bg=PersistentDataBackgroundContainer.ExecutionMode.Save;
+      container.id_bg=id.Value;
+
+      if(this!=null){
+       SetPersistentData();
+      }
+
       PersistentDataMultithreaded.Schedule(container);
       container.IsCompleted(SimObjectSpawner.Singleton.persistentDataBGThreads[0].IsRunning,-1);
      }else{
@@ -261,6 +267,12 @@ namespace AKCondinoO.Sims{
     }
 
     protected virtual void OnDestroy(){
+     Debug.Log("OnDestroy:this!=null:"+(this!=null));
+
+     if(this!=null){
+      SetPersistentData();
+     }
+
     }
        
     [SerializeField]bool DEBUG_UNPLACE=false;
@@ -438,7 +450,6 @@ namespace AKCondinoO.Sims{
 
       SetPersistentData();
 
-      container.SetSerializable(transform);
       PersistentDataMultithreaded.Schedule(container);
       return true;
      }
@@ -446,6 +457,7 @@ namespace AKCondinoO.Sims{
     }
 
     protected virtual void SetPersistentData(){
+     container.SetSerializable(transform);
     }
 
     void OnUnload(){
@@ -461,7 +473,9 @@ namespace AKCondinoO.Sims{
      if(container.IsCompleted(SimObjectSpawner.Singleton.persistentDataBGThreads[0].IsRunning)){
       container.executionMode_bg=PersistentDataBackgroundContainer.ExecutionMode.Save;
       container.id_bg=id.Value;
-      container.SetSerializable(transform);
+
+      SetPersistentData();
+
       PersistentDataMultithreaded.Schedule(container);
       return true;
      }
