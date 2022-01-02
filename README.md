@@ -7,4 +7,6 @@ A solution C# é a AbSolitudeV5272OSaneador.sln. A scene principal está em 'Ass
  
 O usuário deve cessar imediatamente o acesso e uso do código e jogo, se não aceitar o Termo de Uso.
 
+video: https://www.youtube.com/watch?v=WM0xNIc1xGY
+
 old project version: https://www.youtube.com/watch?v=aZ0kENtRupQ
