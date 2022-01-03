@@ -177,19 +177,19 @@ namespace AKCondinoO.Sims{
     protected override void SetPersistentData(){
 
      if(container.specsData_bg is ActorSerializableSpecsData specsData){
-      Debug.Log("ActorSerializableSpecsData");
+      //Debug.Log("ActorSerializableSpecsData");
       specsData.STR=STR_v;
       specsData.AGI=AGI_v;
       specsData.VIT=VIT_v;
       specsData.INT=INT_v;
       specsData.DEX=DEX_v;
       specsData.LUK=LUK_v;
-      Debug.Log("specsData.STR:"+specsData.STR);
-      Debug.Log("specsData.AGI:"+specsData.AGI);
-      Debug.Log("specsData.VIT:"+specsData.VIT);
-      Debug.Log("specsData.INT:"+specsData.INT);
-      Debug.Log("specsData.DEX:"+specsData.DEX);
-      Debug.Log("specsData.LUK:"+specsData.LUK);
+      //Debug.Log("specsData.STR:"+specsData.STR);
+      //Debug.Log("specsData.AGI:"+specsData.AGI);
+      //Debug.Log("specsData.VIT:"+specsData.VIT);
+      //Debug.Log("specsData.INT:"+specsData.INT);
+      //Debug.Log("specsData.DEX:"+specsData.DEX);
+      //Debug.Log("specsData.LUK:"+specsData.LUK);
 
        specsData.stamina=stamina;
 
@@ -201,7 +201,7 @@ namespace AKCondinoO.Sims{
     }
 
     void OnMotionCycleEndEvent(object sender,EventArgs e){
-     Debug.Log("OnMotionCycleEndEvent");
+     //Debug.Log("OnMotionCycleEndEvent");
      isMotionLocked=false;
     }
 

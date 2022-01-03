@@ -40,7 +40,7 @@ namespace AKCondinoO{
 
      QualitySettings.vSyncCount=0;
 
-     Application.targetFrameRate=74;
+     Application.targetFrameRate=100;
 
      Directory.CreateDirectory(savePath);
      Directory.CreateDirectory(perChunkSavePath);
@@ -71,7 +71,7 @@ namespace AKCondinoO{
     [SerializeField]SimObject DEBUG_CREATE_SIM_OBJECT=null;
     bool initialized;
     void Update(){
-     if(Application.targetFrameRate!=74){Application.targetFrameRate=74;}
+     if(Application.targetFrameRate!=100){Application.targetFrameRate=100;}
 
      if(!initialized){
       initialized=true;
