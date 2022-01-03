@@ -60,7 +60,7 @@ namespace AKCondinoO.Sims{
        string specsDataFile=string.Format("{0}({1},{2}).JsonSerializer",Core.sObjectsSavePath,current.id_bg.simType,current.id_bg.number);
 
        if      (current.executionMode_bg==PersistentDataBackgroundContainer.ExecutionMode.Unplace){
-        Debug.Log("PersistentDataMultithreaded:Execute:unplacing");
+        //Debug.Log("PersistentDataMultithreaded:Execute:unplacing");
 
         PersistentDataBackgroundContainer.SerializableSpecsData specsData_old=null;
         using(var file=new FileStream(specsDataFile,FileMode.OpenOrCreate,FileAccess.ReadWrite,FileShare.None)){
@@ -232,7 +232,7 @@ namespace AKCondinoO.Sims{
     }
 
     internal void OnExitSave(List<(Type simType,ulong number)>unplacedIds){
-     Debug.Log("SimObject:OnExitSave:this!=null:"+(this!=null));
+     //Debug.Log("SimObject:OnExitSave:this!=null:"+(this!=null));
      container.IsCompleted(SimObjectSpawner.Singleton.persistentDataBGThreads[0].IsRunning,-1);
      if(unplacing){
       Debug.Log("SimObject:OnExitSave:unplacing:"+id);
@@ -267,7 +267,7 @@ namespace AKCondinoO.Sims{
     }
 
     protected virtual void OnDestroy(){
-     Debug.Log("OnDestroy:this!=null:"+(this!=null));
+     //Debug.Log("OnDestroy:this!=null:"+(this!=null));
 
      if(this!=null){
       SetPersistentData();
@@ -304,7 +304,7 @@ namespace AKCondinoO.Sims{
 
          OnOverlapperUnplacing(this);
 
-         Debug.Log("ManualUpdate:IsOverlappingNonAlloc:save and UNPLACE:"+id,transform);
+         //Debug.Log("ManualUpdate:IsOverlappingNonAlloc:save and UNPLACE:"+id,transform);
          OnUnplace();
 
         }else{
@@ -349,10 +349,10 @@ namespace AKCondinoO.Sims{
      }
  
      if(unplacing){
-      Debug.Log("ManualUpdate:unplacing:"+id,transform);
+      //Debug.Log("ManualUpdate:unplacing:"+id,transform);
       if(unplaceRequested&&OnUnplacedData()){
        unplaceRequested=false;
-       Debug.Log("ManualUpdate:unplacing finished:"+id,transform);
+       //Debug.Log("ManualUpdate:unplacing finished:"+id,transform);
        unplacing=false;
                     
        OnOverlapperUnplaced(this);

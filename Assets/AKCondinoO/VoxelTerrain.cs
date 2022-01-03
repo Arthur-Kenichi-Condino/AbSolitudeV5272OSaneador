@@ -15,8 +15,8 @@ namespace AKCondinoO.Voxels{
 
     internal const int MaxcCoordx=6250;
     internal const int MaxcCoordy=6250;
-    internal static Vector2Int instantiationDistance{get;}=new Vector2Int(5,5);
-    internal static Vector2Int expropriationDistance{get;}=new Vector2Int(5,5);
+    internal static Vector2Int instantiationDistance{get;}=new Vector2Int(10,10);
+    internal static Vector2Int expropriationDistance{get;}=new Vector2Int(10,10);
 
     #region chunk
 
@@ -352,6 +352,8 @@ namespace AKCondinoO.Voxels{
       internal float navMeshBuildInterval=2f;
        internal float navMeshBuildTimer=0f;
 
+    System.Diagnostics.Stopwatch cnksManualUpdateStopwatch=new System.Diagnostics.Stopwatch();
+
     bool editRequired;
     bool editRequested;
     void Update(){
@@ -487,9 +489,11 @@ namespace AKCondinoO.Voxels{
       }
       playersMoved.Clear();
 
+     cnksManualUpdateStopwatch.Restart();
      foreach(var a in active){var cnk=a.Value;
-      cnk.ManualUpdate();
+      cnk.ManualUpdate(cnksManualUpdateStopwatch.Elapsed.TotalMilliseconds);
      }
+     //Debug.Log("cnksManualUpdateStopwatch.Elapsed.TotalMilliseconds:"+cnksManualUpdateStopwatch.Elapsed.TotalMilliseconds);
 
      if(DEBUG_BAKE_NAV_MESH){
       DEBUG_BAKE_NAV_MESH=false;

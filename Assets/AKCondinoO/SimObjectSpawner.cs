@@ -97,7 +97,7 @@ namespace AKCondinoO.Sims{
     internal GetPersistentDataFilesMultithreaded getPersistentDataFilesBGThread;
     internal class GetPersistentDataFilesMultithreaded:BaseMultithreaded<GetPersistentDataFilesBackgroundContainer>{
      protected override void Execute(){
-      Debug.Log("GetPersistentDataFilesMultithreaded:Execute:current.playersCoordChange_bg.Count:"+current.playersCoordChange_bg.Count);
+      //Debug.Log("GetPersistentDataFilesMultithreaded:Execute:current.playersCoordChange_bg.Count:"+current.playersCoordChange_bg.Count);
       foreach(var syn in current.syn_bg)Monitor.Enter(syn);
       try{
 
@@ -301,7 +301,7 @@ namespace AKCondinoO.Sims{
      }
     }
 
-    [SerializeField]double instantiationMaxExecutionTime=.05;
+    [SerializeField]double instantiationMaxExecutionTime=.005;
 
     WaitUntil waitSpawnQueue;
     WaitUntil waitPersistentUniqueIdsBGIsCompleted;
