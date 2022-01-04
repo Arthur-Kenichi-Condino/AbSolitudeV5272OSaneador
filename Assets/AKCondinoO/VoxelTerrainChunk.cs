@@ -1032,8 +1032,8 @@ namespace AKCondinoO.Voxels{
 
      JobHandle doRaycastsHandle;
       WaitUntil waitForRaycastsHandle;
-       static int raycastsJobsLimit=1;        
-        static int raycastsJobsCount;
+       //static int raycastsJobsLimit=1;        
+        //static int raycastsJobsCount;
 
      // internal Coroutine findPositionsCoroutine;
      //internal IEnumerator FindPositionsCoroutine(){
@@ -1052,63 +1052,128 @@ namespace AKCondinoO.Voxels{
      //  yield return waitForBeginFlag;
      //   findPositionsCoroutineBeginFlag=false;
 
-     //  //Debug.Log("FindPositionsCoroutine():begin flag was set true:"+cnkRgn_bg);
 
-     //  GetGroundRays.Clear();
-     //  GetGroundHits.Clear();
-
-     //  gotGroundRays_bg.Clear();
-     //  gotGroundHits_bg.Clear();
-
-     //  executionMode_bg=ExecutionMode._1;
-     //  TreesMultithreaded.Schedule(this);
-     //  yield return waitForScheduledTask;
-
-     //  doRaycastsHandle=RaycastCommand.ScheduleBatch(GetGroundRays,GetGroundHits,1,default(JobHandle));
      //  while(raycastsJobsCount>=raycastsJobsLimit){
      //   yield return null;
      //  }
+
      //  raycastsJobsCount++;
-     //  yield return waitForRaycastsHandle;
-     //  doRaycastsHandle.Complete();
 
-     //  Vector3Int vCoord1=new Vector3Int(0,0,0);
-     //  int i=0;
-     //  for(vCoord1.x=0             ;vCoord1.x<Width;vCoord1.x++){
-     //  for(vCoord1.z=0             ;vCoord1.z<Depth;vCoord1.z++){
-     //   if(gotGroundRays_bg.Contains((vCoord1.x,vCoord1.z))){
-     //    RaycastHit hit=GetGroundHits[i++];
-     //    if(hit.collider!=null){
-     //     int index=vCoord1.z+vCoord1.x*Depth;
-     //     gotGroundHits_bg.Add(index,hit);
-
-     //     //Debug.DrawRay(GetGroundHits[i-1].point,(GetGroundRays[i-1].from-GetGroundHits[i-1].point).normalized,Color.white,5f);
-
-     //    }
-     //   }
-     //  }}
      //  raycastsJobsCount--;
    
-     //  executionMode_bg=ExecutionMode._2;
-     //  TreesMultithreaded.Schedule(this);
-     //  yield return waitForScheduledTask;
 
-     //  SimObjectSpawner.Singleton.SpawnQueue.Enqueue(toSpawn_bg);
-     //  yield return waitForSpawner;
                     
-     //  executionMode_bg=ExecutionMode._3;
-     //  TreesMultithreaded.Schedule(this);
-     //  yield return waitForScheduledTask;
 
-     //  findPositionsCoroutineIdleWaiting=true;
      // }
      // goto Loop;
      //}
+
+     bool step1;
+     bool step2;
+     bool step3;
+     bool step4;
+     bool step5;
+     bool step6;
      internal void FindPositionsManualRoutine(){
 
+      if(step6){
+       if(this.IsCompleted(VoxelTerrain.Singleton.addTreesBGThreads[0].IsRunning)){
+        step6=false;
 
+        findPositionsCoroutineIdleWaiting=true;
+       }
+ 
+      }else{
+       if(step5){
+        if(toSpawn_bg.dequeued){
+         step5=false;
+ 
+         executionMode_bg=ExecutionMode._3;
+         TreesMultithreaded.Schedule(this);
+ 
+         step6=true;
+        }
+ 
+       }else{
+        if(step4){
+         if(this.IsCompleted(VoxelTerrain.Singleton.addTreesBGThreads[0].IsRunning)){                   
+          step4=false;
+  
+          SimObjectSpawner.Singleton.SpawnQueue.Enqueue(toSpawn_bg);
+  
+          step5=true;
+         } 
+  
+        }else{
+         if(step3){
+          if(doRaycastsHandle.IsCompleted){
+           doRaycastsHandle.Complete();
+           step3=false;
+   
+           Vector3Int vCoord1=new Vector3Int(0,0,0);
+           int i=0;
+           for(vCoord1.x=0             ;vCoord1.x<Width;vCoord1.x++){
+           for(vCoord1.z=0             ;vCoord1.z<Depth;vCoord1.z++){
+            if(gotGroundRays_bg.Contains((vCoord1.x,vCoord1.z))){
+             RaycastHit hit=GetGroundHits[i++];
+             if(hit.collider!=null){
+              int index=vCoord1.z+vCoord1.x*Depth;
+              gotGroundHits_bg.Add(index,hit);
+                                            
+              //Debug.DrawRay(GetGroundHits[i-1].point,(GetGroundRays[i-1].from-GetGroundHits[i-1].point).normalized,Color.white,5f);
+    
+             }
+            }
+           }}
+   
+           executionMode_bg=ExecutionMode._2;
+           TreesMultithreaded.Schedule(this);
+   
+           step4=true;
+          }
+   
+         }else{
+          if(step2){
+           if(this.IsCompleted(VoxelTerrain.Singleton.addTreesBGThreads[0].IsRunning)){
+            step2=false;
+   
+            doRaycastsHandle=RaycastCommand.ScheduleBatch(GetGroundRays,GetGroundHits,1,default(JobHandle));
+    
+            step3=true;
+           }
+    
+          }else{
+           if(step1){
+            step1=false;
+    
+            executionMode_bg=ExecutionMode._1;
+            TreesMultithreaded.Schedule(this);
+    
+            step2=true;
+     
+           }else{
+            //Debug.Log("FindPositionsCoroutine():begin flag was set true:"+cnkRgn_bg);
+      
+            GetGroundRays.Clear();
+            GetGroundHits.Clear();
+      
+            gotGroundRays_bg.Clear();
+            gotGroundHits_bg.Clear();
+      
+            step1=true;
+     
+           }
+    
+          }
+   
+         }
+  
+        }
+ 
+       }
 
-      findPositionsCoroutineIdleWaiting=true;
+      }
+ 
      }
     }
     internal class TreesMultithreaded:BaseMultithreaded<TreesBackgroundContainer>{
