@@ -280,6 +280,8 @@ namespace AKCondinoO.Voxels{
      VoxelTerrainChunk.marchingCubesCount=0;
 
      VoxelTerrainChunk.bakeJobsCount=0;
+
+     VoxelTerrainChunk.addTreesBGCount=0;
             
      VoxelTerrainChunk.MarchingCubesMultithreaded.biome.Seed=0;
 
@@ -298,12 +300,14 @@ namespace AKCondinoO.Voxels{
      EditingMultithreaded.Stop=false;
      editingBGThread=new EditingMultithreaded();
 
+       playerDisconnectedCoroutine=StartCoroutine(PlayerDisconnectedCoroutine());
      playerMovementFollowUpCoroutine=StartCoroutine(PlayerMovementFollowUpCoroutine());
     }
 
     void OnDestroyingCoreEvent(object sender,EventArgs e){
      Debug.Log("OnDestroyingCoreEvent");
-
+            
+       StopCoroutine(playerDisconnectedCoroutine);
      StopCoroutine(playerMovementFollowUpCoroutine);
 
      //  To do: save pending edits
@@ -378,8 +382,11 @@ namespace AKCondinoO.Voxels{
 
     [SerializeField]internal int marchingCubesLimit=1000;
 
+    [SerializeField]internal int addTreesBGLimit=1000;
+
     bool editRequired;
     bool editRequested;
+    bool playerMovementDetected;
     void Update(){
 
      if(all==null){
@@ -398,7 +405,7 @@ namespace AKCondinoO.Voxels{
 
       navMeshAsyncOperations=new AsyncOperation[maxConnections];
      }
-
+     
      foreach(var player in playersMovement.Keys){var movement=playersMovement[player];
       if(!movement.instantiationRequested){
        //Debug.Log("player didn't request instantiation");
@@ -410,13 +417,32 @@ namespace AKCondinoO.Voxels{
       }else{
        playerMoved[player]=(movement.cCoord,playerMoved[player].cCoord_Pre);
       }
-      playerMovementCoroutineBeginFlag=true;
+      playerMovementDetected=true;
      }
      foreach(var player in playersMovementRegistered){var movement=playersMovement[player];
       Debug.Log("reset player movement flag to false");
       playersMovement[player]=(movement.cCoord,movement.cCoord_Pre,false);
      }
      playersMovementRegistered.Clear();
+
+     if(playerDisconnectedCoroutineIdleWaiting){
+      if(playersDisconnected.Count>0){
+       playerDisconnectedCoroutineIdleWaiting=false;
+       playerDisconnectedCoroutineBeginFlag=true;
+
+      }else{
+       if(playerMovementCoroutineIdleWaiting){
+        if(playerMovementDetected){
+         playerMovementDetected=false;
+         playerMovementCoroutineIdleWaiting=false;
+         playerMovementCoroutineBeginFlag=true;
+        }
+
+       }
+
+      }
+
+     }
  
      if(DEBUG_EDIT){
       DEBUG_EDIT=false;
@@ -505,25 +531,25 @@ namespace AKCondinoO.Voxels{
     internal bool playerMovementCoroutineIdleWaiting=true;
 
     internal bool playerMovementCoroutineBeginFlag;
-     WaitUntil waitForBeginFlag;
+     WaitUntil waitForPlayerMovementFollowUpBeginFlag;
 
     Coroutine playerMovementFollowUpCoroutine;
     IEnumerator PlayerMovementFollowUpCoroutine(){
-      waitForBeginFlag=new WaitUntil(()=>playerMovementCoroutineBeginFlag);
+     waitForPlayerMovementFollowUpBeginFlag=new WaitUntil(()=>playerMovementCoroutineBeginFlag);
 
-      System.Diagnostics.Stopwatch stopwatch=new System.Diagnostics.Stopwatch();
-      bool LimitExecutionTime(){
-       if(stopwatch.Elapsed.TotalMilliseconds>instantiationMaxExecutionTime){
-        stopwatch.Restart();
-        return true;
-       }
-       return false;
+     System.Diagnostics.Stopwatch stopwatch=new System.Diagnostics.Stopwatch();
+     bool LimitExecutionTime(){
+      if(stopwatch.Elapsed.TotalMilliseconds>instantiationMaxExecutionTime){
+       stopwatch.Restart();
+       return true;
       }
+      return false;
+     }
 
      List<(Vector2Int cCoord,Vector2Int cCoord_Pre)>movements=new List<(Vector2Int cCoord,Vector2Int cCoord_Pre)>();
 
      Loop:{
-      yield return waitForBeginFlag;
+      yield return waitForPlayerMovementFollowUpBeginFlag;
        playerMovementCoroutineBeginFlag=false;
 
       Debug.Log("PlayerMovementCoroutine():begin flag was set true:");
@@ -665,54 +691,81 @@ namespace AKCondinoO.Voxels{
 
        navMeshDirty=true;
       }
+      playerMovementCoroutineIdleWaiting=true;
+     }
+     goto Loop;
+    }
+        
+    internal bool playerDisconnectedCoroutineIdleWaiting=true;
+
+    internal bool playerDisconnectedCoroutineBeginFlag;
+     WaitUntil waitForPlayerDisconnectedBeginFlag;
+
+    Coroutine playerDisconnectedCoroutine;
+    IEnumerator PlayerDisconnectedCoroutine(){
+     waitForPlayerDisconnectedBeginFlag=new WaitUntil(()=>playerDisconnectedCoroutineBeginFlag);
+
+     Loop:{
+      yield return waitForPlayerDisconnectedBeginFlag;
+       playerDisconnectedCoroutineBeginFlag=false;
+
+      Debug.Log("PlayerDisconnectedCoroutine():begin flag was set true:");
+
+      var disconnected=playersDisconnected.ToArray();
+      playersDisconnected.Clear();
+      foreach(Vector2Int pCoord in disconnected){
+       for(Vector2Int iCoord=new Vector2Int(),cCoord1=new Vector2Int();iCoord.y<=instantiationDistance.y;iCoord.y++){for(cCoord1.y=-iCoord.y+pCoord.y;cCoord1.y<=iCoord.y+pCoord.y;cCoord1.y+=iCoord.y*2){
+       for(           iCoord.x=0                                      ;iCoord.x<=instantiationDistance.x;iCoord.x++){for(cCoord1.x=-iCoord.x+pCoord.x;cCoord1.x<=iCoord.x+pCoord.x;cCoord1.x+=iCoord.x*2){
+                              
+        if(Math.Abs(cCoord1.x)>=MaxcCoordx||
+           Math.Abs(cCoord1.y)>=MaxcCoordy){
+         goto _skip;
+        }
+  
+        if(playersMovement.All(
+         p=>{
+          return Mathf.Abs(cCoord1.x-p.Key.cCoord.x)>instantiationDistance.x||
+                 Mathf.Abs(cCoord1.y-p.Key.cCoord.y)>instantiationDistance.y;
+         })
+        ){
+         int cnkIdx1=GetcnkIdx(cCoord1.x,cCoord1.y);
+         if(active.TryGetValue(cnkIdx1,out VoxelTerrainChunk cnk)){
+          if(cnk.expropriated==null){
+           cnk.expropriated=pool.AddLast(cnk);
+          }
+         }
+        }
+        if(playersMovement.All(
+         p=>{
+          return Mathf.Abs(cCoord1.x-p.Key.cCoord.x)>physicsDistance.x||
+                 Mathf.Abs(cCoord1.y-p.Key.cCoord.y)>physicsDistance.y;
+         })
+        ){
+         int cnkIdx1=GetcnkIdx(cCoord1.x,cCoord1.y);
+         if(active.TryGetValue(cnkIdx1,out VoxelTerrainChunk cnk)){
+          cnk.OnKeepMeshColliderAssigned(false);
+         }
+        }
+  
+        _skip:{}
+        if(iCoord.x==0){break;}
+       }}
+        if(iCoord.y==0){break;}
+       }}
+      }
+
+      playerDisconnectedCoroutineIdleWaiting=true;
      }
      goto Loop;
     }
 
+    List<Vector2Int>playersDisconnected=new List<Vector2Int>();
     internal void OnPlayerDisconnected(NetcodePlayerPrefab player){
      Debug.Log("OnPlayerDisconnected:");
 
      playersMovement.Remove(player);
 
-     Vector2Int pCoord=player.cCoord;
-     for(Vector2Int iCoord=new Vector2Int(),cCoord1=new Vector2Int();iCoord.y<=instantiationDistance.y;iCoord.y++){for(cCoord1.y=-iCoord.y+pCoord.y;cCoord1.y<=iCoord.y+pCoord.y;cCoord1.y+=iCoord.y*2){
-     for(           iCoord.x=0                                      ;iCoord.x<=instantiationDistance.x;iCoord.x++){for(cCoord1.x=-iCoord.x+pCoord.x;cCoord1.x<=iCoord.x+pCoord.x;cCoord1.x+=iCoord.x*2){
-                            
-      if(Math.Abs(cCoord1.x)>=MaxcCoordx||
-         Math.Abs(cCoord1.y)>=MaxcCoordy){
-       goto _skip;
-      }
-
-      if(playersMovement.All(
-       p=>{
-        return Mathf.Abs(cCoord1.x-p.Key.cCoord.x)>instantiationDistance.x||
-               Mathf.Abs(cCoord1.y-p.Key.cCoord.y)>instantiationDistance.y;
-       })
-      ){
-       int cnkIdx1=GetcnkIdx(cCoord1.x,cCoord1.y);
-       if(active.TryGetValue(cnkIdx1,out VoxelTerrainChunk cnk)){
-        if(cnk.expropriated==null){
-         cnk.expropriated=pool.AddLast(cnk);
-        }
-       }
-      }
-      if(playersMovement.All(
-       p=>{
-        return Mathf.Abs(cCoord1.x-p.Key.cCoord.x)>physicsDistance.x||
-               Mathf.Abs(cCoord1.y-p.Key.cCoord.y)>physicsDistance.y;
-       })
-      ){
-       int cnkIdx1=GetcnkIdx(cCoord1.x,cCoord1.y);
-       if(active.TryGetValue(cnkIdx1,out VoxelTerrainChunk cnk)){
-        cnk.OnKeepMeshColliderAssigned(false);
-       }
-      }
-
-      _skip:{}
-      if(iCoord.x==0){break;}
-     }}
-      if(iCoord.y==0){break;}
-     }}
+     playersDisconnected.Add(player.cCoord);
     }
 
     bool OnEdit(){

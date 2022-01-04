@@ -1105,6 +1105,9 @@ namespace AKCondinoO.Voxels{
      // goto Loop;
      //}
      internal void FindPositionsManualRoutine(){
+
+
+
       findPositionsCoroutineIdleWaiting=true;
      }
     }
@@ -1496,13 +1499,12 @@ namespace AKCondinoO.Voxels{
      addTreesRequired=true;
     }
 
-    static int addTreesBGLimit=1;
-     static int addTreesBGCount;
+    internal static int addTreesBGCount;
 
     bool OnAddingTrees(){
-     //if(addTreesBGCount>=addTreesBGLimit){
-     // return false;
-     //}
+     if(addTreesBGCount>=VoxelTerrain.Singleton.addTreesBGLimit){
+      return false;
+     }
      if(addTreesBG.IsCompleted(VoxelTerrain.Singleton.addTreesBGThreads[0].IsRunning)&&addTreesBG.findPositionsCoroutineIdleWaiting){
       addTreesBGCount++;
       addTreesBG.cCoord_bg=cCoord;
