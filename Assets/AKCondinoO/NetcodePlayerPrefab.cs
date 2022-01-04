@@ -22,9 +22,9 @@ namespace AKCondinoO{
      cCoord_Pre=cCoord=vecPosTocCoord(transform.position);
      worldBounds=new Bounds(Vector3.zero,
       new Vector3(
-       (instantiationDistance.x*2+1)*VoxelTerrainChunk.Width,
+       (physicsDistance.x*2+1)*VoxelTerrainChunk.Width,
        VoxelTerrainChunk.Height,
-       (instantiationDistance.y*2+1)*VoxelTerrainChunk.Depth
+       (physicsDistance.y*2+1)*VoxelTerrainChunk.Depth
       )
      );
      var navMeshValidation=Core.Singleton.navMeshBuildSettings.ValidationReport(worldBounds);

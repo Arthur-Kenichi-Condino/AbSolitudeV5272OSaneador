@@ -15,8 +15,9 @@ namespace AKCondinoO.Voxels{
 
     internal const int MaxcCoordx=6250;
     internal const int MaxcCoordy=6250;
-    internal static Vector2Int instantiationDistance{get;}=new Vector2Int(10,10);
-    internal static Vector2Int expropriationDistance{get;}=new Vector2Int(10,10);
+    internal static Vector2Int instantiationDistance{get;}=new Vector2Int(20,20);
+    internal static Vector2Int expropriationDistance{get;}=new Vector2Int(30,30);
+     internal static Vector2Int physicsDistance{get;}=new Vector2Int(2,2);
 
     #region chunk
 
@@ -274,6 +275,8 @@ namespace AKCondinoO.Voxels{
     void Awake(){if(Singleton==null){Singleton=this;}else{DestroyImmediate(this);return;}
 
      Core.Singleton.OnDestroyingCoreEvent+=OnDestroyingCoreEvent;
+
+     VoxelTerrainChunk.bakeJobsCount=0;
             
      VoxelTerrainChunk.MarchingCubesMultithreaded.biome.Seed=0;
 
@@ -351,8 +354,20 @@ namespace AKCondinoO.Voxels{
      internal AsyncOperation[]navMeshAsyncOperations;
       internal float navMeshBuildInterval=2f;
        internal float navMeshBuildTimer=0f;
-
+        
+    [SerializeField]
+    int cnksManualUpdateLimit=1;
+     int cnksManualUpdateIndex=0;
+      int cnksManualUpdateCount=0;
+       [SerializeField]
+       int cnksManualUpdateSleepingLimit=1;
+        int cnksManualUpdateSleeping=0;
     System.Diagnostics.Stopwatch cnksManualUpdateStopwatch=new System.Diagnostics.Stopwatch();
+
+    [SerializeField]
+    double totalMillisecondsLimit=.1d;
+        
+    [SerializeField]internal int bakeJobsLimit=1;
 
     bool editRequired;
     bool editRequested;
@@ -399,6 +414,8 @@ namespace AKCondinoO.Voxels{
       OnEditing();
      }
 
+     System.Diagnostics.Stopwatch stopwatch=new System.Diagnostics.Stopwatch();
+                                  stopwatch.Restart();
       foreach(var player in playersMovement.Keys){var movement=playersMovement[player];
        if(!movement.instantiationRequested){
         //Debug.Log("player didn't request instantiation");
@@ -481,19 +498,90 @@ namespace AKCondinoO.Voxels{
        }}
        #endregion
        
+       for(Vector2Int dCoord=new Vector2Int(),cCoord1=new Vector2Int();dCoord.y<=physicsDistance.y;dCoord.y++){for(cCoord1.y=-dCoord.y+pCoord_Pre.y;cCoord1.y<=dCoord.y+pCoord_Pre.y;cCoord1.y+=dCoord.y*2){
+       for(           dCoord.x=0                                      ;dCoord.x<=physicsDistance.x;dCoord.x++){for(cCoord1.x=-dCoord.x+pCoord_Pre.x;cCoord1.x<=dCoord.x+pCoord_Pre.x;cCoord1.x+=dCoord.x*2){
+
+        if(Math.Abs(cCoord1.x)>=MaxcCoordx||
+           Math.Abs(cCoord1.y)>=MaxcCoordy){
+         goto _skip;
+        }
+
+        if(playersMovement.All(
+         p=>{
+          return Mathf.Abs(cCoord1.x-p.Key.cCoord.x)>physicsDistance.x||
+                 Mathf.Abs(cCoord1.y-p.Key.cCoord.y)>physicsDistance.y;
+         })
+        ){
+         int cnkIdx1=GetcnkIdx(cCoord1.x,cCoord1.y);
+         if(active.TryGetValue(cnkIdx1,out VoxelTerrainChunk cnk)){
+          cnk.OnKeepMeshColliderAssigned(false);
+         }
+        }
+
+        _skip:{}
+        if(dCoord.x==0){break;}
+       }}
+        if(dCoord.y==0){break;}
+       }}
+
+       for(Vector2Int aCoord=new Vector2Int(),cCoord1=new Vector2Int();aCoord.y<=physicsDistance.y;aCoord.y++){for(cCoord1.y=-aCoord.y+pCoord.y;cCoord1.y<=aCoord.y+pCoord.y;cCoord1.y+=aCoord.y*2){
+       for(           aCoord.x=0                                      ;aCoord.x<=physicsDistance.x;aCoord.x++){for(cCoord1.x=-aCoord.x+pCoord.x;cCoord1.x<=aCoord.x+pCoord.x;cCoord1.x+=aCoord.x*2){
+
+        if(Math.Abs(cCoord1.x)>=MaxcCoordx||
+           Math.Abs(cCoord1.y)>=MaxcCoordy){
+         goto _skip;
+        }
+
+        int cnkIdx1=GetcnkIdx(cCoord1.x,cCoord1.y);
+        if(active.TryGetValue(cnkIdx1,out VoxelTerrainChunk cnk)){
+         cnk.OnKeepMeshColliderAssigned(true);
+        }
+
+        _skip:{}
+        if(aCoord.x==0){break;}
+       }}
+        if(aCoord.y==0){break;}
+       }}
+
        navMeshDirty=true;
       }
+     if(playersMoved.Count>0){
+      Debug.Log("stopwatch.Elapsed.TotalMilliseconds:"+stopwatch.Elapsed.TotalMilliseconds);
+     }
       foreach(var player in playersMoved){var movement=playersMovement[player];
        Debug.Log("reset player movement flag to false");
        playersMovement[player]=(movement.cCoord,movement.cCoord_Pre,false);
       }
       playersMoved.Clear();
-
+            
      cnksManualUpdateStopwatch.Restart();
+     int callsLimit=cnksManualUpdateIndex-1+cnksManualUpdateLimit;
+     cnksManualUpdateSleeping=0;
+     cnksManualUpdateCount=0;
+     int c=0;
      foreach(var a in active){var cnk=a.Value;
-      cnk.ManualUpdate(cnksManualUpdateStopwatch.Elapsed.TotalMilliseconds);
+      if(cnksManualUpdateIndex>=active.Count){
+       cnksManualUpdateIndex=0;
+       callsLimit=cnksManualUpdateLimit;
+      }
+      cnksManualUpdateCount++;
+      if(cnksManualUpdateCount<cnksManualUpdateIndex){
+       continue;
+      }
+      //Debug.Log("cnksManualUpdateCount:"+cnksManualUpdateCount);
+      c++;
+      if(!cnk.ManualUpdate()){
+       cnksManualUpdateSleeping++;
+      }
+      cnksManualUpdateIndex++;
+      if(cnksManualUpdateCount>=callsLimit+cnksManualUpdateSleeping||cnksManualUpdateSleeping>=cnksManualUpdateSleepingLimit){
+       break;
+      }
+      if(cnksManualUpdateStopwatch.Elapsed.TotalMilliseconds>=totalMillisecondsLimit){
+       break;
+      }
      }
-     //Debug.Log("cnksManualUpdateStopwatch.Elapsed.TotalMilliseconds:"+cnksManualUpdateStopwatch.Elapsed.TotalMilliseconds);
+     //Debug.Log("cnk manual updates called:"+c);
 
      if(DEBUG_BAKE_NAV_MESH){
       DEBUG_BAKE_NAV_MESH=false;
@@ -547,6 +635,17 @@ namespace AKCondinoO.Voxels{
         if(cnk.expropriated==null){
          cnk.expropriated=pool.AddLast(cnk);
         }
+       }
+      }
+      if(playersMovement.All(
+       p=>{
+        return Mathf.Abs(cCoord1.x-p.Key.cCoord.x)>physicsDistance.x||
+               Mathf.Abs(cCoord1.y-p.Key.cCoord.y)>physicsDistance.y;
+       })
+      ){
+       int cnkIdx1=GetcnkIdx(cCoord1.x,cCoord1.y);
+       if(active.TryGetValue(cnkIdx1,out VoxelTerrainChunk cnk)){
+        cnk.OnKeepMeshColliderAssigned(false);
        }
       }
 

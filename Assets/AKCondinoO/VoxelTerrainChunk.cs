@@ -1033,74 +1033,77 @@ namespace AKCondinoO.Voxels{
        static int raycastsJobsLimit=1;        
         static int raycastsJobsCount;
 
-      internal Coroutine findPositionsCoroutine;
-     internal IEnumerator FindPositionsCoroutine(){
+     // internal Coroutine findPositionsCoroutine;
+     //internal IEnumerator FindPositionsCoroutine(){
 
-      //Debug.Log("FindPositionsCoroutine() coroutine started");
+     // //Debug.Log("FindPositionsCoroutine() coroutine started");
 
-      waitForBeginFlag=new WaitUntil(()=>findPositionsCoroutineBeginFlag);
+     // waitForBeginFlag=new WaitUntil(()=>findPositionsCoroutineBeginFlag);
 
-      waitForScheduledTask=new WaitUntil(()=>this.IsCompleted(VoxelTerrain.Singleton.addTreesBGThreads[0].IsRunning));
+     // waitForScheduledTask=new WaitUntil(()=>this.IsCompleted(VoxelTerrain.Singleton.addTreesBGThreads[0].IsRunning));
 
-      waitForRaycastsHandle=new WaitUntil(()=>doRaycastsHandle.IsCompleted);
+     // waitForRaycastsHandle=new WaitUntil(()=>doRaycastsHandle.IsCompleted);
 
-      waitForSpawner=new WaitUntil(()=>toSpawn_bg.dequeued);
+     // waitForSpawner=new WaitUntil(()=>toSpawn_bg.dequeued);
 
-      Loop:{
-       yield return waitForBeginFlag;
-        findPositionsCoroutineBeginFlag=false;
+     // Loop:{
+     //  yield return waitForBeginFlag;
+     //   findPositionsCoroutineBeginFlag=false;
 
-       //Debug.Log("FindPositionsCoroutine():begin flag was set true:"+cnkRgn_bg);
+     //  //Debug.Log("FindPositionsCoroutine():begin flag was set true:"+cnkRgn_bg);
 
-       GetGroundRays.Clear();
-       GetGroundHits.Clear();
+     //  GetGroundRays.Clear();
+     //  GetGroundHits.Clear();
 
-       gotGroundRays_bg.Clear();
-       gotGroundHits_bg.Clear();
+     //  gotGroundRays_bg.Clear();
+     //  gotGroundHits_bg.Clear();
 
-       executionMode_bg=ExecutionMode._1;
-       TreesMultithreaded.Schedule(this);
-       yield return waitForScheduledTask;
+     //  executionMode_bg=ExecutionMode._1;
+     //  TreesMultithreaded.Schedule(this);
+     //  yield return waitForScheduledTask;
 
-       doRaycastsHandle=RaycastCommand.ScheduleBatch(GetGroundRays,GetGroundHits,1,default(JobHandle));
-       while(raycastsJobsCount>=raycastsJobsLimit){
-        yield return null;
-       }
-       raycastsJobsCount++;
-       yield return waitForRaycastsHandle;
-       doRaycastsHandle.Complete();
+     //  doRaycastsHandle=RaycastCommand.ScheduleBatch(GetGroundRays,GetGroundHits,1,default(JobHandle));
+     //  while(raycastsJobsCount>=raycastsJobsLimit){
+     //   yield return null;
+     //  }
+     //  raycastsJobsCount++;
+     //  yield return waitForRaycastsHandle;
+     //  doRaycastsHandle.Complete();
 
-       Vector3Int vCoord1=new Vector3Int(0,0,0);
-       int i=0;
-       for(vCoord1.x=0             ;vCoord1.x<Width;vCoord1.x++){
-       for(vCoord1.z=0             ;vCoord1.z<Depth;vCoord1.z++){
-        if(gotGroundRays_bg.Contains((vCoord1.x,vCoord1.z))){
-         RaycastHit hit=GetGroundHits[i++];
-         if(hit.collider!=null){
-          int index=vCoord1.z+vCoord1.x*Depth;
-          gotGroundHits_bg.Add(index,hit);
+     //  Vector3Int vCoord1=new Vector3Int(0,0,0);
+     //  int i=0;
+     //  for(vCoord1.x=0             ;vCoord1.x<Width;vCoord1.x++){
+     //  for(vCoord1.z=0             ;vCoord1.z<Depth;vCoord1.z++){
+     //   if(gotGroundRays_bg.Contains((vCoord1.x,vCoord1.z))){
+     //    RaycastHit hit=GetGroundHits[i++];
+     //    if(hit.collider!=null){
+     //     int index=vCoord1.z+vCoord1.x*Depth;
+     //     gotGroundHits_bg.Add(index,hit);
 
-          //Debug.DrawRay(GetGroundHits[i-1].point,(GetGroundRays[i-1].from-GetGroundHits[i-1].point).normalized,Color.white,5f);
+     //     //Debug.DrawRay(GetGroundHits[i-1].point,(GetGroundRays[i-1].from-GetGroundHits[i-1].point).normalized,Color.white,5f);
 
-         }
-        }
-       }}
-       raycastsJobsCount--;
+     //    }
+     //   }
+     //  }}
+     //  raycastsJobsCount--;
    
-       executionMode_bg=ExecutionMode._2;
-       TreesMultithreaded.Schedule(this);
-       yield return waitForScheduledTask;
+     //  executionMode_bg=ExecutionMode._2;
+     //  TreesMultithreaded.Schedule(this);
+     //  yield return waitForScheduledTask;
 
-       SimObjectSpawner.Singleton.SpawnQueue.Enqueue(toSpawn_bg);
-       yield return waitForSpawner;
+     //  SimObjectSpawner.Singleton.SpawnQueue.Enqueue(toSpawn_bg);
+     //  yield return waitForSpawner;
                     
-       executionMode_bg=ExecutionMode._3;
-       TreesMultithreaded.Schedule(this);
-       yield return waitForScheduledTask;
+     //  executionMode_bg=ExecutionMode._3;
+     //  TreesMultithreaded.Schedule(this);
+     //  yield return waitForScheduledTask;
 
-       findPositionsCoroutineIdleWaiting=true;
-      }
-      goto Loop;
+     //  findPositionsCoroutineIdleWaiting=true;
+     // }
+     // goto Loop;
+     //}
+     internal void FindPositionsManualRoutine(){
+      findPositionsCoroutineIdleWaiting=true;
      }
     }
     internal class TreesMultithreaded:BaseMultithreaded<TreesBackgroundContainer>{
@@ -1246,7 +1249,8 @@ namespace AKCondinoO.Voxels{
 
      renderer=GetComponent<MeshRenderer>();
      collider=GetComponent<MeshCollider>();
-
+            
+     collider.enabled=false;
      renderer.enabled=false;
 
      mesh=new Mesh(){
@@ -1281,7 +1285,7 @@ namespace AKCondinoO.Voxels{
 
      addTreesBG.GetGroundRays=new NativeList<RaycastCommand>(Width*Depth,Allocator.Persistent);
      addTreesBG.GetGroundHits=new NativeList<RaycastHit    >(Width*Depth,Allocator.Persistent);
-     addTreesBG.findPositionsCoroutine=StartCoroutine(addTreesBG.FindPositionsCoroutine());
+     //addTreesBG.findPositionsCoroutine=StartCoroutine(addTreesBG.FindPositionsCoroutine());
     }
 
     internal void OnExit(){
@@ -1291,7 +1295,7 @@ namespace AKCondinoO.Voxels{
      if(marchingCubesBG.TempTri.IsCreated)marchingCubesBG.TempTri.Dispose();
 
      if(this!=null){
-      StopCoroutine(addTreesBG.findPositionsCoroutine);
+      //StopCoroutine(addTreesBG.findPositionsCoroutine);
      }
      addTreesBG.IsCompleted(VoxelTerrain.Singleton.addTreesBGThreads[0].IsRunning,-1);
      if(addTreesBG.GetGroundRays.IsCreated)addTreesBG.GetGroundRays.Dispose();
@@ -1314,13 +1318,16 @@ namespace AKCondinoO.Voxels{
      initialization=false;
     }
 
+    bool keepMeshColliderAssigned;
+    internal void OnKeepMeshColliderAssigned(bool state){
+     keepMeshColliderAssigned=state;
+    }
+
     internal void OnEdited(){
      rebuildFlag=true;
 
      rebuildRequired=true;
     }
-
-    static double totalMillisecondsLimit=.1d;
 
     bool addingTrees;
     bool addTreesRequired;
@@ -1332,13 +1339,13 @@ namespace AKCondinoO.Voxels{
     bool rebuildFlag;
     bool rebuildRequired;
     bool moveRequired;
-    internal void ManualUpdate(double totalMilliseconds){
+    internal bool ManualUpdate(){bool busy=true;
      if(addingTrees){
       if(addTreesRequested&&OnAddedTrees()){
        addTreesRequested=false;
        //Debug.Log("ManualUpdate:added trees:they'll be spawned shortly:"+cnkRgn);
        addingTrees=false;
-      }else if(addTreesRequired&&OnAddingTrees(totalMilliseconds)){
+      }else if(addTreesRequired&&OnAddingTrees()){
        addTreesRequired=false;
        //Debug.Log("ManualUpdate:adding trees:find positions:"+cnkRgn);
        addTreesRequested=true;
@@ -1346,7 +1353,7 @@ namespace AKCondinoO.Voxels{
 
      }else{
       if(bakingMesh){
-       if(bakeRequested&&OnBakedMesh(totalMilliseconds)){
+       if(bakeRequested&&OnBakedMesh()){
         bakeRequested=false;
         //Debug.Log("ManualUpdate:mesh baked:assigned mesh collider data:"+cnkRgn);
         bakingMesh=false;
@@ -1355,7 +1362,7 @@ namespace AKCondinoO.Voxels{
     
       }else{
        if(runningMarchingCubes){
-        if(buildRequested&&OnBuilt(totalMilliseconds)){
+        if(buildRequested&&OnBuilt()){
          buildRequested=false;
          //Debug.Log("ManualUpdate:build finished:assigned built mesh data:"+cnkRgn);
          runningMarchingCubes=false;
@@ -1376,6 +1383,20 @@ namespace AKCondinoO.Voxels{
           moveRequired=false;
           //Debug.Log("ManualUpdate:moveRequired:"+cnkRgn);
           OnMoved();
+
+         }else{
+          if(keepMeshColliderAssigned){
+           if(collider.sharedMesh==null&&meshBuilt){
+            collider.sharedMesh=mesh;
+           }
+          }else{
+           if(collider.sharedMesh!=null){
+            collider.sharedMesh=null;
+           }
+          }
+
+          busy=false;
+
          }
 
         }
@@ -1385,10 +1406,13 @@ namespace AKCondinoO.Voxels{
       }
 
      }
+     return busy;
     }
 
     bool OnMoving(){
      if(marchingCubesBG.IsCompleted(VoxelTerrain.Singleton.marchingCubesBGThreads[0].IsRunning)){
+      collider.sharedMesh=null;
+      collider.enabled=false;
       renderer.enabled=false;
       worldBounds.center=transform.position=new Vector3(cnkRgn.x,0,cnkRgn.y);
       var navMeshSource=VoxelTerrain.Singleton.navMeshSources[gameObject];
@@ -1408,11 +1432,16 @@ namespace AKCondinoO.Voxels{
      buildRequested=true;
     }
 
-    bool OnBuilt(double totalMilliseconds){
-     if(totalMilliseconds>=totalMillisecondsLimit){
+    internal static int bakeJobsCount;
+
+    bool meshBuilt;
+
+    bool OnBuilt(){
+     if(bakeJobsCount>=VoxelTerrain.Singleton.bakeJobsLimit){
       return false;
      }
      if(marchingCubesBG.IsCompleted(VoxelTerrain.Singleton.marchingCubesBGThreads[0].IsRunning)){
+      bakeJobsCount++;
       bool resize;
       if(resize=marchingCubesBG.TempVer.Length>mesh.vertexCount){
        mesh.SetVertexBufferParams(marchingCubesBG.TempVer.Length,layout);
@@ -1425,6 +1454,9 @@ namespace AKCondinoO.Voxels{
       mesh.subMeshCount=1;
       mesh.SetSubMesh(0,new SubMeshDescriptor(0,marchingCubesBG.TempTri.Length){firstVertex=0,vertexCount=marchingCubesBG.TempVer.Length},meshFlags);
       renderer.enabled=true;
+
+      meshBuilt=true;
+
       return true;
      }
      return false;
@@ -1437,14 +1469,12 @@ namespace AKCondinoO.Voxels{
      bakeRequested=true;
     }
 
-    bool OnBakedMesh(double totalMilliseconds){
-     if(totalMilliseconds>=totalMillisecondsLimit){
-      return false;
-     }
+    bool OnBakedMesh(){
      if(bakingHandle.IsCompleted){
       bakingHandle.Complete();
-      collider.sharedMesh=null;
+      collider.enabled=true;
       collider.sharedMesh=mesh;
+      bakeJobsCount--;
       return true;
      }
      return false;
@@ -1458,13 +1488,10 @@ namespace AKCondinoO.Voxels{
     static int addTreesBGLimit=1;
      static int addTreesBGCount;
 
-    bool OnAddingTrees(double totalMilliseconds){
-     if(addTreesBGCount>=addTreesBGLimit){
-      return false;
-     }
-     if(totalMilliseconds>=totalMillisecondsLimit){
-      return false;
-     }
+    bool OnAddingTrees(){
+     //if(addTreesBGCount>=addTreesBGLimit){
+     // return false;
+     //}
      if(addTreesBG.IsCompleted(VoxelTerrain.Singleton.addTreesBGThreads[0].IsRunning)&&addTreesBG.findPositionsCoroutineIdleWaiting){
       addTreesBGCount++;
       addTreesBG.cCoord_bg=cCoord;
@@ -1477,6 +1504,9 @@ namespace AKCondinoO.Voxels{
      return false;
     }
     bool OnAddedTrees(){
+
+     addTreesBG.FindPositionsManualRoutine();
+
      if(addTreesBG.IsCompleted(VoxelTerrain.Singleton.addTreesBGThreads[0].IsRunning)&&addTreesBG.findPositionsCoroutineIdleWaiting){
       VoxelTerrain.Singleton.navMeshDirty=true;
       addTreesBGCount--;

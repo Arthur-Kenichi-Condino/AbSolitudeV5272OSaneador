@@ -33,7 +33,7 @@ namespace AKCondinoO{
      debug=new NavMeshBuildDebugSettings{
       flags=NavMeshBuildDebugFlags.None,
      },
-     maxJobWorkers=1,
+     maxJobWorkers=0,
     };
 
     void Awake(){if(Singleton==null){Singleton=this;}else{DestroyImmediate(this);return;}
