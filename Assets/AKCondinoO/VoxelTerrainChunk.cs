@@ -55,6 +55,8 @@ namespace AKCondinoO.Voxels{
     internal new MeshRenderer renderer;
     internal new MeshCollider collider;
 
+    MeshFilter filter;
+
     #region Marching Cubes
     internal MarchingCubesBackgroundContainer marchingCubesBG;
     internal class MarchingCubesBackgroundContainer:BackgroundContainer{
@@ -1257,7 +1259,7 @@ namespace AKCondinoO.Voxels{
       bounds=worldBounds=new Bounds(Vector3.zero,new Vector3(Width,Height,Depth)),
      };
 
-     GetComponent<MeshFilter>().mesh=mesh;
+     filter=GetComponent<MeshFilter>();
 
      bakeJob=new BakerJob(){
       meshId=mesh.GetInstanceID(),
@@ -1409,9 +1411,15 @@ namespace AKCondinoO.Voxels{
      return busy;
     }
 
+    internal static int marchingCubesCount;
+
     bool OnMoving(){
+     if(marchingCubesCount>=VoxelTerrain.Singleton.marchingCubesLimit){
+      return false;
+     }
      if(marchingCubesBG.IsCompleted(VoxelTerrain.Singleton.marchingCubesBGThreads[0].IsRunning)){
       collider.sharedMesh=null;
+      filter.mesh=null;
       collider.enabled=false;
       renderer.enabled=false;
       worldBounds.center=transform.position=new Vector3(cnkRgn.x,0,cnkRgn.y);
@@ -1421,6 +1429,7 @@ namespace AKCondinoO.Voxels{
       marchingCubesBG.cCoord_bg=cCoord;
       marchingCubesBG.cnkRgn_bg=cnkRgn;
       marchingCubesBG.cnkIdx_bg=cnkIdx.Value;
+      marchingCubesCount++;
       MarchingCubesMultithreaded.Schedule(marchingCubesBG);
       return true;
      }
@@ -1454,9 +1463,11 @@ namespace AKCondinoO.Voxels{
       mesh.subMeshCount=1;
       mesh.SetSubMesh(0,new SubMeshDescriptor(0,marchingCubesBG.TempTri.Length){firstVertex=0,vertexCount=marchingCubesBG.TempVer.Length},meshFlags);
       renderer.enabled=true;
+      filter.mesh=mesh;
 
       meshBuilt=true;
 
+      marchingCubesCount--;
       return true;
      }
      return false;

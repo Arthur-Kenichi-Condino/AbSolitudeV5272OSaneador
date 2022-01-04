@@ -492,22 +492,6 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 531232586110231750, guid: 5dfc5ec621a9bfa498d6da1e90e349c0, type: 3}
-      propertyPath: bakeJobsLimit
-      value: 500
-      objectReference: {fileID: 0}
-    - target: {fileID: 531232586110231750, guid: 5dfc5ec621a9bfa498d6da1e90e349c0, type: 3}
-      propertyPath: cnksManualUpdateLimit
-      value: 5
-      objectReference: {fileID: 0}
-    - target: {fileID: 531232586110231750, guid: 5dfc5ec621a9bfa498d6da1e90e349c0, type: 3}
-      propertyPath: totalMillisecondsLimit
-      value: 0.1
-      objectReference: {fileID: 0}
-    - target: {fileID: 531232586110231750, guid: 5dfc5ec621a9bfa498d6da1e90e349c0, type: 3}
-      propertyPath: cnksManualUpdateSleepingLimit
-      value: 3000
-      objectReference: {fileID: 0}
     - target: {fileID: 7355805200245561109, guid: 5dfc5ec621a9bfa498d6da1e90e349c0, type: 3}
       propertyPath: m_Name
       value: Core

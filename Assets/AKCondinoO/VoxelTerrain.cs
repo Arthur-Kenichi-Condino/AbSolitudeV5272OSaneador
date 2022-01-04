@@ -1,5 +1,6 @@
 using MessagePack;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -81,7 +82,7 @@ namespace AKCondinoO.Voxels{
      readonly List<NavMeshBuildMarkup>markups=new List<NavMeshBuildMarkup>();
 
     internal readonly Dictionary<NetcodePlayerPrefab,(Vector2Int cCoord,Vector2Int cCoord_Pre,bool instantiationRequested)>playersMovement=new Dictionary<NetcodePlayerPrefab,(Vector2Int,Vector2Int,bool)>();
-     readonly List<NetcodePlayerPrefab>playersMoved=new List<NetcodePlayerPrefab>();
+     readonly List<NetcodePlayerPrefab>playersMovementRegistered=new List<NetcodePlayerPrefab>();
 
     internal VoxelTerrainChunk[]all;
      readonly Dictionary<VoxelTerrainChunk,object>syn=new Dictionary<VoxelTerrainChunk,object>();
@@ -276,6 +277,8 @@ namespace AKCondinoO.Voxels{
 
      Core.Singleton.OnDestroyingCoreEvent+=OnDestroyingCoreEvent;
 
+     VoxelTerrainChunk.marchingCubesCount=0;
+
      VoxelTerrainChunk.bakeJobsCount=0;
             
      VoxelTerrainChunk.MarchingCubesMultithreaded.biome.Seed=0;
@@ -294,10 +297,14 @@ namespace AKCondinoO.Voxels{
 
      EditingMultithreaded.Stop=false;
      editingBGThread=new EditingMultithreaded();
+
+     playerMovementFollowUpCoroutine=StartCoroutine(PlayerMovementFollowUpCoroutine());
     }
 
     void OnDestroyingCoreEvent(object sender,EventArgs e){
      Debug.Log("OnDestroyingCoreEvent");
+
+     StopCoroutine(playerMovementFollowUpCoroutine);
 
      //  To do: save pending edits
      if(EditingMultithreaded.Clear()==0){
@@ -356,18 +363,20 @@ namespace AKCondinoO.Voxels{
        internal float navMeshBuildTimer=0f;
         
     [SerializeField]
-    int cnksManualUpdateLimit=1;
+    int cnksManualUpdateLimit=1000;
      int cnksManualUpdateIndex=0;
       int cnksManualUpdateCount=0;
        [SerializeField]
-       int cnksManualUpdateSleepingLimit=1;
+       int cnksManualUpdateSleepingLimit=3000;
         int cnksManualUpdateSleeping=0;
     System.Diagnostics.Stopwatch cnksManualUpdateStopwatch=new System.Diagnostics.Stopwatch();
 
     [SerializeField]
-    double totalMillisecondsLimit=.1d;
+    double totalMillisecondsLimit=.15d;
         
-    [SerializeField]internal int bakeJobsLimit=1;
+    [SerializeField]internal int bakeJobsLimit=1000;
+
+    [SerializeField]internal int marchingCubesLimit=1000;
 
     bool editRequired;
     bool editRequested;
@@ -389,6 +398,25 @@ namespace AKCondinoO.Voxels{
 
       navMeshAsyncOperations=new AsyncOperation[maxConnections];
      }
+
+     foreach(var player in playersMovement.Keys){var movement=playersMovement[player];
+      if(!movement.instantiationRequested){
+       //Debug.Log("player didn't request instantiation");
+       continue;
+      }
+      playersMovementRegistered.Add(player);
+      if(!playerMoved.ContainsKey(player)){
+       playerMoved.Add(player,(movement.cCoord,movement.cCoord_Pre));
+      }else{
+       playerMoved[player]=(movement.cCoord,playerMoved[player].cCoord_Pre);
+      }
+      playerMovementCoroutineBeginFlag=true;
+     }
+     foreach(var player in playersMovementRegistered){var movement=playersMovement[player];
+      Debug.Log("reset player movement flag to false");
+      playersMovement[player]=(movement.cCoord,movement.cCoord_Pre,false);
+     }
+     playersMovementRegistered.Clear();
  
      if(DEBUG_EDIT){
       DEBUG_EDIT=false;
@@ -413,146 +441,6 @@ namespace AKCondinoO.Voxels{
       Debug.Log("Update:editRequired:editing requests enqueued to bg task");
       OnEditing();
      }
-
-     System.Diagnostics.Stopwatch stopwatch=new System.Diagnostics.Stopwatch();
-                                  stopwatch.Restart();
-      foreach(var player in playersMovement.Keys){var movement=playersMovement[player];
-       if(!movement.instantiationRequested){
-        //Debug.Log("player didn't request instantiation");
-        continue;
-       }
-       playersMoved.Add(player);
-       Debug.Log("player movement:"+movement);
-       Vector2Int pCoord=movement.cCoord;
-       Vector2Int pCoord_Pre=movement.cCoord_Pre;
-
-       #region expropriation
-       for(Vector2Int eCoord=new Vector2Int(),cCoord1=new Vector2Int();eCoord.y<=expropriationDistance.y;eCoord.y++){for(cCoord1.y=-eCoord.y+pCoord_Pre.y;cCoord1.y<=eCoord.y+pCoord_Pre.y;cCoord1.y+=eCoord.y*2){
-       for(           eCoord.x=0                                      ;eCoord.x<=expropriationDistance.x;eCoord.x++){for(cCoord1.x=-eCoord.x+pCoord_Pre.x;cCoord1.x<=eCoord.x+pCoord_Pre.x;cCoord1.x+=eCoord.x*2){
-
-        if(Math.Abs(cCoord1.x)>=MaxcCoordx||
-           Math.Abs(cCoord1.y)>=MaxcCoordy){
-         goto _skip;
-        }
-
-        //Debug.Log("expropriation at:"+cCoord1);
-
-        if(playersMovement.All(
-         p=>{
-          return Mathf.Abs(cCoord1.x-p.Key.cCoord.x)>instantiationDistance.x||
-                 Mathf.Abs(cCoord1.y-p.Key.cCoord.y)>instantiationDistance.y;
-         })
-        ){
-         int cnkIdx1=GetcnkIdx(cCoord1.x,cCoord1.y);
-         if(active.TryGetValue(cnkIdx1,out VoxelTerrainChunk cnk)){
-          if(cnk.expropriated==null){
-           cnk.expropriated=pool.AddLast(cnk);
-          }
-         }
-
-        }
-
-        _skip:{}
-        if(eCoord.x==0){break;}
-       }}
-        if(eCoord.y==0){break;}
-       }}
-       #endregion
-   
-       #region instantiation
-       for(Vector2Int iCoord=new Vector2Int(),cCoord1=new Vector2Int();iCoord.y<=instantiationDistance.y;iCoord.y++){for(cCoord1.y=-iCoord.y+pCoord.y;cCoord1.y<=iCoord.y+pCoord.y;cCoord1.y+=iCoord.y*2){
-       for(           iCoord.x=0                                      ;iCoord.x<=instantiationDistance.x;iCoord.x++){for(cCoord1.x=-iCoord.x+pCoord.x;cCoord1.x<=iCoord.x+pCoord.x;cCoord1.x+=iCoord.x*2){
-
-        if(Math.Abs(cCoord1.x)>=MaxcCoordx||
-           Math.Abs(cCoord1.y)>=MaxcCoordy){
-         goto _skip;
-        }
-
-        //Debug.Log("instantiation at:"+cCoord1);
-    
-        int cnkIdx1=GetcnkIdx(cCoord1.x,cCoord1.y);
-        if(!active.TryGetValue(cnkIdx1,out VoxelTerrainChunk cnk)){
-         //Debug.Log("activate for:"+cnkIdx1);
-         cnk=pool.First.Value;
-         pool.RemoveFirst();
-         cnk.expropriated=null;
-         if(cnk.cnkIdx!=null&&active.ContainsKey(cnk.cnkIdx.Value)){
-          active.Remove(cnk.cnkIdx.Value);
-         }
-         active.Add(cnkIdx1,cnk);
-         cnk.cnkIdx=cnkIdx1;
-         cnk.OncCoordChanged(cCoord1);
-
-        }else{
-         if(cnk.expropriated!=null){
-          pool.Remove(cnk.expropriated);
-          cnk.expropriated=null;
-         }
-
-        }
-
-        _skip:{}
-        if(iCoord.x==0){break;}
-       }}
-        if(iCoord.y==0){break;}
-       }}
-       #endregion
-       
-       for(Vector2Int dCoord=new Vector2Int(),cCoord1=new Vector2Int();dCoord.y<=physicsDistance.y;dCoord.y++){for(cCoord1.y=-dCoord.y+pCoord_Pre.y;cCoord1.y<=dCoord.y+pCoord_Pre.y;cCoord1.y+=dCoord.y*2){
-       for(           dCoord.x=0                                      ;dCoord.x<=physicsDistance.x;dCoord.x++){for(cCoord1.x=-dCoord.x+pCoord_Pre.x;cCoord1.x<=dCoord.x+pCoord_Pre.x;cCoord1.x+=dCoord.x*2){
-
-        if(Math.Abs(cCoord1.x)>=MaxcCoordx||
-           Math.Abs(cCoord1.y)>=MaxcCoordy){
-         goto _skip;
-        }
-
-        if(playersMovement.All(
-         p=>{
-          return Mathf.Abs(cCoord1.x-p.Key.cCoord.x)>physicsDistance.x||
-                 Mathf.Abs(cCoord1.y-p.Key.cCoord.y)>physicsDistance.y;
-         })
-        ){
-         int cnkIdx1=GetcnkIdx(cCoord1.x,cCoord1.y);
-         if(active.TryGetValue(cnkIdx1,out VoxelTerrainChunk cnk)){
-          cnk.OnKeepMeshColliderAssigned(false);
-         }
-        }
-
-        _skip:{}
-        if(dCoord.x==0){break;}
-       }}
-        if(dCoord.y==0){break;}
-       }}
-
-       for(Vector2Int aCoord=new Vector2Int(),cCoord1=new Vector2Int();aCoord.y<=physicsDistance.y;aCoord.y++){for(cCoord1.y=-aCoord.y+pCoord.y;cCoord1.y<=aCoord.y+pCoord.y;cCoord1.y+=aCoord.y*2){
-       for(           aCoord.x=0                                      ;aCoord.x<=physicsDistance.x;aCoord.x++){for(cCoord1.x=-aCoord.x+pCoord.x;cCoord1.x<=aCoord.x+pCoord.x;cCoord1.x+=aCoord.x*2){
-
-        if(Math.Abs(cCoord1.x)>=MaxcCoordx||
-           Math.Abs(cCoord1.y)>=MaxcCoordy){
-         goto _skip;
-        }
-
-        int cnkIdx1=GetcnkIdx(cCoord1.x,cCoord1.y);
-        if(active.TryGetValue(cnkIdx1,out VoxelTerrainChunk cnk)){
-         cnk.OnKeepMeshColliderAssigned(true);
-        }
-
-        _skip:{}
-        if(aCoord.x==0){break;}
-       }}
-        if(aCoord.y==0){break;}
-       }}
-
-       navMeshDirty=true;
-      }
-     if(playersMoved.Count>0){
-      Debug.Log("stopwatch.Elapsed.TotalMilliseconds:"+stopwatch.Elapsed.TotalMilliseconds);
-     }
-      foreach(var player in playersMoved){var movement=playersMovement[player];
-       Debug.Log("reset player movement flag to false");
-       playersMovement[player]=(movement.cCoord,movement.cCoord_Pre,false);
-      }
-      playersMoved.Clear();
             
      cnksManualUpdateStopwatch.Restart();
      int callsLimit=cnksManualUpdateIndex-1+cnksManualUpdateLimit;
@@ -608,6 +496,177 @@ namespace AKCondinoO.Voxels{
        }
       }
      }
+    }
+
+    readonly Dictionary<NetcodePlayerPrefab,(Vector2Int cCoord,Vector2Int cCoord_Pre)>playerMoved=new Dictionary<NetcodePlayerPrefab,(Vector2Int,Vector2Int)>();
+
+    [SerializeField]double instantiationMaxExecutionTime=10.0;
+        
+    internal bool playerMovementCoroutineIdleWaiting=true;
+
+    internal bool playerMovementCoroutineBeginFlag;
+     WaitUntil waitForBeginFlag;
+
+    Coroutine playerMovementFollowUpCoroutine;
+    IEnumerator PlayerMovementFollowUpCoroutine(){
+      waitForBeginFlag=new WaitUntil(()=>playerMovementCoroutineBeginFlag);
+
+      System.Diagnostics.Stopwatch stopwatch=new System.Diagnostics.Stopwatch();
+      bool LimitExecutionTime(){
+       if(stopwatch.Elapsed.TotalMilliseconds>instantiationMaxExecutionTime){
+        stopwatch.Restart();
+        return true;
+       }
+       return false;
+      }
+
+     List<(Vector2Int cCoord,Vector2Int cCoord_Pre)>movements=new List<(Vector2Int cCoord,Vector2Int cCoord_Pre)>();
+
+     Loop:{
+      yield return waitForBeginFlag;
+       playerMovementCoroutineBeginFlag=false;
+
+      Debug.Log("PlayerMovementCoroutine():begin flag was set true:");
+
+      stopwatch.Restart();
+
+      movements.Clear();
+      movements.AddRange(playerMoved.Values);
+      playerMoved.Clear();
+      foreach(var movement in movements){
+       Debug.Log("player movement:"+movement);
+       Vector2Int pCoord=movement.cCoord;
+       Vector2Int pCoord_Pre=movement.cCoord_Pre;
+
+       #region expropriation
+       for(Vector2Int eCoord=new Vector2Int(),cCoord1=new Vector2Int();eCoord.y<=expropriationDistance.y;eCoord.y++){for(cCoord1.y=-eCoord.y+pCoord_Pre.y;cCoord1.y<=eCoord.y+pCoord_Pre.y;cCoord1.y+=eCoord.y*2){
+       for(           eCoord.x=0                                      ;eCoord.x<=expropriationDistance.x;eCoord.x++){for(cCoord1.x=-eCoord.x+pCoord_Pre.x;cCoord1.x<=eCoord.x+pCoord_Pre.x;cCoord1.x+=eCoord.x*2){
+
+        if(Math.Abs(cCoord1.x)>=MaxcCoordx||
+           Math.Abs(cCoord1.y)>=MaxcCoordy){
+         goto _skip;
+        }
+
+        //Debug.Log("expropriation at:"+cCoord1);
+
+        if(playersMovement.All(
+         p=>{
+          return Mathf.Abs(cCoord1.x-p.Key.cCoord.x)>instantiationDistance.x||
+                 Mathf.Abs(cCoord1.y-p.Key.cCoord.y)>instantiationDistance.y;
+         })
+        ){
+         int cnkIdx1=GetcnkIdx(cCoord1.x,cCoord1.y);
+         if(active.TryGetValue(cnkIdx1,out VoxelTerrainChunk cnk)){
+          if(cnk.expropriated==null){
+           cnk.expropriated=pool.AddLast(cnk);
+          }
+         }
+
+        }
+
+        if(LimitExecutionTime())yield return null;
+
+        _skip:{}
+        if(eCoord.x==0){break;}
+       }}
+        if(eCoord.y==0){break;}
+       }}
+       #endregion
+   
+       #region instantiation
+       for(Vector2Int iCoord=new Vector2Int(),cCoord1=new Vector2Int();iCoord.y<=instantiationDistance.y;iCoord.y++){for(cCoord1.y=-iCoord.y+pCoord.y;cCoord1.y<=iCoord.y+pCoord.y;cCoord1.y+=iCoord.y*2){
+       for(           iCoord.x=0                                      ;iCoord.x<=instantiationDistance.x;iCoord.x++){for(cCoord1.x=-iCoord.x+pCoord.x;cCoord1.x<=iCoord.x+pCoord.x;cCoord1.x+=iCoord.x*2){
+
+        if(Math.Abs(cCoord1.x)>=MaxcCoordx||
+           Math.Abs(cCoord1.y)>=MaxcCoordy){
+         goto _skip;
+        }
+
+        //Debug.Log("instantiation at:"+cCoord1);
+    
+        int cnkIdx1=GetcnkIdx(cCoord1.x,cCoord1.y);
+        if(!active.TryGetValue(cnkIdx1,out VoxelTerrainChunk cnk)){
+         //Debug.Log("activate for:"+cnkIdx1);
+         cnk=pool.First.Value;
+         pool.RemoveFirst();
+         cnk.expropriated=null;
+         if(cnk.cnkIdx!=null&&active.ContainsKey(cnk.cnkIdx.Value)){
+          active.Remove(cnk.cnkIdx.Value);
+         }
+         active.Add(cnkIdx1,cnk);
+         cnk.cnkIdx=cnkIdx1;
+         cnk.OncCoordChanged(cCoord1);
+
+        }else{
+         if(cnk.expropriated!=null){
+          pool.Remove(cnk.expropriated);
+          cnk.expropriated=null;
+         }
+
+        }
+
+        if(LimitExecutionTime())yield return null;
+
+        _skip:{}
+        if(iCoord.x==0){break;}
+       }}
+        if(iCoord.y==0){break;}
+       }}
+       #endregion
+       
+       for(Vector2Int dCoord=new Vector2Int(),cCoord1=new Vector2Int();dCoord.y<=physicsDistance.y;dCoord.y++){for(cCoord1.y=-dCoord.y+pCoord_Pre.y;cCoord1.y<=dCoord.y+pCoord_Pre.y;cCoord1.y+=dCoord.y*2){
+       for(           dCoord.x=0                                      ;dCoord.x<=physicsDistance.x;dCoord.x++){for(cCoord1.x=-dCoord.x+pCoord_Pre.x;cCoord1.x<=dCoord.x+pCoord_Pre.x;cCoord1.x+=dCoord.x*2){
+
+        if(Math.Abs(cCoord1.x)>=MaxcCoordx||
+           Math.Abs(cCoord1.y)>=MaxcCoordy){
+         goto _skip;
+        }
+
+        if(playersMovement.All(
+         p=>{
+          return Mathf.Abs(cCoord1.x-p.Key.cCoord.x)>physicsDistance.x||
+                 Mathf.Abs(cCoord1.y-p.Key.cCoord.y)>physicsDistance.y;
+         })
+        ){
+         int cnkIdx1=GetcnkIdx(cCoord1.x,cCoord1.y);
+         if(active.TryGetValue(cnkIdx1,out VoxelTerrainChunk cnk)){
+          cnk.OnKeepMeshColliderAssigned(false);
+         }
+        }
+
+        if(LimitExecutionTime())yield return null;
+
+        _skip:{}
+        if(dCoord.x==0){break;}
+       }}
+        if(dCoord.y==0){break;}
+       }}
+
+       for(Vector2Int aCoord=new Vector2Int(),cCoord1=new Vector2Int();aCoord.y<=physicsDistance.y;aCoord.y++){for(cCoord1.y=-aCoord.y+pCoord.y;cCoord1.y<=aCoord.y+pCoord.y;cCoord1.y+=aCoord.y*2){
+       for(           aCoord.x=0                                      ;aCoord.x<=physicsDistance.x;aCoord.x++){for(cCoord1.x=-aCoord.x+pCoord.x;cCoord1.x<=aCoord.x+pCoord.x;cCoord1.x+=aCoord.x*2){
+
+        if(Math.Abs(cCoord1.x)>=MaxcCoordx||
+           Math.Abs(cCoord1.y)>=MaxcCoordy){
+         goto _skip;
+        }
+
+        int cnkIdx1=GetcnkIdx(cCoord1.x,cCoord1.y);
+        if(active.TryGetValue(cnkIdx1,out VoxelTerrainChunk cnk)){
+         cnk.OnKeepMeshColliderAssigned(true);
+        }
+
+        if(LimitExecutionTime())yield return null;
+
+        _skip:{}
+        if(aCoord.x==0){break;}
+       }}
+        if(aCoord.y==0){break;}
+       }}
+
+       navMeshDirty=true;
+      }
+     }
+     goto Loop;
     }
 
     internal void OnPlayerDisconnected(NetcodePlayerPrefab player){
