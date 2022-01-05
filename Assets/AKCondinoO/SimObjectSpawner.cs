@@ -146,6 +146,8 @@ namespace AKCondinoO.Sims{
 
      Core.Singleton.OnDestroyingCoreEvent+=OnDestroyingCoreEvent;
 
+     SimObject.unloadingCount=0;
+
      foreach(var o in Resources.LoadAll("AKCondinoO/",typeof(GameObject))){var gO=(GameObject)o;var sO=gO.GetComponent<SimObject>();if(sO==null)continue;
       Type t=sO.GetType();
       Prefabs.Add(t,gO);
@@ -226,6 +228,8 @@ namespace AKCondinoO.Sims{
       }
      }
     }
+
+    [SerializeField]internal int unloadingLimit=1000;
                 
     internal bool anyPlayerBoundsMoved;
 
@@ -323,11 +327,11 @@ namespace AKCondinoO.Sims{
       return persistUniqueIdsBG.IsCompleted(persistUniqueIdsBGThread.IsRunning);
      });
      Loop:{
-      Debug.Log("SpawnCoroutine:waitSpawnQueue");
+      //Debug.Log("SpawnCoroutine:waitSpawnQueue");
       yield return waitSpawnQueue;
       yield return waitPersistentUniqueIdsBGIsCompleted;
       if(persistUniqueIdsBG.executionMode_bg==PersistentUniqueIdsBackgroundContainer.ExecutionMode.Load){
-       Debug.Log("register loaded ids");
+       //Debug.Log("register loaded ids");
        ids=persistUniqueIdsBG.ids_bg;
        releasedIds=persistUniqueIdsBG.releasedIds_bg;
       }

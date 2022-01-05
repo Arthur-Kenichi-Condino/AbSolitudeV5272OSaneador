@@ -78,6 +78,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3bc3e4f103f7a7640b5d1d9fe64b46db, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  unloadingLimit: 3
   instantiationMaxExecutionTime: 0.005
 --- !u!114 &8440837572105550481
 MonoBehaviour:
@@ -117,6 +118,7 @@ MonoBehaviour:
   totalMillisecondsLimit: 2
   bakeJobsLimit: 1000
   marchingCubesLimit: 8
+  addTreesBGLimit: 1000
   instantiationMaxExecutionTime: 10
 --- !u!114 &5296139000763584891
 MonoBehaviour:

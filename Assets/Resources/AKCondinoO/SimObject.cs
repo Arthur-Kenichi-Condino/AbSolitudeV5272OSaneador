@@ -326,7 +326,7 @@ namespace AKCondinoO.Sims{
            }
           )
          ){
-          Debug.Log("ManualUpdate:sim object has vertice out of active voxel terrain:save and unload:"+id,transform);
+          //Debug.Log("ManualUpdate:sim object has vertice out of active voxel terrain:save and unload:"+id,transform);
           OnUnload();
 
          }else{
@@ -366,16 +366,16 @@ namespace AKCondinoO.Sims{
 
      }else{
       if(unloading){
-       Debug.Log("ManualUpdate:unloading:"+id,transform);
+       //Debug.Log("ManualUpdate:unloading:"+id,transform);
        if(unloadRequested&&OnUnloadedData()){
         unloadRequested=false;
-        Debug.Log("ManualUpdate:unloading finished:"+id,transform);
+        //Debug.Log("ManualUpdate:unloading finished:"+id,transform);
         unloading=false;
         SimObjectSpawner.Singleton.DespawnQueue.Enqueue(this);
         return;
        }else if(unloadRequired&&OnUnloading()){
         unloadRequired=false;
-        Debug.Log("ManualUpdate:unloading started:"+id,transform);
+        //Debug.Log("ManualUpdate:unloading started:"+id,transform);
         unloadRequested=true;
        }
     
@@ -459,6 +459,8 @@ namespace AKCondinoO.Sims{
     protected virtual void SetPersistentData(){
      container.SetSerializable(transform);
     }
+        
+    internal static int unloadingCount;
 
     void OnUnload(){
 
@@ -470,7 +472,11 @@ namespace AKCondinoO.Sims{
      unloadRequired=true;
     }
     bool OnUnloading(){
+     if(unloadingCount>=SimObjectSpawner.Singleton.unloadingLimit){
+      return false;
+     }
      if(container.IsCompleted(SimObjectSpawner.Singleton.persistentDataBGThreads[0].IsRunning)){
+      unloadingCount++;
       container.executionMode_bg=PersistentDataBackgroundContainer.ExecutionMode.Save;
       container.id_bg=id.Value;
 
@@ -483,6 +489,7 @@ namespace AKCondinoO.Sims{
     }
     bool OnUnloadedData(){
      if(container.IsCompleted(SimObjectSpawner.Singleton.persistentDataBGThreads[0].IsRunning)){
+      unloadingCount--;
       return true;
      }
      return false;

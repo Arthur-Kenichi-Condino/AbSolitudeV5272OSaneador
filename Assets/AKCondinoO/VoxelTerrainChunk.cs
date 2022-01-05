@@ -1021,52 +1021,12 @@ namespace AKCondinoO.Voxels{
       internal readonly Dictionary<(int x,int z),MarchingCubesMultithreaded.BaseBiome.TreeModifiersResults>treeModifiers_bg=new Dictionary<(int,int),MarchingCubesMultithreaded.BaseBiome.TreeModifiersResults>();
 
      internal readonly SimObjectSpawner.SpawnData toSpawn_bg=new SimObjectSpawner.SpawnData(Width*Depth);
-      WaitUntil waitForSpawner;
 
      internal bool findPositionsCoroutineIdleWaiting=true;
 
      internal bool findPositionsCoroutineBeginFlag;
-      WaitUntil waitForBeginFlag;
-
-      WaitUntil waitForScheduledTask;
 
      JobHandle doRaycastsHandle;
-      WaitUntil waitForRaycastsHandle;
-       //static int raycastsJobsLimit=1;        
-        //static int raycastsJobsCount;
-
-     // internal Coroutine findPositionsCoroutine;
-     //internal IEnumerator FindPositionsCoroutine(){
-
-     // //Debug.Log("FindPositionsCoroutine() coroutine started");
-
-     // waitForBeginFlag=new WaitUntil(()=>findPositionsCoroutineBeginFlag);
-
-     // waitForScheduledTask=new WaitUntil(()=>this.IsCompleted(VoxelTerrain.Singleton.addTreesBGThreads[0].IsRunning));
-
-     // waitForRaycastsHandle=new WaitUntil(()=>doRaycastsHandle.IsCompleted);
-
-     // waitForSpawner=new WaitUntil(()=>toSpawn_bg.dequeued);
-
-     // Loop:{
-     //  yield return waitForBeginFlag;
-     //   findPositionsCoroutineBeginFlag=false;
-
-
-     //  while(raycastsJobsCount>=raycastsJobsLimit){
-     //   yield return null;
-     //  }
-
-     //  raycastsJobsCount++;
-
-     //  raycastsJobsCount--;
-   
-
-                    
-
-     // }
-     // goto Loop;
-     //}
 
      bool step1;
      bool step2;
