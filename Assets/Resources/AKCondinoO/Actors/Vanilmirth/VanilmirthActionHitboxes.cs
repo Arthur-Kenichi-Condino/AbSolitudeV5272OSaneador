@@ -9,7 +9,11 @@ namespace AKCondinoO.Sims.Actors{
 
      base.Awake();
 
-     
+     tentacle.SetActive(false);
+
+     //foreach(var tentacle in tentacles){
+     // tentacle.SetActive(false);
+     //}
 
     }
 

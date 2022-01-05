@@ -1315,7 +1315,6 @@ namespace AKCondinoO.Voxels{
 
      addTreesBG.GetGroundRays=new NativeList<RaycastCommand>(Width*Depth,Allocator.Persistent);
      addTreesBG.GetGroundHits=new NativeList<RaycastHit    >(Width*Depth,Allocator.Persistent);
-     //addTreesBG.findPositionsCoroutine=StartCoroutine(addTreesBG.FindPositionsCoroutine());
     }
 
     internal void OnExit(){
@@ -1325,7 +1324,6 @@ namespace AKCondinoO.Voxels{
      if(marchingCubesBG.TempTri.IsCreated)marchingCubesBG.TempTri.Dispose();
 
      if(this!=null){
-      //StopCoroutine(addTreesBG.findPositionsCoroutine);
      }
      addTreesBG.IsCompleted(VoxelTerrain.Singleton.addTreesBGThreads[0].IsRunning,-1);
      if(addTreesBG.GetGroundRays.IsCreated)addTreesBG.GetGroundRays.Dispose();

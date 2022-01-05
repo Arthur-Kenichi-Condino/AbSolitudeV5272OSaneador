@@ -15,6 +15,20 @@ namespace AKCondinoO.Sims{
     internal CharacterController characterController;
 
     internal ActionHitboxes hitboxes;
+        
+    internal bool isTranscended;
+
+    protected int level_v=1;
+     internal int level{
+      get{
+       return level_v;
+      }
+      set{
+       level_v=value;
+       UpdateSubstats();
+      }
+     }
+     internal int totalStatPoints;
 
     protected float STR_v=1; 
      internal float STR{
@@ -78,6 +92,14 @@ namespace AKCondinoO.Sims{
      }
 
     protected virtual void UpdateSubstats(){
+     totalStatPoints=isTranscended?100:48;
+     int level1To99=Mathf.Min(level_v,99);
+     Debug.Log("level1To99:"+level1To99);
+     for(int l=2;l<=level1To99;l++){
+      totalStatPoints+=Mathf.FloorToInt((l-1)/5f)+3;
+     }
+     Debug.Log("totalStatPoints:"+totalStatPoints);
+
      float BASE_SP=35f;
 
      float MAX_SP=BASE_SP;
@@ -94,6 +116,10 @@ namespace AKCondinoO.Sims{
      internal float focus;
 
     [Serializable]internal class ActorSerializableSpecsData:PersistentDataBackgroundContainer.SerializableSpecsData{
+     public bool isTranscended;
+
+     public int level;
+
      public float STR;
      public float AGI;
      public float VIT;
@@ -153,6 +179,13 @@ namespace AKCondinoO.Sims{
 
      if(container.specsData_bg is ActorSerializableSpecsData specsData){
       Debug.Log("ActorSerializableSpecsData");
+      isTranscended=specsData.isTranscended;
+
+      level_v=specsData.level;
+      if(level_v<=0){
+       level_v=1;
+      }
+
       STR_v=specsData.STR;
       AGI_v=specsData.AGI;
       VIT_v=specsData.VIT;
@@ -178,6 +211,10 @@ namespace AKCondinoO.Sims{
 
      if(container.specsData_bg is ActorSerializableSpecsData specsData){
       //Debug.Log("ActorSerializableSpecsData");
+      specsData.isTranscended=isTranscended;
+
+      specsData.level=level_v;
+
       specsData.STR=STR_v;
       specsData.AGI=AGI_v;
       specsData.VIT=VIT_v;
