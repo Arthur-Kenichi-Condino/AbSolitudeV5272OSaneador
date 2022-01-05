@@ -18,7 +18,7 @@ namespace AKCondinoO.Voxels{
     internal const int MaxcCoordy=6250;
     internal static Vector2Int instantiationDistance{get;}=new Vector2Int(12,12);
     internal static Vector2Int expropriationDistance{get;}=new Vector2Int(13,13);
-     internal static Vector2Int physicsDistance{get;}=new Vector2Int(2,2);
+     internal static Vector2Int physicsDistance{get;}=new Vector2Int(5,5);
 
     #region chunk
 
@@ -512,8 +512,28 @@ namespace AKCondinoO.Voxels{
         Debug.Log("navMeshDirty:ready to start navMeshAsyncOperations");
         sources.Clear();
         markups.Clear();
-        sources.AddRange(navMeshSources.Values);
-        markups.AddRange(navMeshMarkups.Values);
+        foreach(var movement in playersMovement.Values){
+         Vector2Int pCoord=movement.cCoord;
+         for(Vector2Int aCoord=new Vector2Int(),cCoord1=new Vector2Int();aCoord.y<=physicsDistance.y;aCoord.y++){for(cCoord1.y=-aCoord.y+pCoord.y;cCoord1.y<=aCoord.y+pCoord.y;cCoord1.y+=aCoord.y*2){
+         for(           aCoord.x=0                                      ;aCoord.x<=physicsDistance.x;aCoord.x++){for(cCoord1.x=-aCoord.x+pCoord.x;cCoord1.x<=aCoord.x+pCoord.x;cCoord1.x+=aCoord.x*2){
+
+          if(Math.Abs(cCoord1.x)>=MaxcCoordx||
+             Math.Abs(cCoord1.y)>=MaxcCoordy){
+           goto _skip;
+          }         
+
+          int cnkIdx1=GetcnkIdx(cCoord1.x,cCoord1.y);
+          if(active.TryGetValue(cnkIdx1,out VoxelTerrainChunk cnk)){
+           sources.Add(navMeshSources[cnk.gameObject]);
+           markups.Add(navMeshMarkups[cnk.gameObject]);
+          }
+
+          _skip:{}
+          if(aCoord.x==0){break;}
+         }}
+          if(aCoord.y==0){break;}
+         }}
+        }
         NavMeshBuilder.CollectSources(null,PhysHelper.NavMesh,NavMeshCollectGeometry.PhysicsColliders,0,markups,sources);
         int i=0;
         foreach(var player in playersMovement.Keys){
