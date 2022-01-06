@@ -98,6 +98,14 @@ namespace AKCondinoO.Sims{
      for(int l=2;l<=level1To99;l++){
       totalStatPoints+=Mathf.FloorToInt((l-1)/5f)+3;
      }
+     int level1To150=Mathf.Min(level_v,150);
+     if(level1To150>=100){
+      totalStatPoints+=22;
+      int levelsAfter100=level1To150-100;
+      for(int l=101;l<=levelsAfter100+100;l++){
+       totalStatPoints+=Mathf.FloorToInt((l-1)/10f)+13;
+      }
+     }
      Debug.Log("totalStatPoints:"+totalStatPoints);
 
      float BASE_SP=35f;
