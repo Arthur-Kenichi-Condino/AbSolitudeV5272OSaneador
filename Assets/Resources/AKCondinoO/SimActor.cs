@@ -99,11 +99,20 @@ namespace AKCondinoO.Sims{
       totalStatPoints+=Mathf.FloorToInt((l-1)/5f)+3;
      }
      int level1To150=Mathf.Min(level_v,150);
+     int level1To185=Mathf.Min(level_v,185);
+     Debug.Log("level1To185:"+level1To185);
      if(level1To150>=100){
       totalStatPoints+=22;
       int levelsAfter100=level1To150-100;
       for(int l=101;l<=levelsAfter100+100;l++){
        totalStatPoints+=Mathf.FloorToInt((l-1)/10f)+13;
+      }
+      if(level1To185>=151){
+       totalStatPoints+=28;
+       int levelsAfter151=level1To185-151;
+       for(int l=152;l<=levelsAfter151+151;l++){
+        totalStatPoints+=Mathf.FloorToInt((l-1-150)/7f)+28;
+       }
       }
      }
      Debug.Log("totalStatPoints:"+totalStatPoints);
