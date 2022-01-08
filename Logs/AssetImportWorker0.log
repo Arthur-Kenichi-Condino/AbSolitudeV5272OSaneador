@@ -144,3 +144,4 @@ Received Import Request.
 Start importing Assets/AKCondinoO/VoxelTerrain.cs using Guid(1ced1493d1a78504792d1a353edb0477) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: '28bf2b848273de61c29b03e4e48aa20b') in 0.019859 seconds 
   Import took 0.024180 seconds .
 
+AssetImportWorkerClient::OnTransportError - code=2 error=End of file
