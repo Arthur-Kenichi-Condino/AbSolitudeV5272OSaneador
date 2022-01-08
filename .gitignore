@@ -1,7 +1,4 @@
-[Ll]ibrary/*
-![Ll]ibrary/*.asset
-![Ll]ibrary/PackageCache
-![Ll]ibrary/PackageManager
+#[Ll]ibrary/*
 [Tt]emp/
 #[Oo]bj/
 #[Bb]uild/
