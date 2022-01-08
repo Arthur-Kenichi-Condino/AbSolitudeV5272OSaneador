@@ -57,10 +57,12 @@ namespace AKCondinoO.Sims{
      protected override void Execute(){
       //Debug.Log("PersistentDataMultithreaded:Execute");
       lock(current.syn_bg){
-       string specsDataFile=string.Format("{0}({1},{2}).JsonSerializer",Core.sObjectsSavePath,current.id_bg.simType,current.id_bg.number);
+       string specsDataPath=string.Format("{0}{1}/",Core.sObjectsSavePath,current.id_bg.simType);
+       string specsDataFile=string.Format("{0}({1},{2}).JsonSerializer",specsDataPath,current.id_bg.simType,current.id_bg.number);
+       //Debug.Log("specsDataPath:"+specsDataPath);
 
        if      (current.executionMode_bg==PersistentDataBackgroundContainer.ExecutionMode.Unplace){
-        Debug.Log("PersistentDataMultithreaded:Execute:unplacing");
+        //Debug.Log("PersistentDataMultithreaded:Execute:unplacing");
 
         PersistentDataBackgroundContainer.SerializableSpecsData specsData_old=null;
         using(var file=new FileStream(specsDataFile,FileMode.OpenOrCreate,FileAccess.ReadWrite,FileShare.None)){
@@ -232,7 +234,7 @@ namespace AKCondinoO.Sims{
     }
 
     internal void OnExitSave(List<(Type simType,ulong number)>unplacedIds){
-     Debug.Log("SimObject:OnExitSave");
+     //Debug.Log("SimObject:OnExitSave:this!=null:"+(this!=null));
      container.IsCompleted(SimObjectSpawner.Singleton.persistentDataBGThreads[0].IsRunning,-1);
      if(unplacing){
       Debug.Log("SimObject:OnExitSave:unplacing:"+id);
@@ -253,6 +255,12 @@ namespace AKCondinoO.Sims{
 
      }else if(!loading){
       container.executionMode_bg=PersistentDataBackgroundContainer.ExecutionMode.Save;
+      container.id_bg=id.Value;
+
+      if(this!=null){
+       SetPersistentData();
+      }
+
       PersistentDataMultithreaded.Schedule(container);
       container.IsCompleted(SimObjectSpawner.Singleton.persistentDataBGThreads[0].IsRunning,-1);
      }else{
@@ -261,6 +269,12 @@ namespace AKCondinoO.Sims{
     }
 
     protected virtual void OnDestroy(){
+     //Debug.Log("OnDestroy:this!=null:"+(this!=null));
+
+     if(this!=null){
+      SetPersistentData();
+     }
+
     }
        
     [SerializeField]bool DEBUG_UNPLACE=false;
@@ -292,7 +306,7 @@ namespace AKCondinoO.Sims{
 
          OnOverlapperUnplacing(this);
 
-         Debug.Log("ManualUpdate:IsOverlappingNonAlloc:save and UNPLACE:"+id,transform);
+         //Debug.Log("ManualUpdate:IsOverlappingNonAlloc:save and UNPLACE:"+id,transform);
          OnUnplace();
 
         }else{
@@ -314,7 +328,7 @@ namespace AKCondinoO.Sims{
            }
           )
          ){
-          Debug.Log("ManualUpdate:sim object has vertice out of active voxel terrain:save and unload:"+id,transform);
+          //Debug.Log("ManualUpdate:sim object has vertice out of active voxel terrain:save and unload:"+id,transform);
           OnUnload();
 
          }else{
@@ -337,10 +351,10 @@ namespace AKCondinoO.Sims{
      }
  
      if(unplacing){
-      Debug.Log("ManualUpdate:unplacing:"+id,transform);
+      //Debug.Log("ManualUpdate:unplacing:"+id,transform);
       if(unplaceRequested&&OnUnplacedData()){
        unplaceRequested=false;
-       Debug.Log("ManualUpdate:unplacing finished:"+id,transform);
+       //Debug.Log("ManualUpdate:unplacing finished:"+id,transform);
        unplacing=false;
                     
        OnOverlapperUnplaced(this);
@@ -354,16 +368,16 @@ namespace AKCondinoO.Sims{
 
      }else{
       if(unloading){
-       Debug.Log("ManualUpdate:unloading:"+id,transform);
+       //Debug.Log("ManualUpdate:unloading:"+id,transform);
        if(unloadRequested&&OnUnloadedData()){
         unloadRequested=false;
-        Debug.Log("ManualUpdate:unloading finished:"+id,transform);
+        //Debug.Log("ManualUpdate:unloading finished:"+id,transform);
         unloading=false;
         SimObjectSpawner.Singleton.DespawnQueue.Enqueue(this);
         return;
        }else if(unloadRequired&&OnUnloading()){
         unloadRequired=false;
-        Debug.Log("ManualUpdate:unloading started:"+id,transform);
+        //Debug.Log("ManualUpdate:unloading started:"+id,transform);
         unloadRequested=true;
        }
     
@@ -383,7 +397,7 @@ namespace AKCondinoO.Sims{
           OnTransformHasChanged();
          }
          if(!validData){
-          Debug.Log("ManualUpdate:loaded unplaced object:unplace again immediately:"+id,transform);
+          //Debug.Log("ManualUpdate:loaded unplaced object:unplace again immediately:"+id,transform);
           OnUnplace();
          }
 
@@ -438,7 +452,6 @@ namespace AKCondinoO.Sims{
 
       SetPersistentData();
 
-      container.SetSerializable(transform);
       PersistentDataMultithreaded.Schedule(container);
       return true;
      }
@@ -446,7 +459,10 @@ namespace AKCondinoO.Sims{
     }
 
     protected virtual void SetPersistentData(){
+     container.SetSerializable(transform);
     }
+        
+    internal static int unloadingCount;
 
     void OnUnload(){
 
@@ -454,14 +470,20 @@ namespace AKCondinoO.Sims{
       DisableRendering();
 
      unloading=true;
-     Debug.Log("OnUnload:something caused this sO to be disabled and unloaded");
+     //Debug.Log("OnUnload:something caused this sO to be disabled and unloaded");
      unloadRequired=true;
     }
     bool OnUnloading(){
+     if(unloadingCount>=SimObjectSpawner.Singleton.unloadingLimit){
+      return false;
+     }
      if(container.IsCompleted(SimObjectSpawner.Singleton.persistentDataBGThreads[0].IsRunning)){
+      unloadingCount++;
       container.executionMode_bg=PersistentDataBackgroundContainer.ExecutionMode.Save;
       container.id_bg=id.Value;
-      container.SetSerializable(transform);
+
+      SetPersistentData();
+
       PersistentDataMultithreaded.Schedule(container);
       return true;
      }
@@ -469,6 +491,7 @@ namespace AKCondinoO.Sims{
     }
     bool OnUnloadedData(){
      if(container.IsCompleted(SimObjectSpawner.Singleton.persistentDataBGThreads[0].IsRunning)){
+      unloadingCount--;
       return true;
      }
      return false;
@@ -480,7 +503,7 @@ namespace AKCondinoO.Sims{
       DisableRendering();
 
      unplacing=true;
-     Debug.Log("OnUnplace:something caused this sO to be disabled and removed from the world");
+     //Debug.Log("OnUnplace:something caused this sO to be disabled and removed from the world");
      unplaceRequired=true;
     }
     bool OnUnplacing(){

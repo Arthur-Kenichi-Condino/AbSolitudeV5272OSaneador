@@ -22,9 +22,9 @@ namespace AKCondinoO{
      cCoord_Pre=cCoord=vecPosTocCoord(transform.position);
      worldBounds=new Bounds(Vector3.zero,
       new Vector3(
-       (instantiationDistance.x*2+1)*VoxelTerrainChunk.Width,
+       (physicsDistance.x*2+1)*VoxelTerrainChunk.Width,
        VoxelTerrainChunk.Height,
-       (instantiationDistance.y*2+1)*VoxelTerrainChunk.Depth
+       (physicsDistance.y*2+1)*VoxelTerrainChunk.Depth
       )
      );
      var navMeshValidation=Core.Singleton.navMeshBuildSettings.ValidationReport(worldBounds);
@@ -74,14 +74,14 @@ namespace AKCondinoO{
       cCoord=vecPosTocCoord(transform.position);
       if(cCoord!=cCoord_Pre||initialization){
        loadTimer=0;
-       Debug.Log("NetcodePlayerPrefab:changed to cCoord:"+cCoord+"!",this);
+       //Debug.Log("NetcodePlayerPrefab:changed to cCoord:"+cCoord+"!",this);
 
        SimObjectSpawner.Singleton.playersMovement[this]=(cCoord,cCoord_Pre,true);
        SimObjectSpawner.Singleton.playersCoordChange.Add(cCoord);
 
        VoxelTerrain.Singleton.playersMovement[this]=(cCoord,cCoord_Pre,true);
        cnkRgn=cCoordTocnkRgn(cCoord);
-       Debug.Log("NetcodePlayerPrefab:changed to cnkRgn:"+cnkRgn+"!",this);
+       //Debug.Log("NetcodePlayerPrefab:changed to cnkRgn:"+cnkRgn+"!",this);
        worldBounds.center=new Vector3(cnkRgn.x,0,cnkRgn.y);
       }
      }else if(loadTimer>=loadInterval){

@@ -16,15 +16,137 @@ namespace AKCondinoO.Sims{
 
     internal ActionHitboxes hitboxes;
         
-    internal float maxStamina;
+    internal bool isTranscended;
+
+    protected int level_v=1;
+     internal int level{
+      get{
+       return level_v;
+      }
+      set{
+       level_v=value;
+       UpdateSubstats();
+      }
+     }
+     internal int totalStatPoints;
+
+    protected float STR_v=1; 
+     internal float STR{
+      get{
+       return STR_v;
+      }
+      set{
+       STR_v=value;
+       UpdateSubstats();
+      }
+     }
+    protected float AGI_v=1;
+     internal float AGI{
+      get{
+       return AGI_v;
+      }
+      set{
+       AGI_v=value;
+       UpdateSubstats();
+      }
+     }
+    protected float VIT_v=1;
+     internal float VIT{
+      get{
+       return VIT_v;
+      }
+      set{
+       VIT_v=value;
+       UpdateSubstats();
+      }
+     }
+    protected float INT_v=1;
+     internal float INT{
+      get{
+       return INT_v;
+      }
+      set{
+       INT_v=value;
+       UpdateSubstats();
+      }
+     }
+    protected float DEX_v=1;
+     internal float DEX{
+      get{
+       return DEX_v;
+      }
+      set{
+       DEX_v=value;
+       UpdateSubstats();
+      }
+     }
+    protected float LUK_v=1;
+     internal float LUK{
+      get{
+       return LUK_v;
+      }
+      set{
+       LUK_v=value;
+       UpdateSubstats();
+      }
+     }
+
+    protected virtual void UpdateSubstats(){
+     totalStatPoints=isTranscended?100:48;
+     int level1To99=Mathf.Min(level_v,99);
+     Debug.Log("level1To99:"+level1To99);
+     for(int l=2;l<=level1To99;l++){
+      totalStatPoints+=Mathf.FloorToInt((l-1)/5f)+3;
+     }
+     int level1To150=Mathf.Min(level_v,150);
+     int level1To185=Mathf.Min(level_v,185);
+     Debug.Log("level1To185:"+level1To185);
+     if(level1To150>=100){
+      totalStatPoints+=22;
+      int levelsAfter100=level1To150-100;
+      for(int l=101;l<=levelsAfter100+100;l++){
+       totalStatPoints+=Mathf.FloorToInt((l-1)/10f)+13;
+      }
+      if(level1To185>=151){
+       totalStatPoints+=28;
+       int levelsAfter151=level1To185-151;
+       for(int l=152;l<=levelsAfter151+151;l++){
+        totalStatPoints+=Mathf.FloorToInt((l-1-150)/7f)+28;
+       }
+      }
+     }
+     Debug.Log("totalStatPoints:"+totalStatPoints);
+
+     float BASE_SP=35f;
+
+     float MAX_SP=BASE_SP;
+           MAX_SP=MAX_SP*(1+VIT*0.01f);
+
+     maxStamina_v=MAX_SP;
+     Debug.Log("maxStamina_v:"+maxStamina_v);
+    }
+
+    internal float maxStamina_v;
      internal float stamina;
-    internal float maxFocus;
+
+    internal float maxFocus_v;
      internal float focus;
+
     [Serializable]internal class ActorSerializableSpecsData:PersistentDataBackgroundContainer.SerializableSpecsData{
-     public float maxStamina;
-      public float stamina;
-     public float maxFocus;
-      public float focus;
+     public bool isTranscended;
+
+     public int level;
+
+     public float STR;
+     public float AGI;
+     public float VIT;
+     public float INT;
+     public float DEX;
+     public float LUK;
+
+     public float stamina;
+
+     public float focus;
     }
 
     protected override void Awake(){
@@ -74,16 +196,30 @@ namespace AKCondinoO.Sims{
 
      if(container.specsData_bg is ActorSerializableSpecsData specsData){
       Debug.Log("ActorSerializableSpecsData");
-      maxStamina=specsData.maxStamina;
+      isTranscended=specsData.isTranscended;
+
+      level_v=specsData.level;
+      if(level_v<=0){
+       level_v=1;
+      }
+
+      STR_v=specsData.STR;
+      AGI_v=specsData.AGI;
+      VIT_v=specsData.VIT;
+      INT_v=specsData.INT;
+      DEX_v=specsData.DEX;
+      LUK  =specsData.LUK;
+
        stamina=specsData.stamina;
-      if(maxStamina<stamina){
-       maxStamina=stamina;
-      }
-      maxFocus=specsData.maxFocus;
+       if(maxStamina_v<stamina){
+        stamina=maxStamina_v;
+       }
+
        focus=specsData.focus;
-      if(maxFocus<focus){
-       maxFocus=focus;
-      }
+       if(maxFocus_v<focus){
+        focus=maxFocus_v;
+       }
+
      }
 
     }
@@ -91,10 +227,26 @@ namespace AKCondinoO.Sims{
     protected override void SetPersistentData(){
 
      if(container.specsData_bg is ActorSerializableSpecsData specsData){
-      Debug.Log("ActorSerializableSpecsData");
-      specsData.maxStamina=maxStamina;
+      //Debug.Log("ActorSerializableSpecsData");
+      specsData.isTranscended=isTranscended;
+
+      specsData.level=level_v;
+
+      specsData.STR=STR_v;
+      specsData.AGI=AGI_v;
+      specsData.VIT=VIT_v;
+      specsData.INT=INT_v;
+      specsData.DEX=DEX_v;
+      specsData.LUK=LUK_v;
+      //Debug.Log("specsData.STR:"+specsData.STR);
+      //Debug.Log("specsData.AGI:"+specsData.AGI);
+      //Debug.Log("specsData.VIT:"+specsData.VIT);
+      //Debug.Log("specsData.INT:"+specsData.INT);
+      //Debug.Log("specsData.DEX:"+specsData.DEX);
+      //Debug.Log("specsData.LUK:"+specsData.LUK);
+
        specsData.stamina=stamina;
-      specsData.maxFocus=maxFocus;
+
        specsData.focus=focus;
      }
 
@@ -103,7 +255,7 @@ namespace AKCondinoO.Sims{
     }
 
     void OnMotionCycleEndEvent(object sender,EventArgs e){
-     Debug.Log("OnMotionCycleEndEvent");
+     //Debug.Log("OnMotionCycleEndEvent");
      isMotionLocked=false;
     }
 

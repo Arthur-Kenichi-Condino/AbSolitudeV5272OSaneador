@@ -97,7 +97,7 @@ namespace AKCondinoO.Sims{
     internal GetPersistentDataFilesMultithreaded getPersistentDataFilesBGThread;
     internal class GetPersistentDataFilesMultithreaded:BaseMultithreaded<GetPersistentDataFilesBackgroundContainer>{
      protected override void Execute(){
-      Debug.Log("GetPersistentDataFilesMultithreaded:Execute:current.playersCoordChange_bg.Count:"+current.playersCoordChange_bg.Count);
+      //Debug.Log("GetPersistentDataFilesMultithreaded:Execute:current.playersCoordChange_bg.Count:"+current.playersCoordChange_bg.Count);
       foreach(var syn in current.syn_bg)Monitor.Enter(syn);
       try{
 
@@ -146,10 +146,14 @@ namespace AKCondinoO.Sims{
 
      Core.Singleton.OnDestroyingCoreEvent+=OnDestroyingCoreEvent;
 
+     SimObject.unloadingCount=0;
+
      foreach(var o in Resources.LoadAll("AKCondinoO/",typeof(GameObject))){var gO=(GameObject)o;var sO=gO.GetComponent<SimObject>();if(sO==null)continue;
       Type t=sO.GetType();
       Prefabs.Add(t,gO);
       pool.Add(t,new LinkedList<SimObject>());
+      string specsDataPath=string.Format("{0}{1}/",Core.sObjectsSavePath,t);
+      Directory.CreateDirectory(specsDataPath);
       Debug.Log("added Prefab:"+sO.name);
      }
 
@@ -226,6 +230,8 @@ namespace AKCondinoO.Sims{
       }
      }
     }
+
+    [SerializeField]internal int unloadingLimit=1000;
                 
     internal bool anyPlayerBoundsMoved;
 
@@ -246,7 +252,7 @@ namespace AKCondinoO.Sims{
        continue;
       }
       playersMoved.Add(player);
-      Debug.Log("player movement:"+movement);
+      //Debug.Log("player movement:"+movement);
 
       anyPlayerBoundsMoved=true;
 
@@ -301,7 +307,7 @@ namespace AKCondinoO.Sims{
      }
     }
 
-    [SerializeField]double instantiationMaxExecutionTime=.05;
+    [SerializeField]double instantiationMaxExecutionTime=.005;
 
     WaitUntil waitSpawnQueue;
     WaitUntil waitPersistentUniqueIdsBGIsCompleted;
@@ -323,11 +329,11 @@ namespace AKCondinoO.Sims{
       return persistUniqueIdsBG.IsCompleted(persistUniqueIdsBGThread.IsRunning);
      });
      Loop:{
-      Debug.Log("SpawnCoroutine:waitSpawnQueue");
+      //Debug.Log("SpawnCoroutine:waitSpawnQueue");
       yield return waitSpawnQueue;
       yield return waitPersistentUniqueIdsBGIsCompleted;
       if(persistUniqueIdsBG.executionMode_bg==PersistentUniqueIdsBackgroundContainer.ExecutionMode.Load){
-       Debug.Log("register loaded ids");
+       //Debug.Log("register loaded ids");
        ids=persistUniqueIdsBG.ids_bg;
        releasedIds=persistUniqueIdsBG.releasedIds_bg;
       }
@@ -364,7 +370,7 @@ namespace AKCondinoO.Sims{
         GameObject gO;
         SimObject sO;
         if(pool[at.type].Count>0){
-         Debug.Log("SpawnCoroutine:using pooled sim object");
+         //Debug.Log("SpawnCoroutine:using pooled sim object");
          sO=pool[at.type].First.Value;
          pool[at.type].RemoveFirst();
          sO.pooled=null;

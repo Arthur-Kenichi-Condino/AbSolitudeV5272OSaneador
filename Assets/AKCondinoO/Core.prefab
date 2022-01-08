@@ -78,7 +78,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3bc3e4f103f7a7640b5d1d9fe64b46db, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  instantiationMaxExecutionTime: 0.05
+  unloadingLimit: 3
+  instantiationMaxExecutionTime: 0.005
 --- !u!114 &8440837572105550481
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -112,6 +113,13 @@ MonoBehaviour:
   DEBUG_EDIT_MATERIAL_ID: 2
   DEBUG_EDIT_SMOOTHNESS: 5
   DEBUG_BAKE_NAV_MESH: 0
+  cnksManualUpdateLimit: 3000
+  cnksManualUpdateSleepingLimit: 7000
+  totalMillisecondsLimit: 2
+  bakeJobsLimit: 1000
+  marchingCubesLimit: 8
+  addTreesBGLimit: 8
+  instantiationMaxExecutionTime: 10
 --- !u!114 &5296139000763584891
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -12,7 +12,7 @@ internal static class PhysHelper{
      VoxelTerrain=1<<LayerMask.NameToLayer("VoxelTerrain");
      //Debug.Log("SetLayerMasks():\"VoxelTerrain\":"+VoxelTerrain);
      NavMesh=1<<LayerMask.NameToLayer("VoxelTerrain");
-     Debug.Log("SetLayerMasks():\"NavMesh\":"+NavMesh);
+     //Debug.Log("SetLayerMasks():\"NavMesh\":"+NavMesh);
     }
 
 }
