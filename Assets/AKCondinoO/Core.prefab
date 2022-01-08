@@ -118,7 +118,7 @@ MonoBehaviour:
   totalMillisecondsLimit: 2
   bakeJobsLimit: 1000
   marchingCubesLimit: 8
-  addTreesBGLimit: 1000
+  addTreesBGLimit: 8
   instantiationMaxExecutionTime: 10
 --- !u!114 &5296139000763584891
 MonoBehaviour:

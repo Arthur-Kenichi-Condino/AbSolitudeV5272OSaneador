@@ -16,8 +16,8 @@ namespace AKCondinoO.Voxels{
 
     internal const int MaxcCoordx=312;
     internal const int MaxcCoordy=312;
-    internal static Vector2Int instantiationDistance{get;}=new Vector2Int(6,6);
-    internal static Vector2Int expropriationDistance{get;}=new Vector2Int(6,6);
+    internal static Vector2Int instantiationDistance{get;}=new Vector2Int(12,12);
+    internal static Vector2Int expropriationDistance{get;}=new Vector2Int(13,13);
      internal static Vector2Int physicsDistance{get;}=new Vector2Int(5,5);
 
     #region chunk
@@ -580,7 +580,7 @@ namespace AKCondinoO.Voxels{
       movements.AddRange(playerMoved.Values);
       playerMoved.Clear();
       foreach(var movement in movements){
-       Debug.Log("player movement:"+movement);
+       //Debug.Log("player movement:"+movement);
        Vector2Int pCoord=movement.cCoord;
        Vector2Int pCoord_Pre=movement.cCoord_Pre;
 

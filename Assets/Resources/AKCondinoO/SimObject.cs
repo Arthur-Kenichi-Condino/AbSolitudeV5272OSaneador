@@ -58,7 +58,6 @@ namespace AKCondinoO.Sims{
       //Debug.Log("PersistentDataMultithreaded:Execute");
       lock(current.syn_bg){
        string specsDataPath=string.Format("{0}{1}/",Core.sObjectsSavePath,current.id_bg.simType);
-       Directory.CreateDirectory(specsDataPath);
        string specsDataFile=string.Format("{0}({1},{2}).JsonSerializer",specsDataPath,current.id_bg.simType,current.id_bg.number);
        //Debug.Log("specsDataPath:"+specsDataPath);
 
@@ -398,7 +397,7 @@ namespace AKCondinoO.Sims{
           OnTransformHasChanged();
          }
          if(!validData){
-          Debug.Log("ManualUpdate:loaded unplaced object:unplace again immediately:"+id,transform);
+          //Debug.Log("ManualUpdate:loaded unplaced object:unplace again immediately:"+id,transform);
           OnUnplace();
          }
 
@@ -471,7 +470,7 @@ namespace AKCondinoO.Sims{
       DisableRendering();
 
      unloading=true;
-     Debug.Log("OnUnload:something caused this sO to be disabled and unloaded");
+     //Debug.Log("OnUnload:something caused this sO to be disabled and unloaded");
      unloadRequired=true;
     }
     bool OnUnloading(){
@@ -504,7 +503,7 @@ namespace AKCondinoO.Sims{
       DisableRendering();
 
      unplacing=true;
-     Debug.Log("OnUnplace:something caused this sO to be disabled and removed from the world");
+     //Debug.Log("OnUnplace:something caused this sO to be disabled and removed from the world");
      unplaceRequired=true;
     }
     bool OnUnplacing(){

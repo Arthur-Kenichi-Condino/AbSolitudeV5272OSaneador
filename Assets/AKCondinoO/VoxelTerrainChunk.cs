@@ -915,7 +915,21 @@ namespace AKCondinoO.Voxels{
           maxScale=Vector3.one*1.5f,
           rootsDepth=1.2f,
           spacing=Vector3.one*2.4f*2f,
-          spacingAll=Vector3.one*2.4f*2f,
+          spacingAll=Vector3.one*1.2f*2f,
+         },
+        }
+       },
+       {
+        typeof(Betula_occidentalis),
+        new TreeData[]{
+         new TreeData{
+          chance=.2f,
+          verticalRotationFactor=.125f,
+          minScale=Vector3.one*.5f,
+          maxScale=Vector3.one*1.5f,
+          rootsDepth=.25f,
+          spacing=Vector3.one*1.0f*2f,
+          spacingAll=Vector3.one*1.0f*2f,
          },
         }
        },
@@ -926,6 +940,7 @@ namespace AKCondinoO.Voxels{
         1,
         new Type[]{
          typeof(Pinus_elliottii),
+         typeof(Betula_occidentalis),
         }
        },
       };
@@ -1258,6 +1273,7 @@ namespace AKCondinoO.Voxels{
          current.gotGroundRays_bg.Add((vCoord1.x,vCoord1.z));
 
          current.treeAt_bg.Add((vCoord1.x,vCoord1.z),treePicked.Value);
+         //Debug.Log("treePicked.Value.tree:"+treePicked.Value.tree);
 
          MarchingCubesMultithreaded.BaseBiome.TreeModifiersResults modifiers=MarchingCubesMultithreaded.biome.TreeModifiers(noiseInput,treePicked.Value.treeData,current.treeRotationModifierPerlin_bg,current.treeScaleModifierPerlin_bg);
 
@@ -1265,7 +1281,7 @@ namespace AKCondinoO.Voxels{
 
          Vector3 spacing=treePicked.Value.treeData.spacing;
                  spacing=Vector3.Scale(spacing,modifiers.scale);
-         Debug.Log("spacing:"+spacing);
+         //Debug.Log("spacing:"+spacing);
 
          spacingOwnTypeOnly[(treePicked.Value.tree,vCoord1.z)]=new Vector2Int((int)Math.Ceiling(spacing.x),
                                                                               (int)Math.Ceiling(spacing.z)
@@ -1273,7 +1289,7 @@ namespace AKCondinoO.Voxels{
 
          Vector3 spacingAll=treePicked.Value.treeData.spacingAll;
                  spacingAll=Vector3.Scale(spacingAll,modifiers.scale);
-         Debug.Log("spacingAll:"+spacingAll);
+         //Debug.Log("spacingAll:"+spacingAll);
 
          spacingAllTypes[vCoord1.z]=new Vector2Int((int)Math.Ceiling(spacingAll.x),
                                                    (int)Math.Ceiling(spacingAll.z)

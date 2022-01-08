@@ -152,6 +152,8 @@ namespace AKCondinoO.Sims{
       Type t=sO.GetType();
       Prefabs.Add(t,gO);
       pool.Add(t,new LinkedList<SimObject>());
+      string specsDataPath=string.Format("{0}{1}/",Core.sObjectsSavePath,t);
+      Directory.CreateDirectory(specsDataPath);
       Debug.Log("added Prefab:"+sO.name);
      }
 
@@ -250,7 +252,7 @@ namespace AKCondinoO.Sims{
        continue;
       }
       playersMoved.Add(player);
-      Debug.Log("player movement:"+movement);
+      //Debug.Log("player movement:"+movement);
 
       anyPlayerBoundsMoved=true;
 
@@ -368,7 +370,7 @@ namespace AKCondinoO.Sims{
         GameObject gO;
         SimObject sO;
         if(pool[at.type].Count>0){
-         Debug.Log("SpawnCoroutine:using pooled sim object");
+         //Debug.Log("SpawnCoroutine:using pooled sim object");
          sO=pool[at.type].First.Value;
          pool[at.type].RemoveFirst();
          sO.pooled=null;
