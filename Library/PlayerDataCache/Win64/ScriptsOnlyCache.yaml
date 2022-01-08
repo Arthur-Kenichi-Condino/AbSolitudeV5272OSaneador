@@ -879,4 +879,4 @@ ScriptsOnlyBuild:
   platform: 19
   scenePathNames:
   - Assets/Scenes/SampleScene.unity
-  playerPath: E:/Users/Arthur/GitHub/AbSolitudeV5272OSaneador/AbSolitudeV5272OSaneador.exe
+  playerPath: E:/Users/Arthur/build/AbSolitudeV5272OSaneador.exe
