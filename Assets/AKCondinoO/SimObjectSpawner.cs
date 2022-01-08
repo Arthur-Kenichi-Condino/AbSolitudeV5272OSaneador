@@ -145,6 +145,8 @@ namespace AKCondinoO.Sims{
     void Awake(){if(Singleton==null){Singleton=this;}else{DestroyImmediate(this);return;}
 
      Core.Singleton.OnDestroyingCoreEvent+=OnDestroyingCoreEvent;
+            
+     SimObject.savingCount=0;
 
      SimObject.unloadingCount=0;
 
@@ -230,6 +232,8 @@ namespace AKCondinoO.Sims{
       }
      }
     }
+
+    [SerializeField]internal int savingLimit=1000;
 
     [SerializeField]internal int unloadingLimit=1000;
                 
