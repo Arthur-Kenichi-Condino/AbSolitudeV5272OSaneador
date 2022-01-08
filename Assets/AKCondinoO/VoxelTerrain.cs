@@ -14,8 +14,8 @@ namespace AKCondinoO.Voxels{
 
     internal const double IsoLevel=-50.0d;
 
-    internal const int MaxcCoordx=6250;
-    internal const int MaxcCoordy=6250;
+    internal const int MaxcCoordx=312;
+    internal const int MaxcCoordy=312;
     internal static Vector2Int instantiationDistance{get;}=new Vector2Int(6,6);
     internal static Vector2Int expropriationDistance{get;}=new Vector2Int(6,6);
      internal static Vector2Int physicsDistance{get;}=new Vector2Int(5,5);

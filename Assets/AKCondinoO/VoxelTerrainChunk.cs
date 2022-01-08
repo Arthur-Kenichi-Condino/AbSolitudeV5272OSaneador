@@ -901,6 +901,7 @@ namespace AKCondinoO.Voxels{
        internal Vector3 maxScale=Vector3.one;
        internal float rootsDepth=1f;
        internal Vector3 spacing=Vector3.one;
+       internal Vector3 spacingAll=Vector3.one;
       }
 
       readonly protected Dictionary<Type,TreeData[]>treesData=new Dictionary<Type,TreeData[]>(){
@@ -914,6 +915,7 @@ namespace AKCondinoO.Voxels{
           maxScale=Vector3.one*1.5f,
           rootsDepth=1.2f,
           spacing=Vector3.one*2.4f*2f,
+          spacingAll=Vector3.one*2.4f*2f,
          },
         }
        },
@@ -1140,12 +1142,16 @@ namespace AKCondinoO.Voxels{
 
      readonly static object mutex=new object();
 
+                 readonly Dictionary<int,Vector2Int>spacingAllTypes=new Dictionary<int,Vector2Int>();
      readonly Dictionary<(Type type,int z),Vector2Int>spacingOwnTypeOnly=new Dictionary<(Type,int),Vector2Int>();
 
      protected override void Cleanup(){
+       spacingAllTypes.Clear();
       spacingOwnTypeOnly.Clear();
      }
 
+                 readonly List<int>spacingAllTypes_tmpList=new List<int>();
+     readonly List<(Type type,int z)>spacingOwnTypeOnly_tmpList=new List<(Type,int)>();
      protected override void Execute(){
       //Debug.Log("TreesMultithreaded:Execute:");
       if      (current.executionMode_bg==TreesBackgroundContainer.ExecutionMode._1){
@@ -1170,7 +1176,21 @@ namespace AKCondinoO.Voxels{
 
        for(vCoord1.x=0             ;vCoord1.x<Width;vCoord1.x++){
 
-        foreach(var tree in spacingOwnTypeOnly.Keys.ToArray()){Vector2Int spaced=spacingOwnTypeOnly[tree];
+        spacingAllTypes_tmpList.Clear();
+        spacingAllTypes_tmpList.AddRange(spacingAllTypes.Keys);
+        foreach(var coord in spacingAllTypes_tmpList){Vector2Int spacedAll=spacingAllTypes[coord];
+         spacedAll.y=0;
+         spacedAll.x--;
+         if(spacedAll.x>0){
+          spacingAllTypes[coord]=spacedAll;
+         }else{
+          spacingAllTypes.Remove(coord);
+         }
+        }
+
+        spacingOwnTypeOnly_tmpList.Clear();
+        spacingOwnTypeOnly_tmpList.AddRange(spacingOwnTypeOnly.Keys);
+        foreach(var tree in spacingOwnTypeOnly_tmpList){Vector2Int spaced=spacingOwnTypeOnly[tree];
          spaced.y=0;
          spaced.x--;
          if(spaced.x>0){
@@ -1181,11 +1201,30 @@ namespace AKCondinoO.Voxels{
         }
 
        for(vCoord1.z=0             ;vCoord1.z<Depth;vCoord1.z++){
-
-        foreach(var tree in spacingOwnTypeOnly.Keys.ToArray()){Vector2Int spaced=spacingOwnTypeOnly[tree];
+                            
+        spacingAllTypes_tmpList.Clear();
+        spacingAllTypes_tmpList.AddRange(spacingAllTypes.Keys);
+        foreach(var coord in spacingAllTypes_tmpList){Vector2Int spacedAll=spacingAllTypes[coord];
+         if(spacedAll.y>0){
+          spacedAll.y--;
+          spacingAllTypes[coord]=spacedAll;
+         }
+        }
+        
+        spacingOwnTypeOnly_tmpList.Clear();
+        spacingOwnTypeOnly_tmpList.AddRange(spacingOwnTypeOnly.Keys);
+        foreach(var tree in spacingOwnTypeOnly_tmpList){Vector2Int spaced=spacingOwnTypeOnly[tree];
          if(spaced.y>0){
           spaced.y--;
           spacingOwnTypeOnly[tree]=spaced;
+         }
+        }
+
+        if(spacingAllTypes.TryGetValue(vCoord1.z,out Vector2Int blockedBySpacedAll)){
+         if(blockedBySpacedAll.x>0||
+            blockedBySpacedAll.y>0
+         ){
+          continue;
          }
         }
 
@@ -1201,9 +1240,9 @@ namespace AKCondinoO.Voxels{
           continue;
          }
 
-         if(spacingOwnTypeOnly.TryGetValue((treePicked.Value.tree,vCoord1.z),out Vector2Int spaced)){
-          if(spaced.x>0||
-             spaced.y>0
+         if(spacingOwnTypeOnly.TryGetValue((treePicked.Value.tree,vCoord1.z),out Vector2Int blockedBySpaced)){
+          if(blockedBySpaced.x>0||
+             blockedBySpaced.y>0
           ){
            continue;
           }
@@ -1228,7 +1267,17 @@ namespace AKCondinoO.Voxels{
                  spacing=Vector3.Scale(spacing,modifiers.scale);
          Debug.Log("spacing:"+spacing);
 
-         spacingOwnTypeOnly[(treePicked.Value.tree,vCoord1.z)]=new Vector2Int((int)Math.Ceiling(spacing.x),(int)Math.Ceiling(spacing.z));
+         spacingOwnTypeOnly[(treePicked.Value.tree,vCoord1.z)]=new Vector2Int((int)Math.Ceiling(spacing.x),
+                                                                              (int)Math.Ceiling(spacing.z)
+         );
+
+         Vector3 spacingAll=treePicked.Value.treeData.spacingAll;
+                 spacingAll=Vector3.Scale(spacingAll,modifiers.scale);
+         Debug.Log("spacingAll:"+spacingAll);
+
+         spacingAllTypes[vCoord1.z]=new Vector2Int((int)Math.Ceiling(spacingAll.x),
+                                                   (int)Math.Ceiling(spacingAll.z)
+         );
         }
 
        }

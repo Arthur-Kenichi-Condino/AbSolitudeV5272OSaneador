@@ -57,7 +57,10 @@ namespace AKCondinoO.Sims{
      protected override void Execute(){
       //Debug.Log("PersistentDataMultithreaded:Execute");
       lock(current.syn_bg){
-       string specsDataFile=string.Format("{0}({1},{2}).JsonSerializer",Core.sObjectsSavePath,current.id_bg.simType,current.id_bg.number);
+       string specsDataPath=string.Format("{0}{1}/",Core.sObjectsSavePath,current.id_bg.simType);
+       Directory.CreateDirectory(specsDataPath);
+       string specsDataFile=string.Format("{0}({1},{2}).JsonSerializer",specsDataPath,current.id_bg.simType,current.id_bg.number);
+       //Debug.Log("specsDataPath:"+specsDataPath);
 
        if      (current.executionMode_bg==PersistentDataBackgroundContainer.ExecutionMode.Unplace){
         //Debug.Log("PersistentDataMultithreaded:Execute:unplacing");
