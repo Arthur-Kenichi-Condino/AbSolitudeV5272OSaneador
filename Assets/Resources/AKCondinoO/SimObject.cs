@@ -210,6 +210,7 @@ namespace AKCondinoO.Sims{
      //Debug.Log("localBounds.center:"+localBounds.center+";localBounds.size:"+localBounds.size,this);
 
      foreach(Renderer renderer in renderers=GetComponentsInChildren<Renderer>()){
+      //Debug.Log(renderer.bounds);
      }
 
       DisableInteractions();
