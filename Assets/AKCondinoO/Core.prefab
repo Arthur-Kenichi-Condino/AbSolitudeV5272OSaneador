@@ -114,11 +114,11 @@ MonoBehaviour:
   DEBUG_EDIT_MATERIAL_ID: 2
   DEBUG_EDIT_SMOOTHNESS: 5
   DEBUG_BAKE_NAV_MESH: 0
-  cnksManualUpdateLimit: 3000
-  cnksManualUpdateSleepingLimit: 7000
-  totalMillisecondsLimit: 2
-  bakeJobsLimit: 1000
-  marchingCubesLimit: 8
+  cnksManualUpdateLimit: 1000
+  cnksManualUpdateSleepingLimit: 3000
+  totalMillisecondsLimit: 0.5
+  bakeJobsLimit: 500
+  marchingCubesLimit: 5
   addTreesBGLimit: 8
   instantiationMaxExecutionTime: 10
 --- !u!114 &5296139000763584891
