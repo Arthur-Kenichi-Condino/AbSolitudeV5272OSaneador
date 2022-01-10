@@ -80,7 +80,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   savingLimit: 3
   unloadingLimit: 3
-  instantiationMaxExecutionTime: 0.005
+  instantiationMaxExecutionTime: 0.5
 --- !u!114 &8440837572105550481
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -114,13 +114,13 @@ MonoBehaviour:
   DEBUG_EDIT_MATERIAL_ID: 2
   DEBUG_EDIT_SMOOTHNESS: 5
   DEBUG_BAKE_NAV_MESH: 0
-  cnksManualUpdateLimit: 3000
-  cnksManualUpdateSleepingLimit: 7000
-  totalMillisecondsLimit: 2
-  bakeJobsLimit: 800
-  marchingCubesLimit: 6
-  addTreesBGLimit: 8
-  instantiationMaxExecutionTime: 10
+  cnksManualUpdateLimit: 7000
+  cnksManualUpdateSleepingLimit: 10000
+  totalMillisecondsLimit: 5
+  bakeJobsLimit: 1000
+  marchingCubesLimit: 5
+  addTreesBGLimit: 6
+  instantiationMaxExecutionTime: 15
 --- !u!114 &5296139000763584891
 MonoBehaviour:
   m_ObjectHideFlags: 0

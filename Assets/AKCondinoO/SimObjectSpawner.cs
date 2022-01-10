@@ -266,9 +266,15 @@ namespace AKCondinoO.Sims{
       sO.ManualUpdate();
      }
      while(DespawnQueue.Count>0){var toDespawn=DespawnQueue.Dequeue();
+
+      SimObjectSpawnRoutine.Singleton.OnDespawn(toDespawn);
+
       OnDeactivated(toDespawn);
      }
      while(DespawnReleaseIdQueue.Count>0){var toDespawnReleaseId=DespawnReleaseIdQueue.Dequeue();
+
+      SimObjectSpawnRoutine.Singleton.OnDespawn(toDespawnReleaseId,true);
+
       OnDeactivatedReleaseId(toDespawnReleaseId);
      }
      foreach(var player in playersMoved){var movement=playersMovement[player];
@@ -282,7 +288,7 @@ namespace AKCondinoO.Sims{
     }
 
     bool OnGetFiles(){
-     if(getPersistentDataFilesBG.IsCompleted(getPersistentDataFilesBGThread.IsRunning)){
+     if(getPersistentDataFilesBG.IsCompleted(getPersistentDataFilesBGThread.IsRunning)&&spawnCoroutineIdleWaiting){
       getPersistentDataFilesBG.syn_bg=syn.Values.ToArray();
       getPersistentDataFilesBG.playersCoordChange_bg=new HashSet<Vector2Int>(playersCoordChange,playersCoordChange.Comparer);
       GetPersistentDataFilesMultithreaded.Schedule(getPersistentDataFilesBG);
@@ -313,6 +319,8 @@ namespace AKCondinoO.Sims{
 
     [SerializeField]double instantiationMaxExecutionTime=.005;
 
+    internal bool spawnCoroutineIdleWaiting=true;
+
     WaitUntil waitSpawnQueue;
     WaitUntil waitPersistentUniqueIdsBGIsCompleted;
     IEnumerator SpawnCoroutine(){
@@ -335,6 +343,7 @@ namespace AKCondinoO.Sims{
      Loop:{
       //Debug.Log("SpawnCoroutine:waitSpawnQueue");
       yield return waitSpawnQueue;
+      spawnCoroutineIdleWaiting=false;
       yield return waitPersistentUniqueIdsBGIsCompleted;
       if(persistUniqueIdsBG.executionMode_bg==PersistentUniqueIdsBackgroundContainer.ExecutionMode.Load){
        //Debug.Log("register loaded ids");
@@ -396,6 +405,9 @@ namespace AKCondinoO.Sims{
         active.Add(id,sO);
          syn.Add(sO,sO.syn);
         sO.id=id;
+
+        SimObjectSpawnRoutine.Singleton.OnSpawned(sO);
+
         sO.OnActivated(load);
 
         if(LimitExecutionTime())yield return null;
@@ -406,8 +418,10 @@ namespace AKCondinoO.Sims{
        persistUniqueIdsBG.executionMode_bg=PersistentUniqueIdsBackgroundContainer.ExecutionMode.Save;
        persistUniqueIdsBG.ids_bg=new Dictionary<Type,ulong>(ids);
       PersistentUniqueIdsMultithreaded.Schedule(persistUniqueIdsBG);
+      spawnCoroutineIdleWaiting=true;
      }
-    goto Loop;}
+     goto Loop;
+    }
 
     internal readonly Queue<SimObject>DespawnQueue=new Queue<SimObject>();
     void OnDeactivated(SimObject sO){

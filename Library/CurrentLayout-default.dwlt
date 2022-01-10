@@ -19,9 +19,9 @@ MonoBehaviour:
     width: 1920
     height: 989
   m_ShowMode: 4
-  m_Title: Project
+  m_Title: Console
   m_RootView: {fileID: 3}
-  m_MinSize: {x: 875, y: 652}
+  m_MinSize: {x: 875, y: 631}
   m_MaxSize: {x: 10000, y: 10000}
   m_Maximized: 1
 --- !u!114 &2
@@ -73,7 +73,7 @@ MonoBehaviour:
     y: 0
     width: 1920
     height: 989
-  m_MinSize: {x: 875, y: 652}
+  m_MinSize: {x: 875, y: 631}
   m_MaxSize: {x: 10000, y: 10000}
   m_UseTopView: 1
   m_TopViewHeight: 30
@@ -145,10 +145,10 @@ MonoBehaviour:
     y: 30
     width: 1920
     height: 939
-  m_MinSize: {x: 634, y: 581}
-  m_MaxSize: {x: 18004, y: 14042}
+  m_MinSize: {x: 633, y: 560}
+  m_MaxSize: {x: 18003, y: 14042}
   vertical: 0
-  controlID: 165
+  controlID: 169
 --- !u!114 &7
 MonoBehaviour:
   m_ObjectHideFlags: 52
@@ -170,10 +170,10 @@ MonoBehaviour:
     y: 0
     width: 1920
     height: 939
-  m_MinSize: {x: 634, y: 581}
-  m_MaxSize: {x: 18004, y: 14042}
+  m_MinSize: {x: 633, y: 560}
+  m_MaxSize: {x: 18003, y: 14042}
   vertical: 1
-  controlID: 166
+  controlID: 170
 --- !u!114 &8
 MonoBehaviour:
   m_ObjectHideFlags: 52
@@ -199,7 +199,7 @@ MonoBehaviour:
   m_MinSize: {x: 577, y: 200}
   m_MaxSize: {x: 12002, y: 4021}
   vertical: 0
-  controlID: 167
+  controlID: 171
 --- !u!114 &9
 MonoBehaviour:
   m_ObjectHideFlags: 52
@@ -306,10 +306,10 @@ MonoBehaviour:
     y: 558
     width: 1920
     height: 381
-  m_MinSize: {x: 634, y: 381}
-  m_MaxSize: {x: 18004, y: 10021}
+  m_MinSize: {x: 633, y: 360}
+  m_MaxSize: {x: 18003, y: 10021}
   vertical: 0
-  controlID: 197
+  controlID: 77
 --- !u!114 &13
 MonoBehaviour:
   m_ObjectHideFlags: 52
@@ -329,8 +329,8 @@ MonoBehaviour:
     y: 0
     width: 393
     height: 381
-  m_MinSize: {x: 301, y: 381}
-  m_MaxSize: {x: 4001, y: 4021}
+  m_MinSize: {x: 300, y: 360}
+  m_MaxSize: {x: 4000, y: 4000}
   m_ActualView: {fileID: 27}
   m_Panes:
   - {fileID: 27}
@@ -408,13 +408,13 @@ MonoBehaviour:
     m_Tooltip: 
   m_Pos:
     serializedVersion: 2
-    x: 894
+    x: 945
     y: 631
-    width: 1024.6
+    width: 974
     height: 360
   m_ViewDataDictionary: {fileID: 0}
   m_VertSplit:
-    ID: 96
+    ID: 10731
     splitterInitialOffset: 203
     currentActiveSplitter: -1
     realSizes:
@@ -499,7 +499,7 @@ MonoBehaviour:
             scrollPos: {x: 0, y: 0}
             m_SelectedIDs: 04000000
             m_LastClickedID: 0
-            m_ExpandedIDs: 0a000000
+            m_ExpandedIDs: 040000000a000000
             m_RenameOverlay:
               m_UserAcceptedRename: 0
               m_Name: 
@@ -1310,9 +1310,9 @@ MonoBehaviour:
   m_PlayAudio: 0
   m_AudioPlay: 0
   m_Position:
-    m_Target: {x: 0, y: 0, z: -16}
+    m_Target: {x: -36.5887, y: 10.057396, z: -229.09497}
     speed: 2
-    m_Value: {x: -122.37698, y: 72.260765, z: 68.52101}
+    m_Value: {x: -36.5887, y: 10.057396, z: -229.09497}
   m_RenderMode: 0
   m_CameraMode:
     drawMode: 0
@@ -1363,9 +1363,9 @@ MonoBehaviour:
     speed: 2
     m_Value: {x: -0.25389087, y: 0.6064342, z: -0.21302481, w: -0.7227707}
   m_Size:
-    m_Target: 92.88767
+    m_Target: 204.65248
     speed: 2
-    m_Value: 97.26458
+    m_Value: 204.65248
   m_Ortho:
     m_Target: 0
     speed: 2
@@ -1416,7 +1416,7 @@ MonoBehaviour:
     height: 360
   m_ViewDataDictionary: {fileID: 0}
   m_PosLeft: {x: 0, y: 0}
-  m_PosRight: {x: 0, y: 287}
+  m_PosRight: {x: 0, y: 0}
   m_Scope: 0
   m_SplitterFlex: 0.2
 --- !u!114 &19
@@ -1549,7 +1549,7 @@ MonoBehaviour:
     m_HSlider: 0
     m_VSlider: 0
     m_IgnoreScrollWheelUntilClicked: 0
-    m_EnableMouseInput: 0
+    m_EnableMouseInput: 1
     m_EnableSliderZoomHorizontal: 0
     m_EnableSliderZoomVertical: 0
     m_UniformScale: 1
@@ -1674,9 +1674,9 @@ MonoBehaviour:
   m_SceneHierarchy:
     m_TreeViewState:
       scrollPos: {x: 0, y: 0}
-      m_SelectedIDs: 8845f6ff
+      m_SelectedIDs: 
       m_LastClickedID: 0
-      m_ExpandedIDs: 2e54f8ff5254f8ff7055f8ff4c41f9ff7041f9ff8e42f9ff58b0faff7cb0faff9eb1faff6af3fbff8ef3fbffbef3fbff20fafbff44fafbff62fbfbffd694fdfffa94fdff1896fdff8a9bfeffae9bfeffde9bfeff2aa6feff4ea6feff7ea6feff5eb3feff82b3feffb2b3feff08b5feff2cb5feff5cb5feff9ab8feffbeb8feffdcb9feff44fbffff
+      m_ExpandedIDs: 7a52eeff9e52eeffce52eeff3c5aeeff605aeeff905aeeff305feeff545feeff7260eeff26adf0ff4aadf0ff68aef0ffc01af2ffe41af2ff021cf2ff98d8f2ffbcd8f2ffdad9f2ffc26bf6ffe66bf6ff166cf6ff3471f6ff5871f6ff8871f6ff827af6ffa67af6ffc47bf6ff3c39f7ff6039f7ff7e3af7ff36abf8ff5aabf8ff78acf8ff3a21ffff5e21ffff8e21ffff682bffff8c2bffffbe2cffff5ef5ffff82f5ffffa0f6ffff44fbfffff4ffffff104c0000
       m_RenameOverlay:
         m_UserAcceptedRename: 0
         m_Name: 
@@ -1763,22 +1763,22 @@ MonoBehaviour:
     m_SkipHidden: 0
     m_SearchArea: 1
     m_Folders:
-    - Assets/Resources/AKCondinoO/Trees/Betula_occidentalis 1
+    - Assets/Resources/AKCondinoO/Actors/Vanilmirth
     m_Globs: []
     m_OriginalText: 
   m_ViewMode: 1
   m_StartGridSize: 16
   m_LastFolders:
-  - Assets/Resources/AKCondinoO/Trees/Betula_occidentalis 1
+  - Assets/Resources/AKCondinoO/Actors/Vanilmirth
   m_LastFoldersGridSize: 16
   m_LastProjectPath: E:\Users\Arthur\GitHub\AbSolitudeV5272OSaneador
   m_LockTracker:
     m_IsLocked: 0
   m_FolderTreeState:
     scrollPos: {x: 0, y: 0}
-    m_SelectedIDs: 28470000
-    m_LastClickedID: 18216
-    m_ExpandedIDs: 00000000204700002247000024470000264700002847000000ca9a3b
+    m_SelectedIDs: 8a560000
+    m_LastClickedID: 22154
+    m_ExpandedIDs: 00000000a2470000a4470000a6470000a8470000aa470000b2470000ba47000000ca9a3b
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -1806,7 +1806,7 @@ MonoBehaviour:
     scrollPos: {x: 0, y: 0}
     m_SelectedIDs: 
     m_LastClickedID: 0
-    m_ExpandedIDs: 000000002047000022470000244700002647000028470000
+    m_ExpandedIDs: 00000000a2470000a4470000a6470000a8470000aa470000
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -1837,18 +1837,18 @@ MonoBehaviour:
     m_ExpandedInstanceIDs: c62300009a9100003ca300000000000004430000d04300009663f7ff3ad3f6ffbeccf6ffb046000058c0f6ff9245f6ffdc460000
     m_RenameOverlay:
       m_UserAcceptedRename: 0
-      m_Name: Pinus_elliottii 1
-      m_OriginalName: Pinus_elliottii 1
+      m_Name: 
+      m_OriginalName: 
       m_EditFieldRect:
         serializedVersion: 2
         x: 0
         y: 0
         width: 0
         height: 0
-      m_UserData: 18096
+      m_UserData: 0
       m_IsWaitingForDelay: 0
       m_IsRenaming: 0
-      m_OriginalEventType: 0
+      m_OriginalEventType: 11
       m_IsRenamingFilename: 1
       m_ClientGUIView: {fileID: 14}
     m_CreateAssetUtility:
