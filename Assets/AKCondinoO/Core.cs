@@ -4,10 +4,13 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.AI;
+using UnityEngine.Profiling;
+using UnityEngine.Scripting;
 
 namespace AKCondinoO{
  internal class Core:MonoBehaviour{internal static Core Singleton;
@@ -33,10 +36,14 @@ namespace AKCondinoO{
      debug=new NavMeshBuildDebugSettings{
       flags=NavMeshBuildDebugFlags.None,
      },
-     maxJobWorkers=1,
+     maxJobWorkers=2,
     };
 
     void Awake(){if(Singleton==null){Singleton=this;}else{DestroyImmediate(this);return;}
+     #if !UNITY_EDITOR
+      GarbageCollector.GCMode=GarbageCollector.Mode.Manual;
+     #endif
+     GCSettings.LatencyMode=GCLatencyMode.SustainedLowLatency;
 
      QualitySettings.vSyncCount=0;
 
@@ -71,6 +78,8 @@ namespace AKCondinoO{
     [SerializeField]SimObject DEBUG_CREATE_SIM_OBJECT=null;
     bool initialized;
     void Update(){
+     RunGC();
+
      if(Application.targetFrameRate!=120){Application.targetFrameRate=120;}
 
      if(!initialized){
@@ -86,7 +95,67 @@ namespace AKCondinoO{
       SimObjectSpawner.Singleton.SpawnQueue.Enqueue(toSpawn);
       DEBUG_CREATE_SIM_OBJECT=null;
      }
-    }  
+    }
+        
+    internal const long maxMemoryUsage=32*1024L*1024L*1024L;
+
+    internal const long forcedGCThreshold=16L*1024L*1024L*1024L;
+     internal const float forcedGCDelay=30f;
+      internal float forcedGCTimer=0f;
+
+    internal const long collectAfterAllocating=160L*1024L*1024L;
+     internal const float collectDelay=10f;
+      internal float collectTimer=0f;
+     internal long nextCollectAt;
+
+    internal long currentFrameMemory;
+     internal long lastFrameMemory;
+
+    internal void RunGC(){
+     lastFrameMemory=currentFrameMemory;
+                     currentFrameMemory=Profiler.GetMonoUsedSizeLong();
+
+     if(forcedGCTimer>0f){forcedGCTimer-=Time.deltaTime;}
+     
+     if(collectTimer>0f){collectTimer-=Time.deltaTime;}
+
+     if(currentFrameMemory<lastFrameMemory){//  GC happened.
+      nextCollectAt=currentFrameMemory+collectAfterAllocating;
+      //Debug.Log("GC happened: currentFrameMemory.."+currentFrameMemory+"..<..lastFrameMemory.."+lastFrameMemory+"..;non blocking GC nextCollectAt.."+nextCollectAt);
+     }
+
+     if(currentFrameMemory>maxMemoryUsage){
+      Debug.Log("Trigger immediate GC: currentFrameMemory.."+currentFrameMemory+"..>..maxMemoryUsage.."+maxMemoryUsage);
+      fullBlockingGC();
+      nextCollectAt=(currentFrameMemory=Profiler.GetMonoUsedSizeLong())+collectAfterAllocating;
+      Debug.Log("immediate GC done: currentFrameMemory.."+currentFrameMemory+"..;non blocking GC nextCollectAt.."+nextCollectAt);
+     }else{
+      if(currentFrameMemory>forcedGCThreshold&&forcedGCTimer<=0f){//  Trigger immediate GC
+       Debug.Log("Trigger immediate GC: currentFrameMemory.."+currentFrameMemory+"..>..forcedGCThreshold.."+forcedGCThreshold);
+       fullBlockingGC();
+       forcedGCTimer=forcedGCDelay;
+       nextCollectAt=(currentFrameMemory=Profiler.GetMonoUsedSizeLong())+collectAfterAllocating;
+       Debug.Log("immediate GC done: currentFrameMemory.."+currentFrameMemory+"..;non blocking GC nextCollectAt.."+nextCollectAt);
+      }else{
+       if(currentFrameMemory>=nextCollectAt&&collectTimer<=0f){//  Trigger non blocking GC
+        Debug.Log("Trigger non blocking GC: currentFrameMemory.."+currentFrameMemory+"..>=..nextCollectAt.."+nextCollectAt);
+        nonBlockingGC();
+        collectTimer=collectDelay;
+        nextCollectAt=(currentFrameMemory=Profiler.GetMonoUsedSizeLong())+collectAfterAllocating;
+        Debug.Log("non blocking GC done: currentFrameMemory.."+currentFrameMemory+"..;non blocking GC nextCollectAt.."+nextCollectAt);
+       }
+      }
+     }
+
+     void fullBlockingGC(){
+      GCSettings.LargeObjectHeapCompactionMode=GCLargeObjectHeapCompactionMode.CompactOnce;
+      GC.Collect(GC.MaxGeneration,GCCollectionMode.Forced,true,true);
+      GC.WaitForPendingFinalizers();
+     }
+     void nonBlockingGC(){
+      GarbageCollector.CollectIncremental();
+     }
+    }
         
     #if UNITY_EDITOR
     internal static void DrawBounds(Bounds b,Color color,float duration=0){//[https://gist.github.com/unitycoder/58f4b5d80f423d29e35c814a9556f9d9]

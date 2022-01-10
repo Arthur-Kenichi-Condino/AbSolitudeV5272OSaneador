@@ -3,7 +3,7 @@
   "Assemblies": [
     {
       "FullName": "Unity.Burst, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
-      "LastWriteTime": "2022-01-08T09:15:22.3557785Z"
+      "LastWriteTime": "2022-01-08T09:33:53.6857987Z"
     },
     {
       "FullName": "mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089",
@@ -11,7 +11,7 @@
     },
     {
       "FullName": "Unity.Collections, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
-      "LastWriteTime": "2022-01-08T09:15:22.3627787Z"
+      "LastWriteTime": "2022-01-08T09:33:56.8327993Z"
     },
     {
       "FullName": "UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
@@ -23,7 +23,7 @@
     },
     {
       "FullName": "Unity.Mathematics, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null",
-      "LastWriteTime": "2022-01-08T09:15:22.3697775Z"
+      "LastWriteTime": "2022-01-08T09:33:56.0077988Z"
     },
     {
       "FullName": "Unity.Burst.Unsafe, Version=4.0.5.0, Culture=neutral, PublicKeyToken=null",
@@ -35,7 +35,7 @@
     },
     {
       "FullName": "Unity.Networking.Transport, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
-      "LastWriteTime": "2022-01-08T09:15:22.3847809Z"
+      "LastWriteTime": "2022-01-08T09:33:56.6418006Z"
     },
     {
       "FullName": "Unity.Collections.LowLevel.ILSupport, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
@@ -308,8 +308,7 @@
         3,
         8,
         4,
-        1,
-        0
+        1
       ]
     },
     {
@@ -498,8 +497,7 @@
         8,
         1,
         3,
-        4,
-        0
+        4
       ]
     },
     {
@@ -519,9 +517,7 @@
       "LinkName": "84A21133F3CF57F0",
       "AssemblyDependencyIndices": [
         8,
-        1,
-        3,
-        4
+        1
       ]
     },
     {
@@ -531,9 +527,7 @@
       "LinkName": "8B17BD77EE90BA4D",
       "AssemblyDependencyIndices": [
         8,
-        1,
-        3,
-        4
+        1
       ]
     },
     {
@@ -556,8 +550,7 @@
         1,
         3,
         4,
-        5,
-        0
+        5
       ]
     },
     {
@@ -604,9 +597,7 @@
       "LinkName": "165F68DC85B6E7BF",
       "AssemblyDependencyIndices": [
         8,
-        1,
-        3,
-        4
+        1
       ]
     },
     {
@@ -655,9 +646,7 @@
       "LinkName": "B6C3CDB6974A03E3",
       "AssemblyDependencyIndices": [
         8,
-        1,
-        3,
-        4
+        1
       ]
     },
     {
@@ -669,8 +658,7 @@
         8,
         1,
         3,
-        4,
-        0
+        4
       ]
     },
     {
@@ -714,8 +702,7 @@
         8,
         1,
         3,
-        4,
-        0
+        4
       ]
     },
     {
@@ -801,8 +788,7 @@
       "LinkName": "9832D57B7D83EA86",
       "AssemblyDependencyIndices": [
         8,
-        1,
-        0
+        1
       ]
     },
     {
@@ -876,8 +862,7 @@
         8,
         1,
         3,
-        4,
-        0
+        4
       ]
     },
     {

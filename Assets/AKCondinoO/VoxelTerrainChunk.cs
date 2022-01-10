@@ -44,7 +44,7 @@ namespace AKCondinoO.Voxels{
       new VertexAttributeDescriptor(VertexAttribute.TexCoord3,VertexAttributeFormat.Float32,2),
      };
 
-     MeshUpdateFlags meshFlags=MeshUpdateFlags.DontValidateIndices|MeshUpdateFlags.DontNotifyMeshUsers|MeshUpdateFlags.DontRecalculateBounds;
+     MeshUpdateFlags meshFlags=MeshUpdateFlags.DontValidateIndices|MeshUpdateFlags.DontNotifyMeshUsers|MeshUpdateFlags.DontRecalculateBounds|MeshUpdateFlags.DontResetBoneBounds;
         
      internal Mesh mesh;
 
@@ -1281,6 +1281,8 @@ namespace AKCondinoO.Voxels{
 
          Vector3 spacing=treePicked.Value.treeData.spacing;
                  spacing=Vector3.Scale(spacing,modifiers.scale);
+                 spacing.x=Mathf.Max(spacing.x,1f);
+                 spacing.y=Mathf.Max(spacing.y,1f);
          //Debug.Log("spacing:"+spacing);
 
          spacingOwnTypeOnly[(treePicked.Value.tree,vCoord1.z)]=new Vector2Int((int)Math.Ceiling(spacing.x),
@@ -1289,6 +1291,8 @@ namespace AKCondinoO.Voxels{
 
          Vector3 spacingAll=treePicked.Value.treeData.spacingAll;
                  spacingAll=Vector3.Scale(spacingAll,modifiers.scale);
+                 spacingAll.x=Mathf.Max(spacingAll.x,1f);
+                 spacingAll.y=Mathf.Max(spacingAll.y,1f);
          //Debug.Log("spacingAll:"+spacingAll);
 
          spacingAllTypes[vCoord1.z]=new Vector2Int((int)Math.Ceiling(spacingAll.x),

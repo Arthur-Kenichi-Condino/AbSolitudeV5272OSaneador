@@ -5,21 +5,76 @@ m_ProjectFiles:
     m_ContentTrackingEnabled: 1
     m_ModificationDate:
       serializedVersion: 2
-      ticks: 637772301226269097
-    m_Hash: 2471499224
+      ticks: 637772312246565305
+    m_Hash: 1718861811
   m_LockFileStatus:
     m_FilePath: E:/Users/Arthur/GitHub/AbSolitudeV5272OSaneador/Packages/packages-lock.json
     m_PathExists: 1
     m_ContentTrackingEnabled: 1
     m_ModificationDate:
       serializedVersion: 2
-      ticks: 637772301226279096
-    m_Hash: 3655318483
+      ticks: 637772312246675297
+    m_Hash: 3239487847
 m_EmbeddedPackageManifests:
   m_ManifestsStatus: {}
 m_PackageAssets:
   m_Packages:
     m_ResolvedPackages:
+    - packageId: com.unity.autolod@https://github.com/Unity-Technologies/AutoLOD.git
+      testable: 0
+      isDirectDependency: 1
+      version: 0.0.2
+      source: 5
+      resolvedPath: E:\Users\Arthur\GitHub\AbSolitudeV5272OSaneador\Library\PackageCache\com.unity.autolod@9492bc0620
+      assetPath: Packages/com.unity.autolod
+      name: com.unity.autolod
+      displayName: AutoLOD
+      author:
+        name: Unity
+        email: 
+        url: 
+      category: 
+      type: 
+      description: Automatic LOD generation
+      status: 4
+      errors: []
+      versions:
+        all: []
+        compatible: []
+        verified: 
+      dependencies: []
+      resolvedDependencies: []
+      keywords:
+      - autolod
+      - lod
+      - 3d
+      - mesh
+      - polygon
+      - triangle
+      - simplification
+      - decimation
+      - reduction
+      - optimization
+      registry:
+        id: 
+        name: 
+        url: 
+        scopes: []
+        isDefault: 0
+        capabilities: 0
+      hasRegistry: 0
+      hideInEditor: 1
+      entitlements:
+        isAllowed: 1
+      isAssetStorePackage: 0
+      datePublishedTicks: 0
+      documentationUrl: 
+      hasRepository: 0
+      repository:
+        type: 
+        url: 
+        revision: 
+        path: 
     - packageId: com.unity.burst@1.5.6
       testable: 0
       isDirectDependency: 1
@@ -1892,6 +1947,60 @@ m_PackageAssets:
       - ugui
       - Unity UI
       - Canvas
+      registry:
+        id: 
+        name: 
+        url: 
+        scopes: []
+        isDefault: 0
+        capabilities: 0
+      hasRegistry: 0
+      hideInEditor: 1
+      entitlements:
+        isAllowed: 1
+      isAssetStorePackage: 0
+      datePublishedTicks: 0
+      documentationUrl: 
+      hasRepository: 0
+      repository:
+        type: 
+        url: 
+        revision: 
+        path: 
+    - packageId: com.whinarn.unitymeshsimplifier@https://github.com/Whinarn/UnityMeshSimplifier.git
+      testable: 0
+      isDirectDependency: 1
+      version: 3.0.1
+      source: 5
+      resolvedPath: E:\Users\Arthur\GitHub\AbSolitudeV5272OSaneador\Library\PackageCache\com.whinarn.unitymeshsimplifier@e27528b988
+      assetPath: Packages/com.whinarn.unitymeshsimplifier
+      name: com.whinarn.unitymeshsimplifier
+      displayName: Unity Mesh Simplifier
+      author:
+        name: Mattias Edlund
+        email: 
+        url: https://github.com/Whinarn
+      category: 
+      type: library
+      description: Simplifies 3D meshes with ease. Works both in the editor and during
+        runtime in builds.
+      status: 4
+      errors: []
+      versions:
+        all: []
+        compatible: []
+        verified: 
+      dependencies: []
+      resolvedDependencies: []
+      keywords:
+      - 3d
+      - mesh
+      - polygon
+      - triangle
+      - simplification
+      - decimation
+      - reduction
+      - optimization
       registry:
         id: 
         name: 

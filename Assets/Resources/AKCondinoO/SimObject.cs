@@ -210,6 +210,7 @@ namespace AKCondinoO.Sims{
      //Debug.Log("localBounds.center:"+localBounds.center+";localBounds.size:"+localBounds.size,this);
 
      foreach(Renderer renderer in renderers=GetComponentsInChildren<Renderer>()){
+      //Debug.Log(renderer.bounds);
      }
 
       DisableInteractions();
@@ -242,6 +243,11 @@ namespace AKCondinoO.Sims{
        unplaceRequired=false;
        container.executionMode_bg=PersistentDataBackgroundContainer.ExecutionMode.Unplace;
        container.id_bg=id.Value;
+
+       if(this!=null){
+        SetPersistentData();
+       }
+
        PersistentDataMultithreaded.Schedule(container);
        Debug.Log("SimObject:OnExitSave:unplacing started:"+id);
        container.IsCompleted(SimObjectSpawner.Singleton.persistentDataBGThreads[0].IsRunning,-1);
@@ -292,6 +298,7 @@ namespace AKCondinoO.Sims{
     protected bool loading; 
     bool loadRequired;
     bool loadRequested;
+    protected bool saving;
     bool saveRequired;
     internal virtual void ManualUpdate(){
      if(!unplacing){
@@ -350,69 +357,74 @@ namespace AKCondinoO.Sims{
       }
      }
  
-     if(unplacing){
-      //Debug.Log("ManualUpdate:unplacing:"+id,transform);
-      if(unplaceRequested&&OnUnplacedData()){
-       unplaceRequested=false;
-       //Debug.Log("ManualUpdate:unplacing finished:"+id,transform);
-       unplacing=false;
-                    
-       OnOverlapperUnplaced(this);
-
-       SimObjectSpawner.Singleton.DespawnReleaseIdQueue.Enqueue(this);
-      }else if(unplaceRequired&&OnUnplacing()){
-       unplaceRequired=false;
-       //Debug.Log("ManualUpdate:unplacing started:"+id,transform);
-       unplaceRequested=true;
-      }
-
+     if(saving&&OnSaved()){
+      saving=false;
      }else{
-      if(unloading){
-       //Debug.Log("ManualUpdate:unloading:"+id,transform);
-       if(unloadRequested&&OnUnloadedData()){
-        unloadRequested=false;
-        //Debug.Log("ManualUpdate:unloading finished:"+id,transform);
-        unloading=false;
-        SimObjectSpawner.Singleton.DespawnQueue.Enqueue(this);
-        return;
-       }else if(unloadRequired&&OnUnloading()){
-        unloadRequired=false;
-        //Debug.Log("ManualUpdate:unloading started:"+id,transform);
-        unloadRequested=true;
-       }
-    
-      }else{
-       if(loading){
-        //Debug.Log("ManualUpdate:loading:"+id,transform);
-        if(loadRequested&&OnLoadedData(out bool validData)){
-         loadRequested=false;
-         //Debug.Log("ManualUpdate:loading finished:"+id,transform);
-         transform.hasChanged=false;
-         loading=false;
-
-         if(validData){
-          EnableInteractions();
-           EnableRendering();
-
-          OnTransformHasChanged();
-         }
-         if(!validData){
-          //Debug.Log("ManualUpdate:loaded unplaced object:unplace again immediately:"+id,transform);
-          OnUnplace();
-         }
-
-        }else if(loadRequired&&OnLoading()){
-         loadRequired=false;
-         //Debug.Log("ManualUpdate:loading started:"+id,transform);
-         loadRequested=true;
-        }
+      if(unplacing){
+       //Debug.Log("ManualUpdate:unplacing:"+id,transform);
+       if(unplaceRequested&&OnUnplacedData()){
+        unplaceRequested=false;
+        //Debug.Log("ManualUpdate:unplacing finished:"+id,transform);
+        unplacing=false;
+                     
+        OnOverlapperUnplaced(this);
  
-       }else{
-        if(saveRequired&&OnSaving()){
-         saveRequired=false;
-         //Debug.Log("ManualUpdate:saving started:"+id,transform);
+        SimObjectSpawner.Singleton.DespawnReleaseIdQueue.Enqueue(this);
+       }else if(unplaceRequired&&OnUnplacing()){
+        unplaceRequired=false;
+        //Debug.Log("ManualUpdate:unplacing started:"+id,transform);
+        unplaceRequested=true;
+       }
+ 
+      }else{
+       if(unloading){
+        //Debug.Log("ManualUpdate:unloading:"+id,transform);
+        if(unloadRequested&&OnUnloadedData()){
+         unloadRequested=false;
+         //Debug.Log("ManualUpdate:unloading finished:"+id,transform);
+         unloading=false;
+         SimObjectSpawner.Singleton.DespawnQueue.Enqueue(this);
+         return;
+        }else if(unloadRequired&&OnUnloading()){
+         unloadRequired=false;
+         //Debug.Log("ManualUpdate:unloading started:"+id,transform);
+         unloadRequested=true;
         }
-
+     
+       }else{
+        if(loading){
+         //Debug.Log("ManualUpdate:loading:"+id,transform);
+         if(loadRequested&&OnLoadedData(out bool validData)){
+          loadRequested=false;
+          //Debug.Log("ManualUpdate:loading finished:"+id,transform);
+          transform.hasChanged=false;
+          loading=false;
+ 
+          if(validData){
+           EnableInteractions();
+            EnableRendering();
+ 
+           OnTransformHasChanged();
+          }
+          if(!validData){
+           //Debug.Log("ManualUpdate:loaded unplaced object:unplace again immediately:"+id,transform);
+           OnUnplace();
+          }
+ 
+         }else if(loadRequired&&OnLoading()){
+          loadRequired=false;
+          //Debug.Log("ManualUpdate:loading started:"+id,transform);
+          loadRequested=true;
+         }
+  
+        }else{
+         if(saveRequired&&OnSaving()){
+          saveRequired=false;
+          //Debug.Log("ManualUpdate:saving started:"+id,transform);
+          saving=true;
+         }
+ 
+        }
        }
       }
      }
@@ -445,14 +457,27 @@ namespace AKCondinoO.Sims{
     protected virtual void GetPersistentData(){
     }
 
+    internal static int savingCount;
+
     bool OnSaving(){
+     if(savingCount>=SimObjectSpawner.Singleton.savingLimit){
+      return false;
+     }
      if(container.IsCompleted(SimObjectSpawner.Singleton.persistentDataBGThreads[0].IsRunning)){
+      savingCount++;
       container.executionMode_bg=PersistentDataBackgroundContainer.ExecutionMode.Save;
       container.id_bg=id.Value;
 
       SetPersistentData();
 
       PersistentDataMultithreaded.Schedule(container);
+      return true;
+     }
+     return false;
+    }
+    bool OnSaved(){
+     if(container.IsCompleted(SimObjectSpawner.Singleton.persistentDataBGThreads[0].IsRunning)){
+      savingCount--;
       return true;
      }
      return false;
@@ -510,6 +535,9 @@ namespace AKCondinoO.Sims{
      if(container.IsCompleted(SimObjectSpawner.Singleton.persistentDataBGThreads[0].IsRunning)){
       container.executionMode_bg=PersistentDataBackgroundContainer.ExecutionMode.Unplace;
       container.id_bg=id.Value;
+
+      SetPersistentData();
+
       PersistentDataMultithreaded.Schedule(container);
       return true;
      }
