@@ -121,7 +121,7 @@ namespace AKCondinoO{
 
      if(currentFrameMemory<lastFrameMemory){//  GC happened.
       nextCollectAt=currentFrameMemory+collectAfterAllocating;
-      Debug.Log("GC happened: currentFrameMemory.."+currentFrameMemory+"..<..lastFrameMemory.."+lastFrameMemory+"..;non blocking GC nextCollectAt.."+nextCollectAt);
+      //Debug.Log("GC happened: currentFrameMemory.."+currentFrameMemory+"..<..lastFrameMemory.."+lastFrameMemory+"..;non blocking GC nextCollectAt.."+nextCollectAt);
      }
 
      if(currentFrameMemory>maxMemoryUsage){
