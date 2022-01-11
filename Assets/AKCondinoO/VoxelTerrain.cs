@@ -23,8 +23,8 @@ namespace AKCondinoO.Voxels{
     #region chunk
 
      internal static Vector2Int vecPosTocCoord(Vector3 pos){
-                                                      pos.x/=(float)Width;
-                                                      pos.z/=(float)Depth;
+                                                       pos.x/=(float)Width;
+                                                       pos.z/=(float)Depth;
       return new Vector2Int((pos.x>0)?(pos.x-(int)pos.x==0.5f?Mathf.FloorToInt(pos.x):Mathf.RoundToInt(pos.x)):(int)Math.Round(pos.x,MidpointRounding.AwayFromZero),
                             (pos.z>0)?(pos.z-(int)pos.z==0.5f?Mathf.FloorToInt(pos.z):Mathf.RoundToInt(pos.z)):(int)Math.Round(pos.z,MidpointRounding.AwayFromZero)
                            );
@@ -39,7 +39,7 @@ namespace AKCondinoO.Voxels{
 
      internal static Vector2Int cCoordTocnkRgn(Vector2Int cCoord){return new Vector2Int(cCoord.x*Width,cCoord.y*Depth);}
 
-     internal static int GetcnkIdx(int cx,int cy){return cy+cx*(MaxcCoordy+1);}
+     internal static int GetcnkIdx(int cx,int cy){return cy+cx*(MaxcCoordy*2+1);}
 
     #endregion
 

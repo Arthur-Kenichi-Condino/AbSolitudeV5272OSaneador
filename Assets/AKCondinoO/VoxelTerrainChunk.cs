@@ -1521,6 +1521,11 @@ namespace AKCondinoO.Voxels{
       var navMeshSource=VoxelTerrain.Singleton.navMeshSources[gameObject];
           navMeshSource.transform=transform.localToWorldMatrix;
       VoxelTerrain.Singleton.navMeshSources[gameObject]=navMeshSource;
+
+      #if UNITY_EDITOR
+      SetName();
+      #endif
+
       marchingCubesBG.cCoord_bg=cCoord;
       marchingCubesBG.cnkRgn_bg=cnkRgn;
       marchingCubesBG.cnkIdx_bg=cnkIdx.Value;
@@ -1631,6 +1636,14 @@ namespace AKCondinoO.Voxels{
      runningMarchingCubes=true;
      Debug.Log("OnRebuilding:chunk edited:running Marching Cubes");
      buildRequested=true;
+    }
+
+    void SetName(){
+     #if UNITY_EDITOR
+     var cCoord=vecPosTocCoord(transform.position);
+     var cnkIdx=GetcnkIdx(cCoord.x,cCoord.y);
+     name=GetType()+":"+cCoord+":"+cnkIdx;
+     #endif
     }
 
     #if UNITY_EDITOR

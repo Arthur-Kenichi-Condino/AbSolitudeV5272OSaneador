@@ -227,6 +227,10 @@ namespace AKCondinoO.Sims{
 
       EnableInteractions();
        EnableRendering();
+                
+      #if UNITY_EDITOR
+      SetName();
+      #endif
 
      }else{
       //Debug.Log("SimObject:OnActivated:loading:transform has incorrect data");
@@ -443,7 +447,6 @@ namespace AKCondinoO.Sims{
      validData=false;
      if(container.IsCompleted(SimObjectSpawner.Singleton.persistentDataBGThreads[0].IsRunning)){
       if(!float.IsNaN(container.transform_bg.position.x)){
-       container.GetDeserialized(transform);
 
        GetPersistentData();
 
@@ -455,6 +458,12 @@ namespace AKCondinoO.Sims{
     }
 
     protected virtual void GetPersistentData(){
+     container.GetDeserialized(transform);
+            
+     #if UNITY_EDITOR
+     SetName();
+     #endif
+
     }
 
     internal static int savingCount;
@@ -636,6 +645,14 @@ namespace AKCondinoO.Sims{
 
     static void OnOverlapperUnplaced(SimObject overlapper){
      overlappersUnplacing.Remove(overlapper);
+    }
+
+    void SetName(){
+     #if UNITY_EDITOR
+     var cCoord=vecPosTocCoord(transform.position);
+     var cnkIdx=GetcnkIdx(cCoord.x,cCoord.y);
+     name=GetType()+":"+cCoord+":"+cnkIdx;
+     #endif
     }
 
     #if UNITY_EDITOR
