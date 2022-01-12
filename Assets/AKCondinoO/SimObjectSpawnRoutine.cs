@@ -10,6 +10,7 @@ namespace AKCondinoO.Sims{
   internal readonly Dictionary<Type,SimObjectSpawningSettings>spawningSettings=new Dictionary<Type,SimObjectSpawningSettings>{
    
   };
+  internal const int SimActorTypeHardLimit=5;
 
   void Awake(){if(Singleton==null){Singleton=this;}else{DestroyImmediate(this);return;}
   }
@@ -28,6 +29,8 @@ namespace AKCondinoO.Sims{
    if(sO is SimActor sA){
     Debug.Log("OnSpawned SimActor:"+sO+";count:"+count[type],sO);
     GetActors[sA]=sO;
+    sO.tooMany=count[type]>=SimActorTypeHardLimit;
+    Debug.Log("sO.tooMany:"+sO.tooMany+";["+sO,sO);
    }
   }
   internal void OnDespawn(SimObject sO,bool releasingId=false){

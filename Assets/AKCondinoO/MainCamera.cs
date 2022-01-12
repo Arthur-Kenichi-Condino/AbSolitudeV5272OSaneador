@@ -141,6 +141,7 @@ namespace AKCondinoO{
       Debug.Log("transform changed outside Update");
       tgtRot=tgtRot_Pre=transform.eulerAngles;
       tgtPos=tgtPos_Pre=transform.position;
+      transform.hasChanged=false;
      }
      safePosition=transform.position;
 

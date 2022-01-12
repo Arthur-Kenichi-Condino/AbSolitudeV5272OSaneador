@@ -291,6 +291,8 @@ namespace AKCondinoO.Sims{
 
     [SerializeField]bool DEBUG_UNLOAD=false;
         
+    internal bool tooMany=false;
+
     protected bool sleeping;
 
     protected bool unplacing;
