@@ -32,6 +32,8 @@ namespace AKCondinoO.Voxels{
         
     internal LinkedListNode<VoxelTerrainChunk>expropriated;
 
+    internal readonly(bool,MaterialId)[]voxels=new(bool,MaterialId)[VoxelsPerChunk];
+
     #region Rendering
 
      static readonly VertexAttributeDescriptor[]layout=new[]{

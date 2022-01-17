@@ -43,6 +43,8 @@ namespace AKCondinoO.Sims{
   }
 
   void Update(){
+   foreach(var kv in GetActors){var actor=kv.Key;
+   }
   }
  }
 }
