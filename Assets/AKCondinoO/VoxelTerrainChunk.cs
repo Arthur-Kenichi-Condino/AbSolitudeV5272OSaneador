@@ -45,10 +45,6 @@ namespace AKCondinoO.Voxels{
         
     internal LinkedListNode<VoxelTerrainChunk>expropriated;
 
-    internal readonly(bool,MaterialId)[]voxels=new(bool,MaterialId)[VoxelsPerChunk];
-
-    internal readonly Dictionary<int,(bool,MaterialId)>[]neighbors=new Dictionary<int,(bool,MaterialId)>[8];
-
     #region Rendering
 
      static readonly VertexAttributeDescriptor[]layout=new[]{
@@ -1359,11 +1355,6 @@ namespace AKCondinoO.Voxels{
     }
 
     void Awake(){
-
-     for(int i=0;i<neighbors.Length;++i){
-      neighbors[i]=new Dictionary<int,(bool,MaterialId)>();
-     }
-
      marchingCubesBG=new MarchingCubesBackgroundContainer(syn);
 
      renderer=GetComponent<MeshRenderer>();
@@ -1571,9 +1562,6 @@ namespace AKCondinoO.Voxels{
      }
      if(marchingCubesBG.IsCompleted(VoxelTerrain.Singleton.marchingCubesBGThreads[0].IsRunning)){
       bakeJobsCount++;
-
-
-
       bool resize;
       if(resize=marchingCubesBG.TempVer.Length>mesh.vertexCount){
        mesh.SetVertexBufferParams(marchingCubesBG.TempVer.Length,layout);
