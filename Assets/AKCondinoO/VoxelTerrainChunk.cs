@@ -29,10 +29,25 @@ namespace AKCondinoO.Voxels{
     internal const ushort Depth=(16);
     internal const ushort FlattenOffset=(Width*Depth);
     internal const int VoxelsPerChunk=(FlattenOffset*Height);
+  
+    static int GetoftIdx(Vector2Int offset){//  ..for neighbors
+     if(offset.x== 0&&offset.y== 0)return 0;
+     if(offset.x==-1&&offset.y== 0)return 1;
+     if(offset.x== 1&&offset.y== 0)return 2;
+     if(offset.x== 0&&offset.y==-1)return 3;
+     if(offset.x==-1&&offset.y==-1)return 4;
+     if(offset.x== 1&&offset.y==-1)return 5;
+     if(offset.x== 0&&offset.y== 1)return 6;
+     if(offset.x==-1&&offset.y== 1)return 7;
+     if(offset.x== 1&&offset.y== 1)return 8;
+     return -1;
+    }
         
     internal LinkedListNode<VoxelTerrainChunk>expropriated;
 
     internal readonly(bool,MaterialId)[]voxels=new(bool,MaterialId)[VoxelsPerChunk];
+
+    internal readonly Dictionary<int,(bool,MaterialId)>[]neighbors=new Dictionary<int,(bool,MaterialId)>[8];
 
     #region Rendering
 
@@ -63,6 +78,11 @@ namespace AKCondinoO.Voxels{
     internal MarchingCubesBackgroundContainer marchingCubesBG;
     internal class MarchingCubesBackgroundContainer:BackgroundContainer{
      internal readonly object syn_bg;
+
+    internal(bool,MaterialId)[]voxels_bg;
+
+    internal readonly Dictionary<int,(bool,MaterialId)>[]neighbors_bg=new Dictionary<int,(bool,MaterialId)>[8];
+
      internal MarchingCubesBackgroundContainer(object syn){
       syn_bg=syn;
      }
@@ -733,18 +753,11 @@ namespace AKCondinoO.Voxels{
 
        }
       }
-  
-      int GetoftIdx(Vector2Int offset){//  ..for neighbors
-       if(offset.x== 0&&offset.y== 0)return 0;
-       if(offset.x==-1&&offset.y== 0)return 1;
-       if(offset.x== 1&&offset.y== 0)return 2;
-       if(offset.x== 0&&offset.y==-1)return 3;
-       if(offset.x==-1&&offset.y==-1)return 4;
-       if(offset.x== 1&&offset.y==-1)return 5;
-       if(offset.x== 0&&offset.y== 1)return 6;
-       if(offset.x==-1&&offset.y== 1)return 7;
-       if(offset.x== 1&&offset.y== 1)return 8;
-       return -1;
+
+      current.voxels_bg=Array.ConvertAll<Voxel,(bool,MaterialId)>(voxels,(voxel)=>{return(-voxel.Density<IsoLevel,voxel.Material);});
+
+      for(int i=0;i<neighbors.Length;++i){
+       current.neighbors_bg[i]=neighbors[i].ToDictionary(item=>item.Key,item=>(-item.Value.Density<IsoLevel,item.Value.Material));
       }
 
      }
@@ -1346,6 +1359,11 @@ namespace AKCondinoO.Voxels{
     }
 
     void Awake(){
+
+     for(int i=0;i<neighbors.Length;++i){
+      neighbors[i]=new Dictionary<int,(bool,MaterialId)>();
+     }
+
      marchingCubesBG=new MarchingCubesBackgroundContainer(syn);
 
      renderer=GetComponent<MeshRenderer>();
@@ -1553,6 +1571,9 @@ namespace AKCondinoO.Voxels{
      }
      if(marchingCubesBG.IsCompleted(VoxelTerrain.Singleton.marchingCubesBGThreads[0].IsRunning)){
       bakeJobsCount++;
+
+
+
       bool resize;
       if(resize=marchingCubesBG.TempVer.Length>mesh.vertexCount){
        mesh.SetVertexBufferParams(marchingCubesBG.TempVer.Length,layout);
