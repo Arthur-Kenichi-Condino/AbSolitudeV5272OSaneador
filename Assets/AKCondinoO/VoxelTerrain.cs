@@ -1,6 +1,7 @@
 using MessagePack;
 using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -88,6 +89,7 @@ namespace AKCondinoO.Voxels{
      readonly Dictionary<VoxelTerrainChunk,object>syn=new Dictionary<VoxelTerrainChunk,object>();
 
     internal readonly Dictionary<int,VoxelTerrainChunk>active=new Dictionary<int,VoxelTerrainChunk>();
+     internal readonly ConcurrentDictionary<int,VoxelWaterChunk>water=new ConcurrentDictionary<int,VoxelWaterChunk>();
 
     internal readonly LinkedList<VoxelTerrainChunk>pool=new LinkedList<VoxelTerrainChunk>();
         

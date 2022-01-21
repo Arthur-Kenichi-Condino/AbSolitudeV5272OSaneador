@@ -7,6 +7,7 @@ using MessagePack;
 using paulbourke.MarchingCubes;
 using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
@@ -22,6 +23,8 @@ using static AKCondinoO.Voxels.VoxelTerrainChunk.MarchingCubesBackgroundContaine
 
 namespace AKCondinoO.Voxels{
  internal class VoxelTerrainChunk:MonoBehaviour{
+    internal readonly VoxelWaterChunk water=new VoxelWaterChunk();
+
     internal readonly object syn=new object();        
 
     internal const ushort Height=(256);
@@ -1664,6 +1667,15 @@ namespace AKCondinoO.Voxels{
     #endif
 
  }
+
+ internal class VoxelWaterChunk{
+  internal readonly object syn=new object();    
+
+  internal readonly ConcurrentDictionary<int,(double density,bool sleeping,double absorbing)>voxels=new ConcurrentDictionary<int,(double,bool,double)>();
+   internal readonly ConcurrentDictionary<Vector3Int,double>absorbing=new ConcurrentDictionary<Vector3Int,double>();
+   internal readonly ConcurrentDictionary<Vector3Int,double>spreading=new ConcurrentDictionary<Vector3Int,double>();
+ }
+
 }
 
 namespace paulbourke.MarchingCubes{
