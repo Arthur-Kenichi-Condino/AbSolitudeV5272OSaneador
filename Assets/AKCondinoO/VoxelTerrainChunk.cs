@@ -1461,6 +1461,9 @@ namespace AKCondinoO.Voxels{
      rebuildRequired=true;
     }
 
+    float waterUpdateInterval=.05f;
+     float waterUpdateTimer=0f;
+
     bool addingTrees;
     bool addTreesRequired;
     bool addTreesRequested;
@@ -1472,6 +1475,10 @@ namespace AKCondinoO.Voxels{
     bool rebuildRequired;
     bool moveRequired;
     internal bool ManualUpdate(){bool busy=true;
+     if(waterUpdateTimer>0f){
+      waterUpdateTimer-=Time.deltaTime;
+     }
+
      if(addingTrees){
       if(addTreesRequested&&OnAddedTrees()){
        addTreesRequested=false;
@@ -1517,6 +1524,11 @@ namespace AKCondinoO.Voxels{
           OnMoved();
 
          }else{
+          if(waterUpdateTimer<=0f){
+           waterUpdateTimer=waterUpdateInterval;
+           //Debug.Log("waterUpdateTimer:"+waterUpdateTimer);
+          }
+
           if(keepMeshColliderAssigned){
            if(collider.sharedMesh==null&&meshBuilt){
             collider.sharedMesh=mesh;
@@ -1705,7 +1717,7 @@ namespace AKCondinoO.Voxels{
        }else{
         Gizmos.color=Color.black;
        }
-       Gizmos.DrawCube(vCoord2-MarchingCubesMultithreaded.trianglePosAdj-(Vector3.one*.5f),Vector3.one*(float)(density*.01d));
+       Gizmos.DrawCube(transform.position+vCoord2-MarchingCubesMultithreaded.trianglePosAdj-(Vector3.one*.5f),Vector3.one*(float)(density*.01d));
       }
      }}}
     }
