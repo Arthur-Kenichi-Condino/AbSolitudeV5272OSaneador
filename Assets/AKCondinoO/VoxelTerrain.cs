@@ -349,6 +349,12 @@ namespace AKCondinoO.Voxels{
      }
     }
 
+    [SerializeField]bool    DEBUG_ADD_WATER_SOURCE;
+    [SerializeField]Vector3 DEBUG_ADD_WATER_SOURCE_AT=new Vector3(0,40,0);
+
+    [SerializeField]bool    DEBUG_REMOVE_WATER;
+    [SerializeField]Vector3 DEBUG_REMOVE_WATER_AT=new Vector3(0,40,0);
+
     [SerializeField]bool                                DEBUG_EDIT=false;
     [SerializeField]Vector3                             DEBUG_EDIT_AT=Vector3.zero;
     [SerializeField]EditingBackgroundContainer.EditMode DEBUG_EDIT_MODE=EditingBackgroundContainer.EditMode.Cube;
@@ -444,6 +450,18 @@ namespace AKCondinoO.Voxels{
 
       }
 
+     }
+
+     if(DEBUG_ADD_WATER_SOURCE){
+      DEBUG_ADD_WATER_SOURCE=false;
+      Vector2Int cCoord2=vecPosTocCoord(DEBUG_ADD_WATER_SOURCE_AT);
+      int cnkIdx2=GetcnkIdx(cCoord2.x,cCoord2.y);
+      if(water.TryGetValue(cnkIdx2,out VoxelWaterChunk wcnk)){
+       Vector3Int vCoord2=vecPosTovCoord(DEBUG_ADD_WATER_SOURCE_AT);
+       int vxlIdx2=GetvxlIdx(vCoord2.x,vCoord2.y,vCoord2.z);
+       wcnk.voxels[vxlIdx2]=(100d,false,0d);
+       Debug.Log("DEBUG_ADD_WATER_SOURCE:added water source at chunk:"+cCoord2);
+      }
      }
  
      if(DEBUG_EDIT){
@@ -640,7 +658,13 @@ namespace AKCondinoO.Voxels{
          cnk.expropriated=null;
          if(cnk.cnkIdx!=null&&active.ContainsKey(cnk.cnkIdx.Value)){
           active.Remove(cnk.cnkIdx.Value);
+
+          water.TryRemove(cnk.cnkIdx.Value,out _);
+
          }
+
+         water[cnkIdx1]=cnk.water;
+
          active.Add(cnkIdx1,cnk);
          cnk.cnkIdx=cnkIdx1;
          cnk.OncCoordChanged(cCoord1);
