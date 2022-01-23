@@ -779,6 +779,8 @@ namespace AKCondinoO.Voxels{
            current.water_bg.absorbing.Clear();
            current.water_bg.spreading.Clear();
           }
+      }else if(current.executionMode_bg==MarchingCubesBackgroundContainer.ExecutionMode.water){
+       //Debug.Log("MarchingCubesBackgroundContainer.ExecutionMode.water");
       }
      }
         
@@ -1463,7 +1465,9 @@ namespace AKCondinoO.Voxels{
 
     float waterUpdateInterval=.05f;
      float waterUpdateTimer=0f;
-
+        
+    bool waterUpdating;
+    bool waterUpdateRequested;
     bool addingTrees;
     bool addTreesRequired;
     bool addTreesRequested;
@@ -1478,73 +1482,85 @@ namespace AKCondinoO.Voxels{
      if(waterUpdateTimer>0f){
       waterUpdateTimer-=Time.deltaTime;
      }
-
-     if(addingTrees){
-      if(addTreesRequested&&OnAddedTrees()){
-       addTreesRequested=false;
-       //Debug.Log("ManualUpdate:added trees:they'll be spawned shortly:"+cnkRgn);
-       addingTrees=false;
-      }else if(addTreesRequired&&OnAddingTrees()){
-       addTreesRequired=false;
-       //Debug.Log("ManualUpdate:adding trees:find positions:"+cnkRgn);
-       addTreesRequested=true;
+     if(waterUpdating){
+      if(waterUpdateRequested&&OnWaterUpdated()){
+       waterUpdateRequested=false;
+       //Debug.Log("ManualUpdate:water updated:"+cnkRgn);
+       waterUpdating=false;
       }
 
      }else{
-      if(bakingMesh){
-       if(bakeRequested&&OnBakedMesh()){
-        bakeRequested=false;
-        //Debug.Log("ManualUpdate:mesh baked:assigned mesh collider data:"+cnkRgn);
-        bakingMesh=false;
-        OnAddTrees();
+      if(addingTrees){
+       if(addTreesRequested&&OnAddedTrees()){
+        addTreesRequested=false;
+        //Debug.Log("ManualUpdate:added trees:they'll be spawned shortly:"+cnkRgn);
+        addingTrees=false;
+       }else if(addTreesRequired&&OnAddingTrees()){
+        addTreesRequired=false;
+        //Debug.Log("ManualUpdate:adding trees:find positions:"+cnkRgn);
+        addTreesRequested=true;
        }
-    
+ 
       }else{
-       if(runningMarchingCubes){
-        if(buildRequested&&OnBuilt()){
-         buildRequested=false;
-         //Debug.Log("ManualUpdate:build finished:assigned built mesh data:"+cnkRgn);
-         runningMarchingCubes=false;
-         OnReadyToBakeMesh();
-        }
-
-       }else{
-        if(rebuildFlag){
-         if(rebuildRequired&&OnRebuild()){
-          rebuildRequired=false;
-          Debug.Log("ManualUpdate:rebuildRequired:"+cnkRgn);
-          rebuildFlag=false;
-          OnRebuilding();
-         }
-
-        }else{
-         if(moveRequired&&OnMoving()){
-          moveRequired=false;
-          //Debug.Log("ManualUpdate:moveRequired:"+cnkRgn);
-          OnMoved();
-
-         }else{
-          if(waterUpdateTimer<=0f){
-           waterUpdateTimer=waterUpdateInterval;
-           //Debug.Log("waterUpdateTimer:"+waterUpdateTimer);
-          }
-
-          if(keepMeshColliderAssigned){
-           if(collider.sharedMesh==null&&meshBuilt){
-            collider.sharedMesh=mesh;
-           }
-          }else{
-           if(collider.sharedMesh!=null){
-            collider.sharedMesh=null;
-           }
-          }
-
-          busy=false;
-
-         }
-
+       if(bakingMesh){
+        if(bakeRequested&&OnBakedMesh()){
+         bakeRequested=false;
+         //Debug.Log("ManualUpdate:mesh baked:assigned mesh collider data:"+cnkRgn);
+         bakingMesh=false;
+         OnAddTrees();
         }
      
+       }else{
+        if(runningMarchingCubes){
+         if(buildRequested&&OnBuilt()){
+          buildRequested=false;
+          //Debug.Log("ManualUpdate:build finished:assigned built mesh data:"+cnkRgn);
+          runningMarchingCubes=false;
+          OnReadyToBakeMesh();
+         }
+ 
+        }else{
+         if(rebuildFlag){
+          if(rebuildRequired&&OnRebuild()){
+           rebuildRequired=false;
+           Debug.Log("ManualUpdate:rebuildRequired:"+cnkRgn);
+           rebuildFlag=false;
+           OnRebuilding();
+          }
+ 
+         }else{
+          if(moveRequired&&OnMoving()){
+           moveRequired=false;
+           //Debug.Log("ManualUpdate:moveRequired:"+cnkRgn);
+           OnMoved();
+ 
+          }else{
+           if(waterUpdateTimer<=0f&&OnWaterUpdate()){
+            waterUpdateTimer=waterUpdateInterval;
+            //Debug.Log("waterUpdateTimer:"+waterUpdateTimer);
+            OnWaterUpdating();
+ 
+           }else{
+            if(keepMeshColliderAssigned){
+             if(collider.sharedMesh==null&&meshBuilt){
+              collider.sharedMesh=mesh;
+             }
+            }else{
+             if(collider.sharedMesh!=null){
+              collider.sharedMesh=null;
+             }
+            }
+  
+            busy=false;
+ 
+           }
+ 
+          }
+ 
+         }
+      
+        }
+  
        }
  
       }
@@ -1685,6 +1701,29 @@ namespace AKCondinoO.Voxels{
      runningMarchingCubes=true;
      Debug.Log("OnRebuilding:chunk edited:running Marching Cubes");
      buildRequested=true;
+    }
+
+    bool OnWaterUpdate(){
+     if(marchingCubesCount>0){
+      return false;
+     }
+     if(marchingCubesBG.IsCompleted(VoxelTerrain.Singleton.marchingCubesBGThreads[0].IsRunning)){
+      marchingCubesBG.executionMode_bg=MarchingCubesBackgroundContainer.ExecutionMode.water;
+      MarchingCubesMultithreaded.Schedule(marchingCubesBG);
+      return true;
+     }
+     return false;
+    }
+    void OnWaterUpdating(){
+     waterUpdating=true;
+     //Debug.Log("OnWaterUpdating:running Marching Cubes for water");
+     waterUpdateRequested=true;
+    }
+    bool OnWaterUpdated(){
+     if(marchingCubesBG.IsCompleted(VoxelTerrain.Singleton.marchingCubesBGThreads[0].IsRunning)){
+      return true;
+     }
+     return false;
     }
 
     void SetName(){
