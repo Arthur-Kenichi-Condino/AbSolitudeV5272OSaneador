@@ -780,7 +780,22 @@ namespace AKCondinoO.Voxels{
            current.water_bg.spreading.Clear();
           }
       }else if(current.executionMode_bg==MarchingCubesBackgroundContainer.ExecutionMode.water){
-       //Debug.Log("MarchingCubesBackgroundContainer.ExecutionMode.water");
+       Debug.Log("MarchingCubesBackgroundContainer.ExecutionMode.water");
+       current.water_bg.result_bg=0;
+
+       Vector3Int vCoord1;
+       for(vCoord1=new Vector3Int();vCoord1.y<Height;vCoord1.y++){
+       for(vCoord1.x=0             ;vCoord1.x<Width ;vCoord1.x++){
+       for(vCoord1.z=0             ;vCoord1.z<Depth ;vCoord1.z++){
+        Vector3Int vCoord2=vCoord1;
+        int vxlIdx2=GetvxlIdx(vCoord2.x,vCoord2.y,vCoord2.z); 
+       }}} 
+
+       if(current.water_bg.absorbing.Count>0||
+          current.water_bg.spreading.Count>0
+       ){
+        current.water_bg.result_bg=2;
+       }
       }
      }
         
@@ -1463,9 +1478,14 @@ namespace AKCondinoO.Voxels{
      rebuildRequired=true;
     }
 
-    float waterUpdateInterval=.05f;
+    internal void OnWaterEdited(){
+     waterUpdateFlag=true;
+    }
+
+    float waterUpdateInterval=.5f;
      float waterUpdateTimer=0f;
         
+    bool waterUpdateFlag;
     bool waterUpdating;
     bool waterUpdateRequested;
     bool addingTrees;
@@ -1535,10 +1555,13 @@ namespace AKCondinoO.Voxels{
            OnMoved();
  
           }else{
-           if(waterUpdateTimer<=0f&&OnWaterUpdate()){
-            waterUpdateTimer=waterUpdateInterval;
-            //Debug.Log("waterUpdateTimer:"+waterUpdateTimer);
-            OnWaterUpdating();
+           if(waterUpdateFlag){
+            if(waterUpdateTimer<=0f&&OnWaterUpdate()){
+             waterUpdateTimer=waterUpdateInterval;
+             //Debug.Log("waterUpdateTimer:"+waterUpdateTimer);
+             waterUpdateFlag=false;
+             OnWaterUpdating();
+            }
  
            }else{
             if(keepMeshColliderAssigned){
@@ -1704,11 +1727,12 @@ namespace AKCondinoO.Voxels{
     }
 
     bool OnWaterUpdate(){
-     if(marchingCubesCount>0){
+     if(marchingCubesCount>=VoxelTerrain.Singleton.marchingCubesLimit){
       return false;
      }
      if(marchingCubesBG.IsCompleted(VoxelTerrain.Singleton.marchingCubesBGThreads[0].IsRunning)){
       marchingCubesBG.executionMode_bg=MarchingCubesBackgroundContainer.ExecutionMode.water;
+      marchingCubesCount++;
       MarchingCubesMultithreaded.Schedule(marchingCubesBG);
       return true;
      }
@@ -1721,6 +1745,10 @@ namespace AKCondinoO.Voxels{
     }
     bool OnWaterUpdated(){
      if(marchingCubesBG.IsCompleted(VoxelTerrain.Singleton.marchingCubesBGThreads[0].IsRunning)){
+      if(marchingCubesBG.water_bg.result_bg==2){
+       waterUpdateFlag=true;
+      }
+      marchingCubesCount--;
       return true;
      }
      return false;
@@ -1750,7 +1778,7 @@ namespace AKCondinoO.Voxels{
       Vector3Int vCoord2=vCoord1;
       int vxlIdx2=GetvxlIdx(vCoord2.x,vCoord2.y,vCoord2.z);
       if(water.voxels.TryGetValue(vxlIdx2,out(double density,bool sleeping,double absorbing)voxel)){double density=voxel.density;
-       Debug.Log("debug draw water at voxel:"+vCoord2+";density:"+density);
+       //Debug.Log("debug draw water at voxel:"+vCoord2+";density:"+density);
        if(-density<IsoLevel){
         Gizmos.color=Color.white;
        }else{
@@ -1769,6 +1797,7 @@ namespace AKCondinoO.Voxels{
    internal Vector2Int cCoord_bg;
    internal Vector2Int cnkRgn_bg;
    internal        int cnkIdx_bg;
+  internal int result_bg=0;
 
   internal readonly ConcurrentDictionary<int,(double density,bool sleeping,double absorbing)>voxels=new ConcurrentDictionary<int,(double,bool,double)>();
    internal readonly ConcurrentDictionary<Vector3Int,double>absorbing=new ConcurrentDictionary<Vector3Int,double>();

@@ -460,6 +460,9 @@ namespace AKCondinoO.Voxels{
        Vector3Int vCoord2=vecPosTovCoord(DEBUG_ADD_WATER_SOURCE_AT);
        int vxlIdx2=GetvxlIdx(vCoord2.x,vCoord2.y,vCoord2.z);
        wcnk.voxels[vxlIdx2]=(100d,false,0d);
+       if(active.TryGetValue(cnkIdx2,out VoxelTerrainChunk cnk)){
+        cnk.OnWaterEdited();
+       }
        Debug.Log("DEBUG_ADD_WATER_SOURCE:added water source at chunk:"+cCoord2);
       }
      }

@@ -290,6 +290,9 @@ namespace AKCondinoO.Sims{
     [SerializeField]bool DEBUG_UNPLACE=false;
 
     [SerializeField]bool DEBUG_UNLOAD=false;
+
+    float saveInterval=1.75f;
+     float saveTimer=0f;
         
     internal bool tooMany=false;
 
@@ -307,6 +310,9 @@ namespace AKCondinoO.Sims{
     protected bool saving;
     bool saveRequired;
     internal virtual void ManualUpdate(){
+     if(saveTimer>0f){
+      saveTimer-=Time.deltaTime;
+     }
      if(!unplacing){
       if(!unloading){
        if(!loading){
@@ -474,7 +480,11 @@ namespace AKCondinoO.Sims{
      if(savingCount>=SimObjectSpawner.Singleton.savingLimit){
       return false;
      }
+     if(saveTimer>0f){
+      return false;
+     }
      if(container.IsCompleted(SimObjectSpawner.Singleton.persistentDataBGThreads[0].IsRunning)){
+      saveTimer=saveInterval;
       savingCount++;
       container.executionMode_bg=PersistentDataBackgroundContainer.ExecutionMode.Save;
       container.id_bg=id.Value;
