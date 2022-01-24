@@ -371,7 +371,7 @@ namespace AKCondinoO.Voxels{
 
     internal bool navMeshDirty;
      internal AsyncOperation[]navMeshAsyncOperations;
-      internal float navMeshBuildInterval=2f;
+      internal float navMeshBuildInterval=.5f;
        internal float navMeshBuildTimer=0f;
         
     [SerializeField]
@@ -396,6 +396,9 @@ namespace AKCondinoO.Voxels{
     bool editRequested;
     bool playerMovementDetected;
     void Update(){
+     if(navMeshBuildTimer>0f){
+      navMeshBuildTimer-=Time.deltaTime;
+     }
 
      if(all==null){
       int poolSizeRequired=maxConnections*(expropriationDistance.x*2+1)*(expropriationDistance.y*2+1);
@@ -526,11 +529,9 @@ namespace AKCondinoO.Voxels{
      }
      if(navMeshDirty){
       //Debug.Log("navMeshDirty");
-      if(navMeshBuildTimer>0f){
-       navMeshBuildTimer-=Time.deltaTime;
-      }else{
-       navMeshBuildTimer=navMeshBuildInterval;
+      if(navMeshBuildTimer<=0f){
        if(navMeshAsyncOperations.All(o=>o==null||o.isDone)){
+        navMeshBuildTimer=navMeshBuildInterval;
         navMeshDirty=false;
         Debug.Log("navMeshDirty:ready to start navMeshAsyncOperations");
         sources.Clear();
@@ -562,6 +563,8 @@ namespace AKCondinoO.Voxels{
         foreach(var player in playersMovement.Keys){
          navMeshAsyncOperations[i++]=player.BuildNavMesh(sources);
         }
+       }else{
+        //Debug.Log("navMeshDirty:busy doing navMeshAsyncOperations");
        }
       }
      }

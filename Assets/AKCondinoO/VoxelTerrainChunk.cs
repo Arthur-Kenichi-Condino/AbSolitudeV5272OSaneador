@@ -789,6 +789,20 @@ namespace AKCondinoO.Voxels{
        for(vCoord1.z=0             ;vCoord1.z<Depth ;vCoord1.z++){
         Vector3Int vCoord2=vCoord1;
         int vxlIdx2=GetvxlIdx(vCoord2.x,vCoord2.y,vCoord2.z); 
+        if(current.water_bg.voxels.TryGetValue(vxlIdx2,out(double density,bool sleeping,double absorbing)voxel)){
+         if(voxel.absorbing>0d){
+         }
+         if(!voxel.sleeping){
+          current.water_bg.spreading.AddOrUpdate(vCoord2,voxel.density,
+           (key,oldValue)=>{
+            return Math.Max(oldValue,voxel.density);
+           }
+          );
+          current.water_bg.voxels.TryUpdate(vxlIdx2,(voxel.density,true,voxel.absorbing),voxel);
+         }
+         if(voxel.density<=0d){//  remove
+         }
+        }
        }}} 
 
        if(current.water_bg.absorbing.Count>0||
