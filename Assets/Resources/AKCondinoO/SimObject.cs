@@ -669,7 +669,7 @@ namespace AKCondinoO.Sims{
 
     #if UNITY_EDITOR
     void OnDrawGizmos(){
-     Core.DrawRotatedBounds(worldBoundsVertices,Color.white);
+     //Core.DrawRotatedBounds(worldBoundsVertices,Color.white);
     }
     #endif
 

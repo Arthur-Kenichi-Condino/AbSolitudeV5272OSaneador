@@ -195,13 +195,13 @@ namespace AKCondinoO.Voxels{
              VoxelTerrainChunk.MarchingCubesMultithreaded.biome.Setvxl(noiseInput,null,null,0,vCoord3.z+vCoord3.x*Depth,ref currentVoxel);
             }
             resultDensity=Math.Max(resultDensity,currentVoxel.Density);
-            if(material==MaterialId.Air&&!(-resultDensity>=50d)){
+            if(material==MaterialId.Air&&!(-resultDensity>=-IsoLevel)){
              resultDensity=-resultDensity;
             }
             if(!curSavingData.ContainsKey(cnkIdx3)){
              curSavingData.Add(cnkIdx3,new Dictionary<Vector3Int,(double density,MaterialId materialId)>());
             }
-            curSavingData[cnkIdx3][vCoord3]=(resultDensity,-resultDensity>=50d?MaterialId.Air:material);
+            curSavingData[cnkIdx3][vCoord3]=(resultDensity,-resultDensity>=-IsoLevel?MaterialId.Air:material);
 
             current.dirty_bg.Add(cnkIdx3);
             for(int ngbx=-1;ngbx<=1;ngbx++){
@@ -347,6 +347,8 @@ namespace AKCondinoO.Voxels{
      for(int i=0;i<addTreesBGThreads.Length;++i){
       addTreesBGThreads[i].Wait();
      }
+
+     water.Clear();
     }
 
     [SerializeField]bool    DEBUG_ADD_WATER_SOURCE;
