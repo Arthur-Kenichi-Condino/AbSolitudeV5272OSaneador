@@ -277,6 +277,11 @@ namespace AKCondinoO.Voxels{
 
     void Awake(){if(Singleton==null){Singleton=this;}else{DestroyImmediate(this);return;}
 
+     Shader. EnableKeyword("WATER_VERTEX_DISPLACEMENT_ON" );
+     Shader.DisableKeyword("WATER_VERTEX_DISPLACEMENT_OFF");
+     Shader. EnableKeyword("WATER_EDGEBLEND_ON"           );
+     Shader.DisableKeyword("WATER_EDGEBLEND_OFF"          );
+
      Core.Singleton.OnDestroyingCoreEvent+=OnDestroyingCoreEvent;
 
      VoxelTerrainChunk.marchingCubesCount=0;
