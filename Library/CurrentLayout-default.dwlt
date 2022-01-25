@@ -19,7 +19,7 @@ MonoBehaviour:
     width: 1920
     height: 989
   m_ShowMode: 4
-  m_Title: Inspector
+  m_Title: Project
   m_RootView: {fileID: 3}
   m_MinSize: {x: 875, y: 652}
   m_MaxSize: {x: 10000, y: 10000}
@@ -148,7 +148,7 @@ MonoBehaviour:
   m_MinSize: {x: 634, y: 602}
   m_MaxSize: {x: 18004, y: 14042}
   vertical: 0
-  controlID: 191
+  controlID: 54
 --- !u!114 &7
 MonoBehaviour:
   m_ObjectHideFlags: 52
@@ -173,7 +173,7 @@ MonoBehaviour:
   m_MinSize: {x: 634, y: 602}
   m_MaxSize: {x: 18004, y: 14042}
   vertical: 1
-  controlID: 192
+  controlID: 55
 --- !u!114 &8
 MonoBehaviour:
   m_ObjectHideFlags: 52
@@ -199,7 +199,7 @@ MonoBehaviour:
   m_MinSize: {x: 579, y: 221}
   m_MaxSize: {x: 12004, y: 4021}
   vertical: 0
-  controlID: 193
+  controlID: 56
 --- !u!114 &9
 MonoBehaviour:
   m_ObjectHideFlags: 52
@@ -309,7 +309,7 @@ MonoBehaviour:
   m_MinSize: {x: 634, y: 381}
   m_MaxSize: {x: 18004, y: 10021}
   vertical: 0
-  controlID: 45
+  controlID: 128
 --- !u!114 &13
 MonoBehaviour:
   m_ObjectHideFlags: 52
@@ -408,18 +408,18 @@ MonoBehaviour:
     m_Tooltip: 
   m_Pos:
     serializedVersion: 2
-    x: 945
-    y: 631
-    width: 974
-    height: 360
+    x: 944
+    y: 552
+    width: 975
+    height: 439
   m_ViewDataDictionary: {fileID: 0}
   m_VertSplit:
-    ID: 481
+    ID: 1367
     splitterInitialOffset: 203
     currentActiveSplitter: -1
     realSizes:
-    - 184
-    - 155
+    - 227
+    - 191
     relativeSizes:
     - 0.5427729
     - 0.4572271
@@ -429,7 +429,7 @@ MonoBehaviour:
     maxSizes:
     - 0
     - 0
-    lastTotalSize: 339
+    lastTotalSize: 418
     splitSize: 6
     xOffset: 0
     m_Version: 1
@@ -439,7 +439,7 @@ MonoBehaviour:
     oldSplitSize: 0
   m_Recording: 0
   m_ActiveNativePlatformSupportModuleName: 
-  m_SelectedModuleIndex: 3
+  m_SelectedModuleIndex: 0
   m_Modules:
   - id: 0
   - id: 1
@@ -1310,9 +1310,9 @@ MonoBehaviour:
   m_PlayAudio: 0
   m_AudioPlay: 0
   m_Position:
-    m_Target: {x: -2.2619934, y: 13.740791, z: 24.362577}
+    m_Target: {x: 1.0599265, y: 28.672932, z: -3.2825778}
     speed: 2
-    m_Value: {x: -2.2619934, y: 13.740791, z: 24.362577}
+    m_Value: {x: 1.0599265, y: 28.672932, z: -3.2825778}
   m_RenderMode: 0
   m_CameraMode:
     drawMode: 0
@@ -1357,15 +1357,15 @@ MonoBehaviour:
       m_Size: {x: 1, y: 1}
     m_ShowGrid: 1
     m_GridAxis: 1
-    m_gridOpacity: 0.5
+    m_gridOpacity: 0.25
   m_Rotation:
-    m_Target: {x: 0.37990093, y: 0.1311425, z: -0.05450529, w: 0.9140604}
+    m_Target: {x: 0.27490076, y: -0.5378773, z: 0.19111608, w: 0.77369624}
     speed: 2
-    m_Value: {x: 0.37990087, y: 0.13114248, z: -0.05450528, w: 0.9140603}
+    m_Value: {x: 0.2748989, y: -0.5378737, z: 0.19111478, w: 0.773691}
   m_Size:
-    m_Target: 28.833363
+    m_Target: 4.934971
     speed: 2
-    m_Value: 28.833363
+    m_Value: 4.934971
   m_Ortho:
     m_Target: 0
     speed: 2
@@ -1612,7 +1612,7 @@ MonoBehaviour:
     m_ControlHash: -371814159
     m_PrefName: Preview_InspectorPreview
   m_LastInspectedObjectInstanceID: -1
-  m_LastVerticalScrollValue: 0
+  m_LastVerticalScrollValue: 360
   m_GlobalObjectId: 
   m_LockTracker:
     m_IsLocked: 0
@@ -1674,9 +1674,9 @@ MonoBehaviour:
   m_SceneHierarchy:
     m_TreeViewState:
       scrollPos: {x: 0, y: 0}
-      m_SelectedIDs: 
+      m_SelectedIDs: 905b0000
       m_LastClickedID: 0
-      m_ExpandedIDs: 6004fbff8404fbffa205fbff9640fdffba40fdffd841fdffb8eeffffdceefffffaeffffff8f3ffff1cf4ffff3ef5ffff44fbfffff4ffffff
+      m_ExpandedIDs: 0a64e2ffd4bbe2ffca1bf2ffee1bf2ff0c1df2ff4620f2ff6a20f2ff8821f2ffcc61fdffd261fdffe061fdff8a72fdfff4ffffff
       m_RenameOverlay:
         m_UserAcceptedRename: 0
         m_Name: 
@@ -1720,10 +1720,10 @@ MonoBehaviour:
     m_Tooltip: 
   m_Pos:
     serializedVersion: 2
-    x: 895
+    x: 998
     y: 73
-    width: 1024
-    height: 537
+    width: 921
+    height: 458
   m_ViewDataDictionary: {fileID: 0}
 --- !u!114 &26
 MonoBehaviour:
@@ -1763,22 +1763,22 @@ MonoBehaviour:
     m_SkipHidden: 0
     m_SearchArea: 1
     m_Folders:
-    - Assets/AKCondinoO
+    - Assets/AKCondinoO/Water4
     m_Globs: []
     m_OriginalText: 
   m_ViewMode: 1
   m_StartGridSize: 16
   m_LastFolders:
-  - Assets/AKCondinoO
+  - Assets/AKCondinoO/Water4
   m_LastFoldersGridSize: 16
   m_LastProjectPath: E:\Users\Arthur\GitHub\AbSolitudeV5272OSaneador
   m_LockTracker:
     m_IsLocked: 0
   m_FolderTreeState:
     scrollPos: {x: 0, y: 0}
-    m_SelectedIDs: a8470000
-    m_LastClickedID: 18344
-    m_ExpandedIDs: 000000009c4700009e470000a0470000a2470000a4470000ac47000000ca9a3b
+    m_SelectedIDs: 7e5b0000
+    m_LastClickedID: 23422
+    m_ExpandedIDs: 000000009c4700009e470000a0470000a2470000a4470000b447000000ca9a3b
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
