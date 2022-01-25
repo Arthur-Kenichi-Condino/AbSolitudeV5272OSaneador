@@ -22,7 +22,7 @@
 #*.booproj
 #*.svd
 #*.pdb
-*.opendb
+#*.opendb
 #*.VC.db
 
 # Unity3D generated meta files
