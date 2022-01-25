@@ -1,6 +1,7 @@
 using MessagePack;
 using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -23,8 +24,8 @@ namespace AKCondinoO.Voxels{
     #region chunk
 
      internal static Vector2Int vecPosTocCoord(Vector3 pos){
-                                                      pos.x/=(float)Width;
-                                                      pos.z/=(float)Depth;
+                                                       pos.x/=(float)Width;
+                                                       pos.z/=(float)Depth;
       return new Vector2Int((pos.x>0)?(pos.x-(int)pos.x==0.5f?Mathf.FloorToInt(pos.x):Mathf.RoundToInt(pos.x)):(int)Math.Round(pos.x,MidpointRounding.AwayFromZero),
                             (pos.z>0)?(pos.z-(int)pos.z==0.5f?Mathf.FloorToInt(pos.z):Mathf.RoundToInt(pos.z)):(int)Math.Round(pos.z,MidpointRounding.AwayFromZero)
                            );
@@ -39,7 +40,7 @@ namespace AKCondinoO.Voxels{
 
      internal static Vector2Int cCoordTocnkRgn(Vector2Int cCoord){return new Vector2Int(cCoord.x*Width,cCoord.y*Depth);}
 
-     internal static int GetcnkIdx(int cx,int cy){return cy+cx*(MaxcCoordy+1);}
+     internal static int GetcnkIdx(int cx,int cy){return cy+cx*(MaxcCoordy*2+1);}
 
     #endregion
 
@@ -88,6 +89,7 @@ namespace AKCondinoO.Voxels{
      readonly Dictionary<VoxelTerrainChunk,object>syn=new Dictionary<VoxelTerrainChunk,object>();
 
     internal readonly Dictionary<int,VoxelTerrainChunk>active=new Dictionary<int,VoxelTerrainChunk>();
+     internal readonly ConcurrentDictionary<int,VoxelWaterChunk>water=new ConcurrentDictionary<int,VoxelWaterChunk>();
 
     internal readonly LinkedList<VoxelTerrainChunk>pool=new LinkedList<VoxelTerrainChunk>();
         
@@ -193,13 +195,13 @@ namespace AKCondinoO.Voxels{
              VoxelTerrainChunk.MarchingCubesMultithreaded.biome.Setvxl(noiseInput,null,null,0,vCoord3.z+vCoord3.x*Depth,ref currentVoxel);
             }
             resultDensity=Math.Max(resultDensity,currentVoxel.Density);
-            if(material==MaterialId.Air&&!(-resultDensity>=50d)){
+            if(material==MaterialId.Air&&!(-resultDensity>=-IsoLevel)){
              resultDensity=-resultDensity;
             }
             if(!curSavingData.ContainsKey(cnkIdx3)){
              curSavingData.Add(cnkIdx3,new Dictionary<Vector3Int,(double density,MaterialId materialId)>());
             }
-            curSavingData[cnkIdx3][vCoord3]=(resultDensity,-resultDensity>=50d?MaterialId.Air:material);
+            curSavingData[cnkIdx3][vCoord3]=(resultDensity,-resultDensity>=-IsoLevel?MaterialId.Air:material);
 
             current.dirty_bg.Add(cnkIdx3);
             for(int ngbx=-1;ngbx<=1;ngbx++){
@@ -275,6 +277,11 @@ namespace AKCondinoO.Voxels{
 
     void Awake(){if(Singleton==null){Singleton=this;}else{DestroyImmediate(this);return;}
 
+     Shader. EnableKeyword("WATER_VERTEX_DISPLACEMENT_ON" );
+     Shader.DisableKeyword("WATER_VERTEX_DISPLACEMENT_OFF");
+     Shader. EnableKeyword("WATER_EDGEBLEND_ON"           );
+     Shader.DisableKeyword("WATER_EDGEBLEND_OFF"          );
+
      Core.Singleton.OnDestroyingCoreEvent+=OnDestroyingCoreEvent;
 
      VoxelTerrainChunk.marchingCubesCount=0;
@@ -345,7 +352,15 @@ namespace AKCondinoO.Voxels{
      for(int i=0;i<addTreesBGThreads.Length;++i){
       addTreesBGThreads[i].Wait();
      }
+
+     water.Clear();
     }
+
+    [SerializeField]bool    DEBUG_ADD_WATER_SOURCE;
+    [SerializeField]Vector3 DEBUG_ADD_WATER_SOURCE_AT=new Vector3(0,40,0);
+
+    [SerializeField]bool    DEBUG_REMOVE_WATER;
+    [SerializeField]Vector3 DEBUG_REMOVE_WATER_AT=new Vector3(0,40,0);
 
     [SerializeField]bool                                DEBUG_EDIT=false;
     [SerializeField]Vector3                             DEBUG_EDIT_AT=Vector3.zero;
@@ -363,7 +378,7 @@ namespace AKCondinoO.Voxels{
 
     internal bool navMeshDirty;
      internal AsyncOperation[]navMeshAsyncOperations;
-      internal float navMeshBuildInterval=2f;
+      internal float navMeshBuildInterval=.5f;
        internal float navMeshBuildTimer=0f;
         
     [SerializeField]
@@ -388,6 +403,9 @@ namespace AKCondinoO.Voxels{
     bool editRequested;
     bool playerMovementDetected;
     void Update(){
+     if(navMeshBuildTimer>0f){
+      navMeshBuildTimer-=Time.deltaTime;
+     }
 
      if(all==null){
       int poolSizeRequired=maxConnections*(expropriationDistance.x*2+1)*(expropriationDistance.y*2+1);
@@ -442,6 +460,21 @@ namespace AKCondinoO.Voxels{
 
       }
 
+     }
+
+     if(DEBUG_ADD_WATER_SOURCE){
+      DEBUG_ADD_WATER_SOURCE=false;
+      Vector2Int cCoord2=vecPosTocCoord(DEBUG_ADD_WATER_SOURCE_AT);
+      int cnkIdx2=GetcnkIdx(cCoord2.x,cCoord2.y);
+      if(water.TryGetValue(cnkIdx2,out VoxelWaterChunk wcnk)){
+       Vector3Int vCoord2=vecPosTovCoord(DEBUG_ADD_WATER_SOURCE_AT);
+       int vxlIdx2=GetvxlIdx(vCoord2.x,vCoord2.y,vCoord2.z);
+       wcnk.voxels[vxlIdx2]=(100d,false,0d);
+       if(active.TryGetValue(cnkIdx2,out VoxelTerrainChunk cnk)){
+        cnk.OnWaterEdited();
+       }
+       Debug.Log("DEBUG_ADD_WATER_SOURCE:added water source at chunk:"+cCoord2);
+      }
      }
  
      if(DEBUG_EDIT){
@@ -503,11 +536,9 @@ namespace AKCondinoO.Voxels{
      }
      if(navMeshDirty){
       //Debug.Log("navMeshDirty");
-      if(navMeshBuildTimer>0f){
-       navMeshBuildTimer-=Time.deltaTime;
-      }else{
-       navMeshBuildTimer=navMeshBuildInterval;
+      if(navMeshBuildTimer<=0f){
        if(navMeshAsyncOperations.All(o=>o==null||o.isDone)){
+        navMeshBuildTimer=navMeshBuildInterval;
         navMeshDirty=false;
         Debug.Log("navMeshDirty:ready to start navMeshAsyncOperations");
         sources.Clear();
@@ -539,6 +570,8 @@ namespace AKCondinoO.Voxels{
         foreach(var player in playersMovement.Keys){
          navMeshAsyncOperations[i++]=player.BuildNavMesh(sources);
         }
+       }else{
+        //Debug.Log("navMeshDirty:busy doing navMeshAsyncOperations");
        }
       }
      }
@@ -638,7 +671,13 @@ namespace AKCondinoO.Voxels{
          cnk.expropriated=null;
          if(cnk.cnkIdx!=null&&active.ContainsKey(cnk.cnkIdx.Value)){
           active.Remove(cnk.cnkIdx.Value);
+
+          water.TryRemove(cnk.cnkIdx.Value,out _);
+
          }
+
+         water[cnkIdx1]=cnk.water;
+
          active.Add(cnkIdx1,cnk);
          cnk.cnkIdx=cnkIdx1;
          cnk.OncCoordChanged(cCoord1);

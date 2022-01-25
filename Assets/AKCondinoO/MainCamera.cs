@@ -1,6 +1,9 @@
+using AKCondinoO.Voxels;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using static AKCondinoO.Voxels.VoxelTerrain;
 
 namespace AKCondinoO{
  internal class MainCamera:MonoBehaviour{internal static MainCamera Singleton;
@@ -9,7 +12,10 @@ namespace AKCondinoO{
      Camera.main.transparencySortMode=TransparencySortMode.Perspective;
      tgtRot=tgtRot_Pre=transform.eulerAngles;
      tgtPos=tgtPos_Pre=transform.position;
+     safePosition=transform.position;
     }
+
+    Vector3 safePosition;
 
     Vector3 tgtRot,tgtRot_Pre;
      float tgtRotLerpTime;
@@ -82,6 +88,7 @@ namespace AKCondinoO{
       }
       //Debug.Log("tgtRotLerpA:"+tgtRotLerpA+";tgtRotLerpB:"+tgtRotLerpB);
       transform.rotation=Quaternion.Lerp(tgtRotLerpA,tgtRotLerpB,tgtRotLerpVal);
+      transform.hasChanged=false;//  transform has changed until here, but flag as false so any changes not made by this Update are detected below
       if(tgtRotLerpTime>tgtRotLerpMaxTime){
        if(tgtRot!=tgtRot_Pre){
         //Debug.Log("get new tgtRot:"+tgtRot+";don't need to lerp all the way to old target before going to a new one");
@@ -115,6 +122,7 @@ namespace AKCondinoO{
        //Debug.Log("tgtPos:"+tgtPos+" reached");
       }
       transform.position=Vector3.Lerp(tgtPosLerpA,tgtPosLerpB,tgtPosLerpVal);
+      transform.hasChanged=false;//  transform has changed until here, but flag as false so any changes not made by this Update are detected below
       if(tgtPosLerpTime>tgtPosLerpMaxTime){
        if(tgtPos!=tgtPos_Pre){
         Debug.Log("get new tgtPos:"+tgtPos+";don't need to lerp all the way to old target before going to a new one");
@@ -123,6 +131,19 @@ namespace AKCondinoO{
       }
      }
      #endregion
+     
+     var cCoord=vecPosTocCoord(transform.position);
+     if(Math.Abs(cCoord.x)>=VoxelTerrain.MaxcCoordx||
+        Math.Abs(cCoord.y)>=VoxelTerrain.MaxcCoordy){
+      transform.position=tgtPos=tgtPos_Pre=safePosition;
+     }
+     if(transform.hasChanged){
+      Debug.Log("transform changed outside Update");
+      tgtRot=tgtRot_Pre=transform.eulerAngles;
+      tgtPos=tgtPos_Pre=transform.position;
+      transform.hasChanged=false;
+     }
+     safePosition=transform.position;
 
     }
 

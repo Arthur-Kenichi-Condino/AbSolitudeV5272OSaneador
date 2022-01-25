@@ -227,6 +227,10 @@ namespace AKCondinoO.Sims{
 
       EnableInteractions();
        EnableRendering();
+                
+      #if UNITY_EDITOR
+      SetName();
+      #endif
 
      }else{
       //Debug.Log("SimObject:OnActivated:loading:transform has incorrect data");
@@ -286,7 +290,12 @@ namespace AKCondinoO.Sims{
     [SerializeField]bool DEBUG_UNPLACE=false;
 
     [SerializeField]bool DEBUG_UNLOAD=false;
+
+    float saveInterval=1.75f;
+     float saveTimer=0f;
         
+    internal bool tooMany=false;
+
     protected bool sleeping;
 
     protected bool unplacing;
@@ -301,6 +310,9 @@ namespace AKCondinoO.Sims{
     protected bool saving;
     bool saveRequired;
     internal virtual void ManualUpdate(){
+     if(saveTimer>0f){
+      saveTimer-=Time.deltaTime;
+     }
      if(!unplacing){
       if(!unloading){
        if(!loading){
@@ -443,7 +455,6 @@ namespace AKCondinoO.Sims{
      validData=false;
      if(container.IsCompleted(SimObjectSpawner.Singleton.persistentDataBGThreads[0].IsRunning)){
       if(!float.IsNaN(container.transform_bg.position.x)){
-       container.GetDeserialized(transform);
 
        GetPersistentData();
 
@@ -455,6 +466,12 @@ namespace AKCondinoO.Sims{
     }
 
     protected virtual void GetPersistentData(){
+     container.GetDeserialized(transform);
+            
+     #if UNITY_EDITOR
+     SetName();
+     #endif
+
     }
 
     internal static int savingCount;
@@ -463,7 +480,11 @@ namespace AKCondinoO.Sims{
      if(savingCount>=SimObjectSpawner.Singleton.savingLimit){
       return false;
      }
+     if(saveTimer>0f){
+      return false;
+     }
      if(container.IsCompleted(SimObjectSpawner.Singleton.persistentDataBGThreads[0].IsRunning)){
+      saveTimer=saveInterval;
       savingCount++;
       container.executionMode_bg=PersistentDataBackgroundContainer.ExecutionMode.Save;
       container.id_bg=id.Value;
@@ -638,9 +659,17 @@ namespace AKCondinoO.Sims{
      overlappersUnplacing.Remove(overlapper);
     }
 
+    void SetName(){
+     #if UNITY_EDITOR
+     var cCoord=vecPosTocCoord(transform.position);
+     var cnkIdx=GetcnkIdx(cCoord.x,cCoord.y);
+     name=GetType()+":"+cCoord+":"+cnkIdx;
+     #endif
+    }
+
     #if UNITY_EDITOR
     void OnDrawGizmos(){
-     Core.DrawRotatedBounds(worldBoundsVertices,Color.white);
+     //Core.DrawRotatedBounds(worldBoundsVertices,Color.white);
     }
     #endif
 

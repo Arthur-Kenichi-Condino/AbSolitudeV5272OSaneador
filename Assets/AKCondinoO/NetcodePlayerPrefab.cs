@@ -74,7 +74,7 @@ namespace AKCondinoO{
       cCoord=vecPosTocCoord(transform.position);
       if(cCoord!=cCoord_Pre||initialization){
        loadTimer=0;
-       //Debug.Log("NetcodePlayerPrefab:changed to cCoord:"+cCoord+"!",this);
+       Debug.Log("NetcodePlayerPrefab:changed to cCoord:"+cCoord+"!",this);
 
        SimObjectSpawner.Singleton.playersMovement[this]=(cCoord,cCoord_Pre,true);
        SimObjectSpawner.Singleton.playersCoordChange.Add(cCoord);
