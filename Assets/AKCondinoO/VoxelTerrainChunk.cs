@@ -849,6 +849,7 @@ namespace AKCondinoO.Voxels{
             corner++;           vCoord3=vCoord1;vCoord3.x+=1;             vCoord3.z+=1;SetwpolygonCellVoxel();
             corner++;           vCoord3=vCoord1;vCoord3.x+=1;vCoord3.y+=1;vCoord3.z+=1;SetwpolygonCellVoxel();
             corner++;           vCoord3=vCoord1;             vCoord3.y+=1;vCoord3.z+=1;SetwpolygonCellVoxel();
+
         void SetwpolygonCellVoxel(){
          if(vCoord3.y<0){
           wpolygonCell[corner]=(0d,Vector3.zero);
