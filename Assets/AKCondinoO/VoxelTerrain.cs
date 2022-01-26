@@ -89,7 +89,7 @@ namespace AKCondinoO.Voxels{
      readonly Dictionary<VoxelTerrainChunk,object>syn=new Dictionary<VoxelTerrainChunk,object>();
 
     internal readonly Dictionary<int,VoxelTerrainChunk>active=new Dictionary<int,VoxelTerrainChunk>();
-     internal readonly ConcurrentDictionary<int,VoxelWaterChunk>water=new ConcurrentDictionary<int,VoxelWaterChunk>();
+     internal static readonly ConcurrentDictionary<int,VoxelWaterChunk>water=new ConcurrentDictionary<int,VoxelWaterChunk>();
 
     internal readonly LinkedList<VoxelTerrainChunk>pool=new LinkedList<VoxelTerrainChunk>();
         

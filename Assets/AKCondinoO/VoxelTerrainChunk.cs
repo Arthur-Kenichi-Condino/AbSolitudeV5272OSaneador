@@ -809,7 +809,11 @@ namespace AKCondinoO.Voxels{
           }
       }else if(current.executionMode_bg==MarchingCubesBackgroundContainer.ExecutionMode.water){
        Debug.Log("MarchingCubesBackgroundContainer.ExecutionMode.water");
-       current.water_bg.result_bg=0;
+       if      (current.water_bg.result_bg==2){
+        current.water_bg.result_bg=1;
+       }else if(current.water_bg.result_bg==1){
+        current.water_bg.result_bg=0;
+       }
 
           current.TempWVer.Clear();
           current.TempWTri.Clear();
@@ -854,8 +858,27 @@ namespace AKCondinoO.Voxels{
           if(vCoord3.x<0||vCoord3.x>=Width||
              vCoord3.z<0||vCoord3.z>=Depth
           ){
-           //  TO DO: pegar valor dos chunks vizinhos
-           wpolygonCell[corner]=(0d,Vector3.zero);
+           //  pegar valor dos chunks vizinhos
+           Vector2Int cnkRgn3=current.cnkRgn_bg;
+           Vector2Int cCoord3=current.cCoord_bg;
+           ValidateCoord(ref cnkRgn3,ref vCoord3);
+           cCoord3=cnkRgnTocCoord(cnkRgn3);
+           int cnkIdx3=GetcnkIdx(cCoord3.x,cCoord3.y);
+           bool success=false;
+           if(VoxelTerrain.water.TryGetValue(cnkIdx3,out VoxelWaterChunk wcnk)){
+            lock(wcnk.syn){
+             if(wcnk.cnkIdx_bg==cnkIdx3){
+              int vxlIdx3=GetvxlIdx(vCoord3.x,vCoord3.y,vCoord3.z);
+              if(wcnk.voxels.TryGetValue(vxlIdx3,out(double density,bool sleeping,double absorbing)vxl3)){
+               wpolygonCell[corner]=(vxl3.density,Vector3.zero);
+               success=true;
+              }
+             }
+            }
+           }
+           if(!success){
+            wpolygonCell[corner]=(0d,Vector3.zero);
+           }
           }else{
            int vxlIdx3=GetvxlIdx(vCoord3.x,vCoord3.y,vCoord3.z); 
            if(current.water_bg.voxels.TryGetValue(vxlIdx3,out(double density,bool sleeping,double absorbing)vxl3)){
@@ -1043,7 +1066,49 @@ namespace AKCondinoO.Voxels{
            int h_vxlIdx=GetvxlIdx(h_vCoord.x,h_vCoord.y,h_vCoord.z);
            return Spread(h_vxlIdx);
           }else{
-           //  TO DO: passar pra outros chunks
+           //  passar pra outros chunks
+           Vector3Int vCoord3=h_vCoord;
+           Vector2Int cnkRgn3=current.cnkRgn_bg;
+           Vector2Int cCoord3=current.cCoord_bg;
+           ValidateCoord(ref cnkRgn3,ref vCoord3);
+           cCoord3=cnkRgnTocCoord(cnkRgn3);
+           int cnkIdx3=GetcnkIdx(cCoord3.x,cCoord3.y);
+           //Debug.Log("cCoord3:"+cCoord3);
+           if(VoxelTerrain.water.TryGetValue(cnkIdx3,out VoxelWaterChunk wcnk)){
+            lock(wcnk.syn){
+             if(wcnk.cnkIdx_bg==cnkIdx3){
+
+              int vxlIdx3=GetvxlIdx(vCoord3.x,vCoord3.y,vCoord3.z);
+
+              int oftIdx3=GetoftIdx(cCoord3-current.cCoord_bg);
+
+              bool spread=true;
+              (double density,bool sleeping,double absorbing)newValue=(density-5d,false,0d);
+              if(newValue.density<30d){
+               return false;
+              }
+              bool blocked=current.neighbors_bg[oftIdx3-1].TryGetValue(vxlIdx3,out(bool hasDensity,MaterialId material)ngbvxl3)&&ngbvxl3.hasDensity;
+              if(blocked){
+               spread=false;
+               newValue.sleeping=true;
+              }
+              wcnk.voxels.AddOrUpdate(vxlIdx3,newValue,
+               (key,oldValue)=>{
+                if(oldValue.density>=newValue.density){
+                 spread=false;
+                 return oldValue;
+                }
+                newValue.absorbing=Math.Max(oldValue.absorbing,newValue.absorbing);
+                return newValue;
+               }
+              );
+              wcnk.HasPendingChanges=true;
+              return spread;
+             }
+            }
+           }
+           current.water_bg.spreading.TryAdd(vCoord2,density);
+           return true;
           }
           bool Spread(int h_vxlIdx){
            bool spread=true;
@@ -1783,6 +1848,7 @@ namespace AKCondinoO.Voxels{
     bool rebuildRequired;
     bool moveRequired;
     internal bool ManualUpdate(){bool busy=true;
+     waterUpdateFlag=waterUpdateFlag||water.HasPendingChanges;
      if(waterUpdateTimer>0f){
       waterUpdateTimer-=Time.deltaTime;
      }
@@ -2018,6 +2084,7 @@ namespace AKCondinoO.Voxels{
      if(marchingCubesBG.IsCompleted(VoxelTerrain.Singleton.marchingCubesBGThreads[0].IsRunning)){
       marchingCubesBG.executionMode_bg=MarchingCubesBackgroundContainer.ExecutionMode.water;
       marchingCubesCount++;
+      water.HasPendingChanges=false;
       MarchingCubesMultithreaded.Schedule(marchingCubesBG);
       return true;
      }
@@ -2070,6 +2137,9 @@ namespace AKCondinoO.Voxels{
      }
     }
     void DrawVoxelsDensity(){
+     if(water.voxels.Count<=0){
+      return;
+     }
      Vector3Int vCoord1;
      for(vCoord1=new Vector3Int();vCoord1.y<Height;vCoord1.y++){
      for(vCoord1.x=0             ;vCoord1.x<Width ;vCoord1.x++){
@@ -2101,6 +2171,11 @@ namespace AKCondinoO.Voxels{
   internal readonly ConcurrentDictionary<int,(double density,bool sleeping,double absorbing)>voxels=new ConcurrentDictionary<int,(double,bool,double)>();
    internal readonly ConcurrentDictionary<Vector3Int,double>absorbing=new ConcurrentDictionary<Vector3Int,double>();
    internal readonly ConcurrentDictionary<Vector3Int,double>spreading=new ConcurrentDictionary<Vector3Int,double>();
+
+  internal bool HasPendingChanges{
+   get{bool tmp;lock(HasPendingChanges_syn){tmp=HasPendingChanges_v;      }return tmp;}
+   set{         lock(HasPendingChanges_syn){    HasPendingChanges_v=value;}           }
+  }bool HasPendingChanges_v=false;readonly object HasPendingChanges_syn=new object();
  }
 
 }
