@@ -9,6 +9,7 @@ using System.Threading;
 using UnityEngine;
 using UnityEngine.AI;
 using static AKCondinoO.Voxels.VoxelTerrainChunk;
+using static AKCondinoO.Voxels.VoxelWaterChunk;
 
 namespace AKCondinoO.Voxels{
  internal class VoxelTerrain:MonoBehaviour{internal static VoxelTerrain Singleton;
@@ -270,6 +271,7 @@ namespace AKCondinoO.Voxels{
     }
 
     internal readonly VoxelTerrainChunk.MarchingCubesMultithreaded[]marchingCubesBGThreads=new VoxelTerrainChunk.MarchingCubesMultithreaded[Environment.ProcessorCount];
+     internal readonly VoxelWaterChunk.WaterMarchingCubesMultithreaded[]wmarchingCubesBGThreads=new VoxelWaterChunk.WaterMarchingCubesMultithreaded[Environment.ProcessorCount];
 
     internal readonly VoxelTerrainChunk.TreesMultithreaded[]addTreesBGThreads=new VoxelTerrainChunk.TreesMultithreaded[Environment.ProcessorCount];
 
@@ -285,6 +287,7 @@ namespace AKCondinoO.Voxels{
      Core.Singleton.OnDestroyingCoreEvent+=OnDestroyingCoreEvent;
 
      VoxelTerrainChunk.marchingCubesCount=0;
+      VoxelTerrainChunk.wmarchingCubesCount=0;
 
      VoxelTerrainChunk.bakeJobsCount=0;
 
@@ -298,6 +301,10 @@ namespace AKCondinoO.Voxels{
      for(int i=0;i<marchingCubesBGThreads.Length;++i){
       marchingCubesBGThreads[i]=new VoxelTerrainChunk.MarchingCubesMultithreaded();
      }
+      VoxelWaterChunk.WaterMarchingCubesMultithreaded.Stop=false;
+      for(int i=0;i<wmarchingCubesBGThreads.Length;++i){
+       wmarchingCubesBGThreads[i]=new VoxelWaterChunk.WaterMarchingCubesMultithreaded();
+      }
 
      VoxelTerrainChunk.TreesMultithreaded.Stop=false;
      for(int i=0;i<addTreesBGThreads.Length;++i){
@@ -342,6 +349,10 @@ namespace AKCondinoO.Voxels{
      for(int i=0;i<marchingCubesBGThreads.Length;++i){
       marchingCubesBGThreads[i].Wait();
      }
+      VoxelWaterChunk.WaterMarchingCubesMultithreaded.Stop=true;
+      for(int i=0;i<wmarchingCubesBGThreads.Length;++i){
+       wmarchingCubesBGThreads[i].Wait();
+      }
  
      if(VoxelTerrainChunk.TreesMultithreaded.Clear()==0){
       Debug.Log("chunks' Trees disposal was successful");
@@ -396,6 +407,7 @@ namespace AKCondinoO.Voxels{
     [SerializeField]internal int bakeJobsLimit=1000;
 
     [SerializeField]internal int marchingCubesLimit=1000;
+     [SerializeField]internal int wmarchingCubesLimit=1000;
 
     [SerializeField]internal int addTreesBGLimit=1000;
 
@@ -471,7 +483,9 @@ namespace AKCondinoO.Voxels{
        int vxlIdx2=GetvxlIdx(vCoord2.x,vCoord2.y,vCoord2.z);
        wcnk.voxels[vxlIdx2]=(100d,false,0d);
        if(active.TryGetValue(cnkIdx2,out VoxelTerrainChunk cnk)){
-        cnk.OnWaterEdited();
+
+        cnk.OnResumeWater();
+
        }
        Debug.Log("DEBUG_ADD_WATER_SOURCE:added water source at chunk:"+cCoord2);
       }
@@ -638,6 +652,9 @@ namespace AKCondinoO.Voxels{
          if(active.TryGetValue(cnkIdx1,out VoxelTerrainChunk cnk)){
           if(cnk.expropriated==null){
            cnk.expropriated=pool.AddLast(cnk);
+
+           cnk.OnPauseWater();
+
           }
          }
 
@@ -686,6 +703,9 @@ namespace AKCondinoO.Voxels{
          if(cnk.expropriated!=null){
           pool.Remove(cnk.expropriated);
           cnk.expropriated=null;
+
+          cnk.OnResumeWater();
+
          }
 
         }

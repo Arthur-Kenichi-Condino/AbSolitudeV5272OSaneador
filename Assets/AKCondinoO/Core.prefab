@@ -106,6 +106,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Prefab: {fileID: 5615111631839599395, guid: 442ae0b32aa492c45ad1554040868525, type: 3}
+  DEBUG_ADD_WATER_SOURCE: 0
+  DEBUG_ADD_WATER_SOURCE_AT: {x: 0, y: 40, z: 0}
+  DEBUG_REMOVE_WATER: 0
+  DEBUG_REMOVE_WATER_AT: {x: 0, y: 40, z: 0}
   DEBUG_EDIT: 0
   DEBUG_EDIT_AT: {x: 0, y: 40, z: 0}
   DEBUG_EDIT_MODE: 0
@@ -119,6 +123,7 @@ MonoBehaviour:
   totalMillisecondsLimit: 5
   bakeJobsLimit: 1000
   marchingCubesLimit: 5
+  wmarchingCubesLimit: 5
   addTreesBGLimit: 6
   instantiationMaxExecutionTime: 15
 --- !u!114 &5296139000763584891

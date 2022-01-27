@@ -19,7 +19,10 @@ using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.Rendering;
 using static AKCondinoO.Voxels.VoxelTerrain;
+using static AKCondinoO.Voxels.VoxelTerrainChunk;
 using static AKCondinoO.Voxels.VoxelTerrainChunk.MarchingCubesBackgroundContainer;
+using static AKCondinoO.Voxels.VoxelWaterChunk;
+using static AKCondinoO.Voxels.VoxelWaterChunk.WaterMarchingCubesBackgroundContainer;
 
 namespace AKCondinoO.Voxels{
  internal class VoxelTerrainChunk:MonoBehaviour{
@@ -33,7 +36,7 @@ namespace AKCondinoO.Voxels{
     internal const ushort FlattenOffset=(Width*Depth);
     internal const int VoxelsPerChunk=(FlattenOffset*Height);
   
-    static int GetoftIdx(Vector2Int offset){//  ..for neighbors
+    internal static int GetoftIdx(Vector2Int offset){//  ..for neighbors
      if(offset.x== 0&&offset.y== 0)return 0;
      if(offset.x==-1&&offset.y== 0)return 1;
      if(offset.x== 1&&offset.y== 0)return 2;
@@ -86,8 +89,6 @@ namespace AKCondinoO.Voxels{
     internal MarchingCubesBackgroundContainer marchingCubesBG;
     internal class MarchingCubesBackgroundContainer:BackgroundContainer{
      internal readonly object syn_bg;
-            
-     internal readonly VoxelWaterChunk water_bg;
 
     internal(bool hasDensity,MaterialId material)[]voxels_bg;
 
@@ -95,15 +96,11 @@ namespace AKCondinoO.Voxels{
 
      internal MarchingCubesBackgroundContainer(object syn,VoxelWaterChunk water){
       syn_bg=syn;
-
-      water_bg=water;
-
      }
 
      internal ExecutionMode executionMode_bg=ExecutionMode.terrain;
      internal enum ExecutionMode{
       terrain,
-      water,
      }
 
      internal NativeList<Vertex>TempVer;
@@ -126,16 +123,6 @@ namespace AKCondinoO.Voxels{
       }
      }
      internal NativeList<UInt32>TempTri;
-      internal NativeList<WVertex>TempWVer;
-      [StructLayout(LayoutKind.Sequential)]internal struct WVertex{
-       internal Vector3 pos;
-       internal Vector3 normal;
-       internal WVertex(Vector3 p,Vector3 n){
-        pos=p;
-        normal=n;
-       }
-      }
-      internal NativeList< UInt32>TempWTri;
 
      internal Vector2Int cCoord_bg;
      internal Vector2Int cnkRgn_bg;
@@ -160,7 +147,6 @@ namespace AKCondinoO.Voxels{
      readonly Voxel[][][]voxelsCache1=new Voxel[3][][]{new Voxel[1][]{new Voxel[4],},new Voxel[Depth][],new Voxel[FlattenOffset][],};
 
      readonly Voxel[]polygonCell=new Voxel[8];
-      readonly(double Density,Vector3 Normal)[]wpolygonCell=new(double,Vector3)[8];
 
      readonly double[][][]noiseForHeightCache=new double[biome.heightsCacheLength][][];
 
@@ -169,23 +155,17 @@ namespace AKCondinoO.Voxels{
      readonly Voxel[][]voxelsCache2=new Voxel[3][]{new Voxel[1],new Voxel[Depth],new Voxel[FlattenOffset],};
 
      readonly Voxel[]tmpvxl=new Voxel[6];
-      readonly(double Density,Vector3 Normal)[]wtmpvxl=new(double,Vector3)[6];
 
      readonly Vector3[][][]verticesCache=new Vector3[3][][]{new Vector3[1][]{new Vector3[4],},new Vector3[Depth][],new Vector3[FlattenOffset][],};
 
      readonly Vector3[]vertices=new Vector3[12];
       readonly MaterialId[]materials=new MaterialId[12];
        readonly Vector3[]normals=new Vector3[12];
-      readonly Vector3[]wvertices=new Vector3[12];
-       readonly Vector3[]wnormals=new Vector3[12];
 
      readonly double[]density=new double[2];
       readonly Vector3[]vertex=new Vector3[2];
        readonly MaterialId[]material=new MaterialId[2];
         readonly float[]distance=new float[2];
-      readonly double[]wdensity=new double[2];
-       readonly Vector3[]wvertex=new Vector3[2];
-        readonly float[]wdistance=new float[2];
 
      static readonly ReadOnlyCollection<Vector3>corners=new ReadOnlyCollection<Vector3>(new Vector3[8]{
       new Vector3(-.5f,-.5f,-.5f),
@@ -200,8 +180,6 @@ namespace AKCondinoO.Voxels{
 
      readonly int[]idx=new int[3];
       readonly Vector3[]verPos=new Vector3[3];
-      readonly int[]widx=new int[3];
-       readonly Vector3[]wverPos=new Vector3[3];
 
      internal static Vector3 trianglePosAdj{get;}=new Vector3((Width/2.0f)-0.5f,(Height/2.0f)-0.5f,(Depth/2.0f)-0.5f);
 
@@ -477,6 +455,7 @@ namespace AKCondinoO.Voxels{
            if(Tables.EdgeTable[edgeIndex]!=0){/*  Cube is not entirely in/out of the surface  */
 
             //  Use cached data if available
+            Array.Clear(vertices,0,vertices.Length);
             vertices[ 0]=(vCoord1.z>0?verticesCache[0][0][0]:(vCoord1.y>0?verticesCache[2][vCoord1.z+vCoord1.x*Depth][0]:Vector3.zero));
             vertices[ 1]=(vCoord1.z>0?verticesCache[0][0][1]:Vector3.zero);
             vertices[ 2]=(vCoord1.z>0?verticesCache[0][0][2]:Vector3.zero);
@@ -505,6 +484,7 @@ namespace AKCondinoO.Voxels{
              density[1]=-polygonCell[c1].Density;vertex[1]=corners[c1];material[1]=polygonCell[c1].Material;
 
              //  p
+             if(p!=Vector3.zero){goto _Normal;}
              if(Math.Abs(IsoLevel-density[0])<double.Epsilon){p=vertex[0];goto _Normal;}
              if(Math.Abs(IsoLevel-density[1])<double.Epsilon){p=vertex[1];goto _Normal;}
              if(Math.Abs(density[0]-density[1])<double.Epsilon){p=vertex[0];goto _Normal;}
@@ -534,6 +514,20 @@ namespace AKCondinoO.Voxels{
              }
             }
 
+            //  Cache the data
+            verticesCache[0][0][0]=vertices[ 4]+Vector3.back;//  Adiciona um valor "negativo" porque o voxelCoord próximo vai usar esse valor mas precisa obter "uma posição anterior"
+            verticesCache[0][0][1]=vertices[ 5]+Vector3.back;
+            verticesCache[0][0][2]=vertices[ 6]+Vector3.back;
+            verticesCache[0][0][3]=vertices[ 7]+Vector3.back;
+            verticesCache[1][vCoord1.z][0]=vertices[ 1]+Vector3.left;
+            verticesCache[1][vCoord1.z][1]=vertices[ 5]+Vector3.left;
+            verticesCache[1][vCoord1.z][2]=vertices[ 9]+Vector3.left;
+            verticesCache[1][vCoord1.z][3]=vertices[10]+Vector3.left;
+            verticesCache[2][vCoord1.z+vCoord1.x*Depth][0]=vertices[ 2]+Vector3.down;
+            verticesCache[2][vCoord1.z+vCoord1.x*Depth][1]=vertices[ 6]+Vector3.down;
+            verticesCache[2][vCoord1.z+vCoord1.x*Depth][2]=vertices[10]+Vector3.down;
+            verticesCache[2][vCoord1.z+vCoord1.x*Depth][3]=vertices[11]+Vector3.down;
+
             /*  Create the triangle  */
             for(int i=0;Tables.TriangleTable[edgeIndex][i]!=-1;i+=3){
              idx[0]=Tables.TriangleTable[edgeIndex][i  ];
@@ -560,20 +554,6 @@ namespace AKCondinoO.Voxels{
              if(!vertexUV.ContainsKey(verPos[1])){vertexUV.Add(verPos[1],new List<Vector2>());}vertexUV[verPos[1]].Add(materialUV);
              if(!vertexUV.ContainsKey(verPos[2])){vertexUV.Add(verPos[2],new List<Vector2>());}vertexUV[verPos[2]].Add(materialUV);
             }
-
-            //  Cache the data
-            verticesCache[0][0][0]=vertices[ 4]+Vector3.back;//  Adiciona um valor "negativo" porque o voxelCoord próximo vai usar esse valor mas precisa obter "uma posição anterior"
-            verticesCache[0][0][1]=vertices[ 5]+Vector3.back;
-            verticesCache[0][0][2]=vertices[ 6]+Vector3.back;
-            verticesCache[0][0][3]=vertices[ 7]+Vector3.back;
-            verticesCache[1][vCoord1.z][0]=vertices[ 1]+Vector3.left;
-            verticesCache[1][vCoord1.z][1]=vertices[ 5]+Vector3.left;
-            verticesCache[1][vCoord1.z][2]=vertices[ 9]+Vector3.left;
-            verticesCache[1][vCoord1.z][3]=vertices[10]+Vector3.left;
-            verticesCache[2][vCoord1.z+vCoord1.x*Depth][0]=vertices[ 2]+Vector3.down;
-            verticesCache[2][vCoord1.z+vCoord1.x*Depth][1]=vertices[ 6]+Vector3.down;
-            verticesCache[2][vCoord1.z+vCoord1.x*Depth][2]=vertices[10]+Vector3.down;
-            verticesCache[2][vCoord1.z+vCoord1.x*Depth][3]=vertices[11]+Vector3.down;
 
            }
 
@@ -799,349 +779,6 @@ namespace AKCondinoO.Voxels{
            current.neighbors_bg[i]=neighbors[i].ToDictionary(item=>item.Key,item=>(-item.Value.Density<IsoLevel,item.Value.Material));
           }
 
-          lock(current.water_bg.syn){
-           current.water_bg.cCoord_bg=current.cCoord_bg;
-           current.water_bg.cnkRgn_bg=current.cnkRgn_bg;
-           current.water_bg.cnkIdx_bg=current.cnkIdx_bg;
-           current.water_bg.voxels.Clear();
-           current.water_bg.absorbing.Clear();
-           current.water_bg.spreading.Clear();
-          }
-      }else if(current.executionMode_bg==MarchingCubesBackgroundContainer.ExecutionMode.water){
-       Debug.Log("MarchingCubesBackgroundContainer.ExecutionMode.water");
-       if      (current.water_bg.result_bg==2){
-        current.water_bg.result_bg=1;
-       }else if(current.water_bg.result_bg==1){
-        current.water_bg.result_bg=0;
-       }
-
-          current.TempWVer.Clear();
-          current.TempWTri.Clear();
-
-          UInt32 wvertexCount=0;
-
-       Vector3Int vCoord1;
-       for(vCoord1=new Vector3Int();vCoord1.y<Height;vCoord1.y++){
-       for(vCoord1.x=0             ;vCoord1.x<Width ;vCoord1.x++){
-       for(vCoord1.z=0             ;vCoord1.z<Depth ;vCoord1.z++){
-        Vector3Int vCoord2=vCoord1;
-        int vxlIdx2=GetvxlIdx(vCoord2.x,vCoord2.y,vCoord2.z); 
-        if(current.water_bg.voxels.TryGetValue(vxlIdx2,out(double density,bool sleeping,double absorbing)vxl2)){
-         if(vxl2.absorbing>0d){
-         }
-         if(!vxl2.sleeping){
-          current.water_bg.spreading.AddOrUpdate(vCoord2,vxl2.density,
-           (key,oldValue)=>{
-            return Math.Max(oldValue,vxl2.density);
-           }
-          );
-          current.water_bg.voxels.TryUpdate(vxlIdx2,(vxl2.density,true,vxl2.absorbing),vxl2);
-         }
-         if(vxl2.density<=0d){//  remove
-         }
-        }
-
-        int corner=0;Vector3Int vCoord3=vCoord1;                                       SetwpolygonCellVoxel();
-            corner++;           vCoord3=vCoord1;vCoord3.x+=1;                          SetwpolygonCellVoxel();
-            corner++;           vCoord3=vCoord1;vCoord3.x+=1;vCoord3.y+=1;             SetwpolygonCellVoxel();
-            corner++;           vCoord3=vCoord1;             vCoord3.y+=1;             SetwpolygonCellVoxel();
-            corner++;           vCoord3=vCoord1;                          vCoord3.z+=1;SetwpolygonCellVoxel();
-            corner++;           vCoord3=vCoord1;vCoord3.x+=1;             vCoord3.z+=1;SetwpolygonCellVoxel();
-            corner++;           vCoord3=vCoord1;vCoord3.x+=1;vCoord3.y+=1;vCoord3.z+=1;SetwpolygonCellVoxel();
-            corner++;           vCoord3=vCoord1;             vCoord3.y+=1;vCoord3.z+=1;SetwpolygonCellVoxel();
-
-        void SetwpolygonCellVoxel(){
-         if(vCoord3.y<0){
-          wpolygonCell[corner]=(0d,Vector3.zero);
-         }else if(vCoord3.y>=Height){
-          wpolygonCell[corner]=(0d,Vector3.zero);
-         }else{
-          if(vCoord3.x<0||vCoord3.x>=Width||
-             vCoord3.z<0||vCoord3.z>=Depth
-          ){
-           //  pegar valor dos chunks vizinhos
-           Vector2Int cnkRgn3=current.cnkRgn_bg;
-           Vector2Int cCoord3=current.cCoord_bg;
-           ValidateCoord(ref cnkRgn3,ref vCoord3);
-           cCoord3=cnkRgnTocCoord(cnkRgn3);
-           int cnkIdx3=GetcnkIdx(cCoord3.x,cCoord3.y);
-           bool success=false;
-           if(VoxelTerrain.water.TryGetValue(cnkIdx3,out VoxelWaterChunk wcnk)){
-            lock(wcnk.syn){
-             if(wcnk.cnkIdx_bg==cnkIdx3){
-              int vxlIdx3=GetvxlIdx(vCoord3.x,vCoord3.y,vCoord3.z);
-              if(wcnk.voxels.TryGetValue(vxlIdx3,out(double density,bool sleeping,double absorbing)vxl3)){
-               wpolygonCell[corner]=(vxl3.density,Vector3.zero);
-               success=true;
-              }
-             }
-            }
-           }
-           if(!success){
-            wpolygonCell[corner]=(0d,Vector3.zero);
-           }
-          }else{
-           int vxlIdx3=GetvxlIdx(vCoord3.x,vCoord3.y,vCoord3.z); 
-           if(current.water_bg.voxels.TryGetValue(vxlIdx3,out(double density,bool sleeping,double absorbing)vxl3)){
-            wpolygonCell[corner]=(vxl3.density,Vector3.zero);
-           }else{
-            wpolygonCell[corner]=(0d,Vector3.zero);
-           }
-          }
-         }
-
-              //  calcular normal:
-              int tmpIdx=0;Vector3Int vCoord4=vCoord3;vCoord4.x++;                        SetwpolygonCellNormalSetwtmpvxl();
-                  tmpIdx++;           vCoord4=vCoord3;vCoord4.x--;                        SetwpolygonCellNormalSetwtmpvxl();
-                  tmpIdx++;           vCoord4=vCoord3;            vCoord4.y++;            SetwpolygonCellNormalSetwtmpvxl();
-                  tmpIdx++;           vCoord4=vCoord3;            vCoord4.y--;            SetwpolygonCellNormalSetwtmpvxl();
-                  tmpIdx++;           vCoord4=vCoord3;                        vCoord4.z++;SetwpolygonCellNormalSetwtmpvxl();
-                  tmpIdx++;           vCoord4=vCoord3;                        vCoord4.z--;SetwpolygonCellNormalSetwtmpvxl();
-
-              void SetwpolygonCellNormalSetwtmpvxl(){
-               if(vCoord4.y<0){
-                wtmpvxl[tmpIdx]=(0d,Vector3.zero);
-               }else if(vCoord4.y>=Height){
-                wtmpvxl[tmpIdx]=(0d,Vector3.zero);
-               }else{
-                if(vCoord4.x<0||vCoord4.x>=Width||
-                   vCoord4.z<0||vCoord4.z>=Depth
-                ){
-                 //  TO DO: pegar valor dos chunks vizinhos
-                 wtmpvxl[tmpIdx]=(0d,Vector3.zero);
-                }else{
-                 int vxlIdx4=GetvxlIdx(vCoord4.x,vCoord4.y,vCoord4.z); 
-                 if(current.water_bg.voxels.TryGetValue(vxlIdx4,out(double density,bool sleeping,double absorbing)vxl4)){
-                  wtmpvxl[tmpIdx]=(vxl4.density,Vector3.zero);
-                 }else{
-                  wtmpvxl[tmpIdx]=(0d,Vector3.zero);
-                 }
-                }
-               }
-              }
-
-              Vector3 wpolygonCellNormal=new Vector3{
-               x=(float)(wtmpvxl[1].Density-wtmpvxl[0].Density),
-               y=(float)(wtmpvxl[3].Density-wtmpvxl[2].Density),
-               z=(float)(wtmpvxl[5].Density-wtmpvxl[4].Density)
-              };
-
-              wpolygonCell[corner].Normal=wpolygonCellNormal;
-              if(wpolygonCell[corner].Normal!=Vector3.zero){
-               wpolygonCell[corner].Normal.Normalize();
-              }
-
-        }
-
-           int edgeIndex;
-           /*
-               Determine the index into the edge table which
-               tells us which vertices are inside of the surface
-           */
-                                                edgeIndex =  0;
-           if(-wpolygonCell[0].Density<IsoLevel)edgeIndex|=  1;
-           if(-wpolygonCell[1].Density<IsoLevel)edgeIndex|=  2;
-           if(-wpolygonCell[2].Density<IsoLevel)edgeIndex|=  4;
-           if(-wpolygonCell[3].Density<IsoLevel)edgeIndex|=  8;
-           if(-wpolygonCell[4].Density<IsoLevel)edgeIndex|= 16;
-           if(-wpolygonCell[5].Density<IsoLevel)edgeIndex|= 32;
-           if(-wpolygonCell[6].Density<IsoLevel)edgeIndex|= 64;
-           if(-wpolygonCell[7].Density<IsoLevel)edgeIndex|=128;
-           if(Tables.EdgeTable[edgeIndex]!=0){/*  Cube is not entirely in/out of the surface  */
-
-            if(0!=(Tables.EdgeTable[edgeIndex]&   1)){wvertexInterp(0,1,ref wvertices[ 0],ref wnormals[ 0]);}
-            if(0!=(Tables.EdgeTable[edgeIndex]&   2)){wvertexInterp(1,2,ref wvertices[ 1],ref wnormals[ 1]);}
-            if(0!=(Tables.EdgeTable[edgeIndex]&   4)){wvertexInterp(2,3,ref wvertices[ 2],ref wnormals[ 2]);}
-            if(0!=(Tables.EdgeTable[edgeIndex]&   8)){wvertexInterp(3,0,ref wvertices[ 3],ref wnormals[ 3]);}
-            if(0!=(Tables.EdgeTable[edgeIndex]&  16)){wvertexInterp(4,5,ref wvertices[ 4],ref wnormals[ 4]);}
-            if(0!=(Tables.EdgeTable[edgeIndex]&  32)){wvertexInterp(5,6,ref wvertices[ 5],ref wnormals[ 5]);}
-            if(0!=(Tables.EdgeTable[edgeIndex]&  64)){wvertexInterp(6,7,ref wvertices[ 6],ref wnormals[ 6]);}
-            if(0!=(Tables.EdgeTable[edgeIndex]& 128)){wvertexInterp(7,4,ref wvertices[ 7],ref wnormals[ 7]);}
-            if(0!=(Tables.EdgeTable[edgeIndex]& 256)){wvertexInterp(0,4,ref wvertices[ 8],ref wnormals[ 8]);}
-            if(0!=(Tables.EdgeTable[edgeIndex]& 512)){wvertexInterp(1,5,ref wvertices[ 9],ref wnormals[ 9]);}
-            if(0!=(Tables.EdgeTable[edgeIndex]&1024)){wvertexInterp(2,6,ref wvertices[10],ref wnormals[10]);}
-            if(0!=(Tables.EdgeTable[edgeIndex]&2048)){wvertexInterp(3,7,ref wvertices[11],ref wnormals[11]);}
-            void wvertexInterp(int c0,int c1,ref Vector3 p,ref Vector3 n){
-             wdensity[0]=-wpolygonCell[c0].Density;wvertex[0]=corners[c0];
-             wdensity[1]=-wpolygonCell[c1].Density;wvertex[1]=corners[c1];
-
-             //  p
-             if(Math.Abs(IsoLevel-wdensity[0])<double.Epsilon){p=wvertex[0];goto _Normal;}
-             if(Math.Abs(IsoLevel-wdensity[1])<double.Epsilon){p=wvertex[1];goto _Normal;}
-             if(Math.Abs(wdensity[0]-wdensity[1])<double.Epsilon){p=wvertex[0];goto _Normal;}
-             double marchingUnit=(IsoLevel-wdensity[0])/(wdensity[1]-wdensity[0]);
-             p.x=(float)(wvertex[0].x+marchingUnit*(wvertex[1].x-wvertex[0].x));
-             p.y=(float)(wvertex[0].y+marchingUnit*(wvertex[1].y-wvertex[0].y));
-             p.z=(float)(wvertex[0].z+marchingUnit*(wvertex[1].z-wvertex[0].z));
-                                        
-             //  n
-             _Normal:{
-              wdistance[0]=Vector3.Distance(wvertex[0],wvertex[1]);
-              wdistance[1]=Vector3.Distance(wvertex[1],p);
-              n=Vector3.Lerp(
-               wpolygonCell[c1].Normal,
-               wpolygonCell[c0].Normal,
-               wdistance[1]/wdistance[0]
-              );
-              n=n!=Vector3.zero?n.normalized:Vector3.down;
-             }
-
-            }
-
-            /*  Create the triangle  */
-            for(int i=0;Tables.TriangleTable[edgeIndex][i]!=-1;i+=3){
-             widx[0]=Tables.TriangleTable[edgeIndex][i  ];
-             widx[1]=Tables.TriangleTable[edgeIndex][i+1];
-             widx[2]=Tables.TriangleTable[edgeIndex][i+2];
-
-             Vector3 pos=vCoord1-trianglePosAdj;
-
-             current.TempWVer.Add(new WVertex(wverPos[0]=pos+wvertices[widx[0]],wnormals[widx[0]]));
-             current.TempWVer.Add(new WVertex(wverPos[1]=pos+wvertices[widx[1]],wnormals[widx[1]]));
-             current.TempWVer.Add(new WVertex(wverPos[2]=pos+wvertices[widx[2]],wnormals[widx[2]]));
-             current.TempWTri.Add(wvertexCount+2);
-             current.TempWTri.Add(wvertexCount+1);
-             current.TempWTri.Add(wvertexCount  );
-                                  wvertexCount+=3;
-            }
-
-           }
-
-       }}} 
-
-       if(current.water_bg.absorbing.Count>0||
-          current.water_bg.spreading.Count>0
-       ){
-        current.water_bg.result_bg=2;
-       }
-
-       foreach(var voxel in current.water_bg.absorbing){
-       }
-       foreach(var voxel in current.water_bg.spreading){
-        Vector3Int vCoord2=voxel.Key;
-        if(current.water_bg.spreading.TryRemove(vCoord2,out double density)){
-         //Debug.Log("spreading:"+vCoord2);
-         Vector3Int d_vCoord=new Vector3Int(vCoord2.x,vCoord2.y-1,vCoord2.z);
-         bool waterfall=VerticalSpread(d_vCoord,d_vCoord.y>=0);
-         bool VerticalSpread(Vector3Int v_vCoord,bool insideAxisLength){
-          if(insideAxisLength){
-           int v_vxlIdx=GetvxlIdx(v_vCoord.x,v_vCoord.y,v_vCoord.z);
-           return Spread(v_vxlIdx);
-          }
-          bool Spread(int v_vxlIdx){
-           bool spread=true;
-           (double density,bool sleeping,double absorbing)newValue=(density,false,0d);
-           if(newValue.density<30d){
-            return false;
-           }
-           bool blocked=current.voxels_bg[v_vxlIdx].hasDensity;
-           if(blocked){
-            spread=false;
-            newValue.sleeping=true;
-           }
-           current.water_bg.voxels.AddOrUpdate(v_vxlIdx,newValue,
-            (key,oldValue)=>{
-             if(oldValue.density>=newValue.density){
-              return oldValue;
-             }
-             newValue.absorbing=Math.Max(oldValue.absorbing,newValue.absorbing);
-             return newValue;
-            }
-           );
-           return spread;
-          }
-          return false;
-         }
-         if(!waterfall){
-          Vector3Int r_vCoord=new Vector3Int(vCoord2.x+1,vCoord2.y,vCoord2.z);
-          HorizontalSpread(r_vCoord,r_vCoord.x<Width);
-          Vector3Int l_vCoord=new Vector3Int(vCoord2.x-1,vCoord2.y,vCoord2.z);
-          HorizontalSpread(l_vCoord,l_vCoord.x>=0);
-          Vector3Int f_vCoord=new Vector3Int(vCoord2.x,vCoord2.y,vCoord2.z+1);
-          HorizontalSpread(f_vCoord,f_vCoord.z<Depth);
-          Vector3Int b_vCoord=new Vector3Int(vCoord2.x,vCoord2.y,vCoord2.z-1);
-          HorizontalSpread(b_vCoord,b_vCoord.z>=0);
-         }
-         bool HorizontalSpread(Vector3Int h_vCoord,bool insideAxisLength){
-          if(insideAxisLength){
-           int h_vxlIdx=GetvxlIdx(h_vCoord.x,h_vCoord.y,h_vCoord.z);
-           return Spread(h_vxlIdx);
-          }else{
-           //  passar pra outros chunks
-           Vector3Int vCoord3=h_vCoord;
-           Vector2Int cnkRgn3=current.cnkRgn_bg;
-           Vector2Int cCoord3=current.cCoord_bg;
-           ValidateCoord(ref cnkRgn3,ref vCoord3);
-           cCoord3=cnkRgnTocCoord(cnkRgn3);
-           int cnkIdx3=GetcnkIdx(cCoord3.x,cCoord3.y);
-           //Debug.Log("cCoord3:"+cCoord3);
-           if(VoxelTerrain.water.TryGetValue(cnkIdx3,out VoxelWaterChunk wcnk)){
-            lock(wcnk.syn){
-             if(wcnk.cnkIdx_bg==cnkIdx3){
-
-              int vxlIdx3=GetvxlIdx(vCoord3.x,vCoord3.y,vCoord3.z);
-
-              int oftIdx3=GetoftIdx(cCoord3-current.cCoord_bg);
-
-              bool spread=true;
-              (double density,bool sleeping,double absorbing)newValue=(density-5d,false,0d);
-              if(newValue.density<30d){
-               return false;
-              }
-              bool blocked=current.neighbors_bg[oftIdx3-1].TryGetValue(vxlIdx3,out(bool hasDensity,MaterialId material)ngbvxl3)&&ngbvxl3.hasDensity;
-              if(blocked){
-               spread=false;
-               newValue.sleeping=true;
-              }
-              wcnk.voxels.AddOrUpdate(vxlIdx3,newValue,
-               (key,oldValue)=>{
-                if(oldValue.density>=newValue.density){
-                 spread=false;
-                 return oldValue;
-                }
-                newValue.absorbing=Math.Max(oldValue.absorbing,newValue.absorbing);
-                return newValue;
-               }
-              );
-              wcnk.HasPendingChanges=true;
-              return spread;
-             }
-            }
-           }
-           current.water_bg.spreading.AddOrUpdate(vCoord2,density,
-            (key,oldValue)=>{
-             return Math.Max(oldValue,density);
-            }
-           );
-           return true;
-          }
-          bool Spread(int h_vxlIdx){
-           bool spread=true;
-           (double density,bool sleeping,double absorbing)newValue=(density-5d,false,0d);
-           if(newValue.density<30d){
-            return false;
-           }
-           bool blocked=current.voxels_bg[h_vxlIdx].hasDensity;
-           if(blocked){
-            spread=false;
-            newValue.sleeping=true;
-           }
-           current.water_bg.voxels.AddOrUpdate(h_vxlIdx,newValue,
-            (key,oldValue)=>{
-             if(oldValue.density>=newValue.density){
-              spread=false;
-              return oldValue;
-             }
-             newValue.absorbing=Math.Max(oldValue.absorbing,newValue.absorbing);
-             return newValue;
-            }
-           );
-           return spread;
-          }
-          return false;
-         }
-        }
-       }
       }
      }
         
@@ -1395,6 +1032,8 @@ namespace AKCondinoO.Voxels{
 
     }
     #endregion
+        
+    internal VoxelWaterChunk.WaterMarchingCubesBackgroundContainer wmarchingCubesBG;
 
     BakerJob bakeJob;
     struct BakerJob:IJob{
@@ -1743,6 +1382,7 @@ namespace AKCondinoO.Voxels{
 
     void Awake(){
      marchingCubesBG=new MarchingCubesBackgroundContainer(syn,water);
+      wmarchingCubesBG=new VoxelWaterChunk.WaterMarchingCubesBackgroundContainer(water);
 
      renderer=GetComponent<MeshRenderer>();
      collider=GetComponent<MeshCollider>();
@@ -1783,8 +1423,8 @@ namespace AKCondinoO.Voxels{
      //Debug.Log("VoxelTerrainChunk:OnActivated");
      marchingCubesBG.TempVer=new NativeList<Vertex>(Allocator.Persistent);
      marchingCubesBG.TempTri=new NativeList<UInt32>(Allocator.Persistent);
-      marchingCubesBG.TempWVer=new NativeList<WVertex>(Allocator.Persistent);
-      marchingCubesBG.TempWTri=new NativeList< UInt32>(Allocator.Persistent);
+      wmarchingCubesBG.TempWVer=new NativeList<WVertex>(Allocator.Persistent);
+      wmarchingCubesBG.TempWTri=new NativeList< UInt32>(Allocator.Persistent);
 
      addTreesBG.GetGroundRays=new NativeList<RaycastCommand>(Width*Depth,Allocator.Persistent);
      addTreesBG.GetGroundHits=new NativeList<RaycastHit    >(Width*Depth,Allocator.Persistent);
@@ -1795,8 +1435,9 @@ namespace AKCondinoO.Voxels{
      marchingCubesBG.IsCompleted(VoxelTerrain.Singleton.marchingCubesBGThreads[0].IsRunning,-1);
      if(marchingCubesBG.TempVer.IsCreated)marchingCubesBG.TempVer.Dispose();
      if(marchingCubesBG.TempTri.IsCreated)marchingCubesBG.TempTri.Dispose();
-      if(marchingCubesBG.TempWVer.IsCreated)marchingCubesBG.TempWVer.Dispose();
-      if(marchingCubesBG.TempWTri.IsCreated)marchingCubesBG.TempWTri.Dispose();
+      wmarchingCubesBG.IsCompleted(VoxelTerrain.Singleton.wmarchingCubesBGThreads[0].IsRunning,-1);
+      if(wmarchingCubesBG.TempWVer.IsCreated)wmarchingCubesBG.TempWVer.Dispose();
+      if(wmarchingCubesBG.TempWTri.IsCreated)wmarchingCubesBG.TempWTri.Dispose();
 
      if(this!=null){
      }
@@ -1832,8 +1473,13 @@ namespace AKCondinoO.Voxels{
      rebuildRequired=true;
     }
 
-    internal void OnWaterEdited(){
+    internal void OnResumeWater(){
      waterUpdateFlag=true;
+    }
+
+    internal void OnPauseWater(){
+     Debug.Log("OnPauseWater");
+     waterUpdateFlag=false;
     }
 
     float waterUpdateInterval=.125f;
@@ -1954,6 +1600,7 @@ namespace AKCondinoO.Voxels{
       return false;
      }
      if(marchingCubesBG.IsCompleted(VoxelTerrain.Singleton.marchingCubesBGThreads[0].IsRunning)){
+      waterUpdateFlag=true;
       collider.sharedMesh=null;
       filter.mesh=null;
        wfilter.mesh=null;
@@ -2070,6 +1717,7 @@ namespace AKCondinoO.Voxels{
 
     bool OnRebuild(){
      if(marchingCubesBG.IsCompleted(VoxelTerrain.Singleton.marchingCubesBGThreads[0].IsRunning)){
+      waterUpdateFlag=true;
       marchingCubesBG.executionMode_bg=MarchingCubesBackgroundContainer.ExecutionMode.terrain;
       MarchingCubesMultithreaded.Schedule(marchingCubesBG);
       return true;
@@ -2082,15 +1730,26 @@ namespace AKCondinoO.Voxels{
      buildRequested=true;
     }
 
+    internal static int wmarchingCubesCount;
+
     bool OnWaterUpdate(){
-     if(marchingCubesCount>=VoxelTerrain.Singleton.marchingCubesLimit){
+     if(marchingCubesCount>0){
       return false;
      }
-     if(marchingCubesBG.IsCompleted(VoxelTerrain.Singleton.marchingCubesBGThreads[0].IsRunning)){
-      marchingCubesBG.executionMode_bg=MarchingCubesBackgroundContainer.ExecutionMode.water;
-      marchingCubesCount++;
+     if(wmarchingCubesCount>=VoxelTerrain.Singleton.wmarchingCubesLimit){
+      return false;
+     }
+     if(wmarchingCubesBG.IsCompleted(VoxelTerrain.Singleton.wmarchingCubesBGThreads[0].IsRunning)){
+      wmarchingCubesBG.cCoord_bg=cCoord;
+      wmarchingCubesBG.cnkRgn_bg=cnkRgn;
+      wmarchingCubesBG.cnkIdx_bg=cnkIdx.Value;
+      wmarchingCubesBG.voxels_bg=marchingCubesBG.voxels_bg;
+      for(int i=0;i<marchingCubesBG.neighbors_bg.Length;++i){
+       wmarchingCubesBG.neighbors_bg[i]=new Dictionary<int,(bool hasDensity,MaterialId material)>(marchingCubesBG.neighbors_bg[i]);
+      }
+      wmarchingCubesCount++;
       water.HasPendingChanges=false;
-      MarchingCubesMultithreaded.Schedule(marchingCubesBG);
+      VoxelWaterChunk.WaterMarchingCubesMultithreaded.Schedule(wmarchingCubesBG);
       return true;
      }
      return false;
@@ -2101,25 +1760,23 @@ namespace AKCondinoO.Voxels{
      waterUpdateRequested=true;
     }
     bool OnWaterUpdated(){
-     if(marchingCubesBG.IsCompleted(VoxelTerrain.Singleton.marchingCubesBGThreads[0].IsRunning)){
-      if(marchingCubesBG.water_bg.result_bg==2){
+     if(wmarchingCubesBG.IsCompleted(VoxelTerrain.Singleton.wmarchingCubesBGThreads[0].IsRunning)){
+      if(wmarchingCubesBG.water_bg.result_bg==2){
        waterUpdateFlag=true;
       }
-      if(marchingCubesBG.water_bg.result_bg==2||marchingCubesBG.water_bg.result_bg==1){
-       bool resize;
-       if(resize=marchingCubesBG.TempWVer.Length>wmesh.vertexCount){
-        wmesh.SetVertexBufferParams(marchingCubesBG.TempWVer.Length,wlayout);
-       }
-       wmesh.SetVertexBufferData(marchingCubesBG.TempWVer.AsArray(),0,0,marchingCubesBG.TempWVer.Length,0,wmeshFlags);
-       if(resize){
-        wmesh.SetIndexBufferParams(marchingCubesBG.TempWTri.Length,IndexFormat.UInt32);
-       }
-       wmesh.SetIndexBufferData(marchingCubesBG.TempWTri.AsArray(),0,0,marchingCubesBG.TempWTri.Length,wmeshFlags);
-       wmesh.subMeshCount=1;
-       wmesh.SetSubMesh(0,new SubMeshDescriptor(0,marchingCubesBG.TempWTri.Length){firstVertex=0,vertexCount=marchingCubesBG.TempWVer.Length},wmeshFlags);
-       wfilter.mesh=wmesh;
+      bool resize;
+      if(resize=wmarchingCubesBG.TempWVer.Length>wmesh.vertexCount){
+       wmesh.SetVertexBufferParams(wmarchingCubesBG.TempWVer.Length,wlayout);
       }
-      marchingCubesCount--;
+      wmesh.SetVertexBufferData(wmarchingCubesBG.TempWVer.AsArray(),0,0,wmarchingCubesBG.TempWVer.Length,0,wmeshFlags);
+      if(resize){
+       wmesh.SetIndexBufferParams(wmarchingCubesBG.TempWTri.Length,IndexFormat.UInt32);
+      }
+      wmesh.SetIndexBufferData(wmarchingCubesBG.TempWTri.AsArray(),0,0,wmarchingCubesBG.TempWTri.Length,wmeshFlags);
+      wmesh.subMeshCount=1;
+      wmesh.SetSubMesh(0,new SubMeshDescriptor(0,wmarchingCubesBG.TempWTri.Length){firstVertex=0,vertexCount=wmarchingCubesBG.TempWVer.Length},wmeshFlags);
+      wfilter.mesh=wmesh;
+      wmarchingCubesCount--;
       return true;
      }
      return false;
@@ -2181,6 +1838,481 @@ namespace AKCondinoO.Voxels{
    get{bool tmp;lock(HasPendingChanges_syn){tmp=HasPendingChanges_v;      }return tmp;}
    set{         lock(HasPendingChanges_syn){    HasPendingChanges_v=value;}           }
   }bool HasPendingChanges_v=false;readonly object HasPendingChanges_syn=new object();
+        
+    internal class WaterMarchingCubesBackgroundContainer:BackgroundContainer{
+     internal readonly VoxelWaterChunk water_bg;
+
+    internal(bool hasDensity,MaterialId material)[]voxels_bg;
+
+    internal readonly Dictionary<int,(bool hasDensity,MaterialId material)>[]neighbors_bg=new Dictionary<int,(bool,MaterialId)>[8];
+            
+     internal WaterMarchingCubesBackgroundContainer(VoxelWaterChunk water){
+
+      water_bg=water;
+
+     }
+            
+      internal NativeList<WVertex>TempWVer;
+      [StructLayout(LayoutKind.Sequential)]internal struct WVertex{
+       internal Vector3 pos;
+       internal Vector3 normal;
+       internal WVertex(Vector3 p,Vector3 n){
+        pos=p;
+        normal=n;
+       }
+      }
+      internal NativeList< UInt32>TempWTri;
+
+     internal Vector2Int cCoord_bg;
+     internal Vector2Int cnkRgn_bg;
+     internal        int cnkIdx_bg;
+    }
+    internal class WaterMarchingCubesMultithreaded:BaseMultithreaded<WaterMarchingCubesBackgroundContainer>{
+            
+      readonly(double Density,Vector3 Normal)[]wpolygonCell=new(double,Vector3)[8];
+            
+      readonly(double Density,Vector3 Normal)[][][]wvoxelsCache1=new(double,Vector3)[3][][]{new(double Density,Vector3 Normal)[1][]{new(double Density,Vector3 Normal)[4],},new(double Density,Vector3 Normal)[Depth][],new(double Density,Vector3 Normal)[FlattenOffset][],};
+            
+      readonly(double Density,Vector3 Normal)[]wtmpvxl=new(double,Vector3)[6];
+
+      readonly Vector3[]wvertices=new Vector3[12];
+       readonly Vector3[]wnormals=new Vector3[12];
+            
+      readonly Vector3[][][]wverticesCache=new Vector3[3][][]{new Vector3[1][]{new Vector3[4],},new Vector3[Depth][],new Vector3[FlattenOffset][],};
+            
+      readonly double[]wdensity=new double[2];
+       readonly Vector3[]wvertex=new Vector3[2];
+        readonly float[]wdistance=new float[2];
+
+     static readonly ReadOnlyCollection<Vector3>corners=new ReadOnlyCollection<Vector3>(new Vector3[8]{
+      new Vector3(-.5f,-.5f,-.5f),
+      new Vector3( .5f,-.5f,-.5f),
+      new Vector3( .5f, .5f,-.5f),
+      new Vector3(-.5f, .5f,-.5f),
+      new Vector3(-.5f,-.5f, .5f),
+      new Vector3( .5f,-.5f, .5f),
+      new Vector3( .5f, .5f, .5f),
+      new Vector3(-.5f, .5f, .5f),
+     });
+
+      readonly int[]widx=new int[3];
+       readonly Vector3[]wverPos=new Vector3[3];
+
+     internal static Vector3 trianglePosAdj{get;}=new Vector3((Width/2.0f)-0.5f,(Height/2.0f)-0.5f,(Depth/2.0f)-0.5f);
+            
+     internal WaterMarchingCubesMultithreaded(){
+       for(int i=0;i<wvoxelsCache1[2].Length;++i){
+        wvoxelsCache1[2][i]=new(double Density,Vector3 Normal)[4];
+        if(i<wvoxelsCache1[1].Length){
+         wvoxelsCache1[1][i]=new(double Density,Vector3 Normal)[4];
+        }
+       }
+
+       for(int i=0;i<wverticesCache[2].Length;++i){
+        wverticesCache[2][i]=new Vector3[4];
+        if(i<wverticesCache[1].Length){
+         wverticesCache[1][i]=new Vector3[4];
+        }
+       }
+     }
+
+     protected override void Cleanup(){
+       for(int i=0;i<wvoxelsCache1[0].Length;++i){Array.Clear(wvoxelsCache1[0][i],0,wvoxelsCache1[0][i].Length);}
+       for(int i=0;i<wvoxelsCache1[1].Length;++i){Array.Clear(wvoxelsCache1[1][i],0,wvoxelsCache1[1][i].Length);}
+       for(int i=0;i<wvoxelsCache1[2].Length;++i){Array.Clear(wvoxelsCache1[2][i],0,wvoxelsCache1[2][i].Length);}
+       
+       for(int i=0;i<wverticesCache[0].Length;++i){Array.Clear(wverticesCache[0][i],0,wverticesCache[0][i].Length);}
+       for(int i=0;i<wverticesCache[1].Length;++i){Array.Clear(wverticesCache[1][i],0,wverticesCache[1][i].Length);}
+       for(int i=0;i<wverticesCache[2].Length;++i){Array.Clear(wverticesCache[2][i],0,wverticesCache[2][i].Length);}
+     }
+     protected override void Execute(){
+      if(current.water_bg.cnkIdx_bg!=current.cnkIdx_bg){
+       lock(current.water_bg.syn){
+        current.water_bg.cCoord_bg=current.cCoord_bg;
+        current.water_bg.cnkRgn_bg=current.cnkRgn_bg;
+        current.water_bg.cnkIdx_bg=current.cnkIdx_bg;
+        current.water_bg.voxels.Clear();
+        current.water_bg.absorbing.Clear();
+        current.water_bg.spreading.Clear();
+       }
+      }
+       //Debug.Log("MarchingCubesBackgroundContainer.ExecutionMode.water");
+
+       if      (current.water_bg.result_bg==2){
+        current.water_bg.result_bg=1;
+       }else if(current.water_bg.result_bg==1){
+        current.water_bg.result_bg=0;
+       }
+
+          current.TempWVer.Clear();
+          current.TempWTri.Clear();
+
+          UInt32 wvertexCount=0;
+
+       Vector3Int vCoord1;
+       for(vCoord1=new Vector3Int();vCoord1.y<Height;vCoord1.y++){
+       for(vCoord1.x=0             ;vCoord1.x<Width ;vCoord1.x++){
+       for(vCoord1.z=0             ;vCoord1.z<Depth ;vCoord1.z++){
+
+        Vector3Int vCoord2=vCoord1;
+        int vxlIdx2=GetvxlIdx(vCoord2.x,vCoord2.y,vCoord2.z); 
+        if(current.water_bg.voxels.TryGetValue(vxlIdx2,out(double density,bool sleeping,double absorbing)vxl2)){
+         if(vxl2.absorbing>0d){
+         }
+         if(!vxl2.sleeping){
+          current.water_bg.spreading.AddOrUpdate(vCoord2,vxl2.density,
+           (key,oldValue)=>{
+            return Math.Max(oldValue,vxl2.density);
+           }
+          );
+          current.water_bg.voxels.TryUpdate(vxlIdx2,(vxl2.density,true,vxl2.absorbing),vxl2);
+         }
+         if(vxl2.density<=0d){//  remove
+         }
+        }
+
+        int corner=0;Vector3Int vCoord3=vCoord1;                                       if(vCoord1.z>0)wpolygonCell[corner]=wvoxelsCache1[0][0][0];else if(vCoord1.x>0)wpolygonCell[corner]=wvoxelsCache1[1][vCoord1.z][0];else if(vCoord1.y>0)wpolygonCell[corner]=wvoxelsCache1[2][vCoord1.z+vCoord1.x*Depth][0];else SetwpolygonCellVoxel();
+            corner++;           vCoord3=vCoord1;vCoord3.x+=1;                          if(vCoord1.z>0)wpolygonCell[corner]=wvoxelsCache1[0][0][1];                                                                        else if(vCoord1.y>0)wpolygonCell[corner]=wvoxelsCache1[2][vCoord1.z+vCoord1.x*Depth][1];else SetwpolygonCellVoxel();
+            corner++;           vCoord3=vCoord1;vCoord3.x+=1;vCoord3.y+=1;             if(vCoord1.z>0)wpolygonCell[corner]=wvoxelsCache1[0][0][2];                                                                                                                                                                else SetwpolygonCellVoxel();
+            corner++;           vCoord3=vCoord1;             vCoord3.y+=1;             if(vCoord1.z>0)wpolygonCell[corner]=wvoxelsCache1[0][0][3];else if(vCoord1.x>0)wpolygonCell[corner]=wvoxelsCache1[1][vCoord1.z][1];                                                                                        else SetwpolygonCellVoxel();
+            corner++;           vCoord3=vCoord1;                          vCoord3.z+=1;                                                                if(vCoord1.x>0)wpolygonCell[corner]=wvoxelsCache1[1][vCoord1.z][2];else if(vCoord1.y>0)wpolygonCell[corner]=wvoxelsCache1[2][vCoord1.z+vCoord1.x*Depth][2];else SetwpolygonCellVoxel();
+            corner++;           vCoord3=vCoord1;vCoord3.x+=1;             vCoord3.z+=1;                                                                                                                                        if(vCoord1.y>0)wpolygonCell[corner]=wvoxelsCache1[2][vCoord1.z+vCoord1.x*Depth][3];else SetwpolygonCellVoxel();
+            corner++;           vCoord3=vCoord1;vCoord3.x+=1;vCoord3.y+=1;vCoord3.z+=1;                                                                                                                                                                                                                                SetwpolygonCellVoxel();
+            corner++;           vCoord3=vCoord1;             vCoord3.y+=1;vCoord3.z+=1;                                                                if(vCoord1.x>0)wpolygonCell[corner]=wvoxelsCache1[1][vCoord1.z][3];                                                                                        else SetwpolygonCellVoxel();
+        wvoxelsCache1[0][0][0]=wpolygonCell[4];
+        wvoxelsCache1[0][0][1]=wpolygonCell[5];
+        wvoxelsCache1[0][0][2]=wpolygonCell[6];
+        wvoxelsCache1[0][0][3]=wpolygonCell[7];
+        wvoxelsCache1[1][vCoord1.z][0]=wpolygonCell[1];
+        wvoxelsCache1[1][vCoord1.z][1]=wpolygonCell[2];
+        wvoxelsCache1[1][vCoord1.z][2]=wpolygonCell[5];
+        wvoxelsCache1[1][vCoord1.z][3]=wpolygonCell[6];
+        wvoxelsCache1[2][vCoord1.z+vCoord1.x*Depth][0]=wpolygonCell[3];
+        wvoxelsCache1[2][vCoord1.z+vCoord1.x*Depth][1]=wpolygonCell[2];
+        wvoxelsCache1[2][vCoord1.z+vCoord1.x*Depth][2]=wpolygonCell[7];
+        wvoxelsCache1[2][vCoord1.z+vCoord1.x*Depth][3]=wpolygonCell[6];
+
+        void SetwpolygonCellVoxel(){
+         if(vCoord3.y<0){
+          wpolygonCell[corner]=(0d,Vector3.zero);
+         }else if(vCoord3.y>=Height){
+          wpolygonCell[corner]=(0d,Vector3.zero);
+         }else{
+          if(vCoord3.x<0||vCoord3.x>=Width||
+             vCoord3.z<0||vCoord3.z>=Depth
+          ){
+           //  pegar valor dos chunks vizinhos
+           Vector2Int cnkRgn3=current.cnkRgn_bg;
+           Vector2Int cCoord3=current.cCoord_bg;
+           ValidateCoord(ref cnkRgn3,ref vCoord3);
+           cCoord3=cnkRgnTocCoord(cnkRgn3);
+           int cnkIdx3=GetcnkIdx(cCoord3.x,cCoord3.y);
+           bool success=false;
+           if(VoxelTerrain.water.TryGetValue(cnkIdx3,out VoxelWaterChunk wcnk)){
+            lock(wcnk.syn){
+             if(wcnk.cnkIdx_bg==cnkIdx3){
+              int vxlIdx3=GetvxlIdx(vCoord3.x,vCoord3.y,vCoord3.z);
+              if(wcnk.voxels.TryGetValue(vxlIdx3,out(double density,bool sleeping,double absorbing)vxl3)){
+               wpolygonCell[corner]=(vxl3.density,Vector3.zero);
+               success=true;
+              }
+             }
+            }
+           }
+           if(!success){
+            wpolygonCell[corner]=(0d,Vector3.zero);
+           }
+          }else{
+           int vxlIdx3=GetvxlIdx(vCoord3.x,vCoord3.y,vCoord3.z); 
+           if(current.water_bg.voxels.TryGetValue(vxlIdx3,out(double density,bool sleeping,double absorbing)vxl3)){
+            wpolygonCell[corner]=(vxl3.density,Vector3.zero);
+           }else{
+            wpolygonCell[corner]=(0d,Vector3.zero);
+           }
+          }
+         }
+
+              //  calcular normal:
+              int tmpIdx=0;Vector3Int vCoord4=vCoord3;vCoord4.x++;                        SetwpolygonCellNormalSetwtmpvxl();
+                  tmpIdx++;           vCoord4=vCoord3;vCoord4.x--;                        SetwpolygonCellNormalSetwtmpvxl();
+                  tmpIdx++;           vCoord4=vCoord3;            vCoord4.y++;            SetwpolygonCellNormalSetwtmpvxl();
+                  tmpIdx++;           vCoord4=vCoord3;            vCoord4.y--;            SetwpolygonCellNormalSetwtmpvxl();
+                  tmpIdx++;           vCoord4=vCoord3;                        vCoord4.z++;SetwpolygonCellNormalSetwtmpvxl();
+                  tmpIdx++;           vCoord4=vCoord3;                        vCoord4.z--;SetwpolygonCellNormalSetwtmpvxl();
+
+              void SetwpolygonCellNormalSetwtmpvxl(){
+               if(vCoord4.y<0){
+                wtmpvxl[tmpIdx]=(0d,Vector3.zero);
+               }else if(vCoord4.y>=Height){
+                wtmpvxl[tmpIdx]=(0d,Vector3.zero);
+               }else{
+                if(vCoord4.x<0||vCoord4.x>=Width||
+                   vCoord4.z<0||vCoord4.z>=Depth
+                ){
+                 //  TO DO: pegar valor dos chunks vizinhos
+                 wtmpvxl[tmpIdx]=(0d,Vector3.zero);
+                }else{
+                 int vxlIdx4=GetvxlIdx(vCoord4.x,vCoord4.y,vCoord4.z); 
+                 if(current.water_bg.voxels.TryGetValue(vxlIdx4,out(double density,bool sleeping,double absorbing)vxl4)){
+                  wtmpvxl[tmpIdx]=(vxl4.density,Vector3.zero);
+                 }else{
+                  wtmpvxl[tmpIdx]=(0d,Vector3.zero);
+                 }
+                }
+               }
+              }
+
+              Vector3 wpolygonCellNormal=new Vector3{
+               x=(float)(wtmpvxl[1].Density-wtmpvxl[0].Density),
+               y=(float)(wtmpvxl[3].Density-wtmpvxl[2].Density),
+               z=(float)(wtmpvxl[5].Density-wtmpvxl[4].Density)
+              };
+
+              wpolygonCell[corner].Normal=wpolygonCellNormal;
+              if(wpolygonCell[corner].Normal!=Vector3.zero){
+               wpolygonCell[corner].Normal.Normalize();
+              }
+
+        }
+
+           int edgeIndex;
+           /*
+               Determine the index into the edge table which
+               tells us which vertices are inside of the surface
+           */
+                                                edgeIndex =  0;
+           if(-wpolygonCell[0].Density<IsoLevel)edgeIndex|=  1;
+           if(-wpolygonCell[1].Density<IsoLevel)edgeIndex|=  2;
+           if(-wpolygonCell[2].Density<IsoLevel)edgeIndex|=  4;
+           if(-wpolygonCell[3].Density<IsoLevel)edgeIndex|=  8;
+           if(-wpolygonCell[4].Density<IsoLevel)edgeIndex|= 16;
+           if(-wpolygonCell[5].Density<IsoLevel)edgeIndex|= 32;
+           if(-wpolygonCell[6].Density<IsoLevel)edgeIndex|= 64;
+           if(-wpolygonCell[7].Density<IsoLevel)edgeIndex|=128;
+           if(Tables.EdgeTable[edgeIndex]!=0){/*  Cube is not entirely in/out of the surface  */
+                                    
+            //  Use cached data if available
+            Array.Clear(wvertices,0,wvertices.Length);
+            wvertices[ 0]=(vCoord1.z>0?wverticesCache[0][0][0]:(vCoord1.y>0?wverticesCache[2][vCoord1.z+vCoord1.x*Depth][0]:Vector3.zero));
+            wvertices[ 1]=(vCoord1.z>0?wverticesCache[0][0][1]:Vector3.zero);
+            wvertices[ 2]=(vCoord1.z>0?wverticesCache[0][0][2]:Vector3.zero);
+            wvertices[ 3]=(vCoord1.z>0?wverticesCache[0][0][3]:(vCoord1.x>0?wverticesCache[1][vCoord1.z][0]:Vector3.zero));
+            wvertices[ 4]=(vCoord1.y>0?wverticesCache[2][vCoord1.z+vCoord1.x*Depth][1]:Vector3.zero);
+            wvertices[ 7]=(vCoord1.x>0?wverticesCache[1][vCoord1.z][1]:Vector3.zero);
+            wvertices[ 8]=(vCoord1.x>0?wverticesCache[1][vCoord1.z][2]:(vCoord1.y>0?wverticesCache[2][vCoord1.z+vCoord1.x*Depth][3]:Vector3.zero));
+            wvertices[ 9]=(vCoord1.y>0?wverticesCache[2][vCoord1.z+vCoord1.x*Depth][2]:Vector3.zero);
+            wvertices[11]=(vCoord1.x>0?wverticesCache[1][vCoord1.z][3]:Vector3.zero);
+
+            if(0!=(Tables.EdgeTable[edgeIndex]&   1)){wvertexInterp(0,1,ref wvertices[ 0],ref wnormals[ 0]);}
+            if(0!=(Tables.EdgeTable[edgeIndex]&   2)){wvertexInterp(1,2,ref wvertices[ 1],ref wnormals[ 1]);}
+            if(0!=(Tables.EdgeTable[edgeIndex]&   4)){wvertexInterp(2,3,ref wvertices[ 2],ref wnormals[ 2]);}
+            if(0!=(Tables.EdgeTable[edgeIndex]&   8)){wvertexInterp(3,0,ref wvertices[ 3],ref wnormals[ 3]);}
+            if(0!=(Tables.EdgeTable[edgeIndex]&  16)){wvertexInterp(4,5,ref wvertices[ 4],ref wnormals[ 4]);}
+            if(0!=(Tables.EdgeTable[edgeIndex]&  32)){wvertexInterp(5,6,ref wvertices[ 5],ref wnormals[ 5]);}
+            if(0!=(Tables.EdgeTable[edgeIndex]&  64)){wvertexInterp(6,7,ref wvertices[ 6],ref wnormals[ 6]);}
+            if(0!=(Tables.EdgeTable[edgeIndex]& 128)){wvertexInterp(7,4,ref wvertices[ 7],ref wnormals[ 7]);}
+            if(0!=(Tables.EdgeTable[edgeIndex]& 256)){wvertexInterp(0,4,ref wvertices[ 8],ref wnormals[ 8]);}
+            if(0!=(Tables.EdgeTable[edgeIndex]& 512)){wvertexInterp(1,5,ref wvertices[ 9],ref wnormals[ 9]);}
+            if(0!=(Tables.EdgeTable[edgeIndex]&1024)){wvertexInterp(2,6,ref wvertices[10],ref wnormals[10]);}
+            if(0!=(Tables.EdgeTable[edgeIndex]&2048)){wvertexInterp(3,7,ref wvertices[11],ref wnormals[11]);}
+            void wvertexInterp(int c0,int c1,ref Vector3 p,ref Vector3 n){
+             wdensity[0]=-wpolygonCell[c0].Density;wvertex[0]=corners[c0];
+             wdensity[1]=-wpolygonCell[c1].Density;wvertex[1]=corners[c1];
+
+             //  p
+             if(p!=Vector3.zero){goto _Normal;}
+             if(Math.Abs(IsoLevel-wdensity[0])<double.Epsilon){p=wvertex[0];goto _Normal;}
+             if(Math.Abs(IsoLevel-wdensity[1])<double.Epsilon){p=wvertex[1];goto _Normal;}
+             if(Math.Abs(wdensity[0]-wdensity[1])<double.Epsilon){p=wvertex[0];goto _Normal;}
+             double marchingUnit=(IsoLevel-wdensity[0])/(wdensity[1]-wdensity[0]);
+             p.x=(float)(wvertex[0].x+marchingUnit*(wvertex[1].x-wvertex[0].x));
+             p.y=(float)(wvertex[0].y+marchingUnit*(wvertex[1].y-wvertex[0].y));
+             p.z=(float)(wvertex[0].z+marchingUnit*(wvertex[1].z-wvertex[0].z));
+                                        
+             //  n
+             _Normal:{
+              wdistance[0]=Vector3.Distance(wvertex[0],wvertex[1]);
+              wdistance[1]=Vector3.Distance(wvertex[1],p);
+              n=Vector3.Lerp(
+               wpolygonCell[c1].Normal,
+               wpolygonCell[c0].Normal,
+               wdistance[1]/wdistance[0]
+              );
+              n=n!=Vector3.zero?n.normalized:Vector3.down;
+             }
+
+            }
+
+            //  Cache the data
+            wverticesCache[0][0][0]=wvertices[ 4]+Vector3.back;//  Adiciona um valor "negativo" porque o voxelCoord próximo vai usar esse valor mas precisa obter "uma posição anterior"
+            wverticesCache[0][0][1]=wvertices[ 5]+Vector3.back;
+            wverticesCache[0][0][2]=wvertices[ 6]+Vector3.back;
+            wverticesCache[0][0][3]=wvertices[ 7]+Vector3.back;
+            wverticesCache[1][vCoord1.z][0]=wvertices[ 1]+Vector3.left;
+            wverticesCache[1][vCoord1.z][1]=wvertices[ 5]+Vector3.left;
+            wverticesCache[1][vCoord1.z][2]=wvertices[ 9]+Vector3.left;
+            wverticesCache[1][vCoord1.z][3]=wvertices[10]+Vector3.left;
+            wverticesCache[2][vCoord1.z+vCoord1.x*Depth][0]=wvertices[ 2]+Vector3.down;
+            wverticesCache[2][vCoord1.z+vCoord1.x*Depth][1]=wvertices[ 6]+Vector3.down;
+            wverticesCache[2][vCoord1.z+vCoord1.x*Depth][2]=wvertices[10]+Vector3.down;
+            wverticesCache[2][vCoord1.z+vCoord1.x*Depth][3]=wvertices[11]+Vector3.down;
+
+            /*  Create the triangle  */
+            for(int i=0;Tables.TriangleTable[edgeIndex][i]!=-1;i+=3){
+             widx[0]=Tables.TriangleTable[edgeIndex][i  ];
+             widx[1]=Tables.TriangleTable[edgeIndex][i+1];
+             widx[2]=Tables.TriangleTable[edgeIndex][i+2];
+
+             Vector3 pos=vCoord1-trianglePosAdj;
+
+             current.TempWVer.Add(new WVertex(wverPos[0]=pos+wvertices[widx[0]],wnormals[widx[0]]));
+             current.TempWVer.Add(new WVertex(wverPos[1]=pos+wvertices[widx[1]],wnormals[widx[1]]));
+             current.TempWVer.Add(new WVertex(wverPos[2]=pos+wvertices[widx[2]],wnormals[widx[2]]));
+             current.TempWTri.Add(wvertexCount+2);
+             current.TempWTri.Add(wvertexCount+1);
+             current.TempWTri.Add(wvertexCount  );
+                                  wvertexCount+=3;
+            }
+
+           }
+       }}} 
+
+       if(current.water_bg.absorbing.Count>0||
+          current.water_bg.spreading.Count>0
+       ){
+        current.water_bg.result_bg=2;
+       }
+
+       foreach(var voxel in current.water_bg.absorbing){
+       }
+       foreach(var voxel in current.water_bg.spreading){
+        Vector3Int vCoord2=voxel.Key;
+        if(current.water_bg.spreading.TryRemove(vCoord2,out double density)){
+         //Debug.Log("spreading:"+vCoord2);
+         Vector3Int d_vCoord=new Vector3Int(vCoord2.x,vCoord2.y-1,vCoord2.z);
+         bool waterfall=VerticalSpread(d_vCoord,d_vCoord.y>=0);
+         bool VerticalSpread(Vector3Int v_vCoord,bool insideAxisLength){
+          if(insideAxisLength){
+           int v_vxlIdx=GetvxlIdx(v_vCoord.x,v_vCoord.y,v_vCoord.z);
+           return Spread(v_vxlIdx);
+          }
+          bool Spread(int v_vxlIdx){
+           bool spread=true;
+           (double density,bool sleeping,double absorbing)newValue=(density,false,0d);
+           if(newValue.density<30d){
+            return false;
+           }
+           bool blocked=current.voxels_bg[v_vxlIdx].hasDensity;
+           if(blocked){
+            spread=false;
+            newValue.sleeping=true;
+           }
+           current.water_bg.voxels.AddOrUpdate(v_vxlIdx,newValue,
+            (key,oldValue)=>{
+             if(oldValue.density>=newValue.density){
+              return oldValue;
+             }
+             newValue.absorbing=Math.Max(oldValue.absorbing,newValue.absorbing);
+             return newValue;
+            }
+           );
+           return spread;
+          }
+          return false;
+         }
+         if(!waterfall){
+          Vector3Int r_vCoord=new Vector3Int(vCoord2.x+1,vCoord2.y,vCoord2.z);
+          HorizontalSpread(r_vCoord,r_vCoord.x<Width);
+          Vector3Int l_vCoord=new Vector3Int(vCoord2.x-1,vCoord2.y,vCoord2.z);
+          HorizontalSpread(l_vCoord,l_vCoord.x>=0);
+          Vector3Int f_vCoord=new Vector3Int(vCoord2.x,vCoord2.y,vCoord2.z+1);
+          HorizontalSpread(f_vCoord,f_vCoord.z<Depth);
+          Vector3Int b_vCoord=new Vector3Int(vCoord2.x,vCoord2.y,vCoord2.z-1);
+          HorizontalSpread(b_vCoord,b_vCoord.z>=0);
+         }
+         bool HorizontalSpread(Vector3Int h_vCoord,bool insideAxisLength){
+          if(insideAxisLength){
+           int h_vxlIdx=GetvxlIdx(h_vCoord.x,h_vCoord.y,h_vCoord.z);
+           return Spread(h_vxlIdx);
+          }else{
+           //  passar pra outros chunks
+           Vector3Int vCoord3=h_vCoord;
+           Vector2Int cnkRgn3=current.cnkRgn_bg;
+           Vector2Int cCoord3=current.cCoord_bg;
+           ValidateCoord(ref cnkRgn3,ref vCoord3);
+           cCoord3=cnkRgnTocCoord(cnkRgn3);
+           int cnkIdx3=GetcnkIdx(cCoord3.x,cCoord3.y);
+           //Debug.Log("cCoord3:"+cCoord3);
+           if(VoxelTerrain.water.TryGetValue(cnkIdx3,out VoxelWaterChunk wcnk)){
+            lock(wcnk.syn){
+             if(wcnk.cnkIdx_bg==cnkIdx3){
+
+              int vxlIdx3=GetvxlIdx(vCoord3.x,vCoord3.y,vCoord3.z);
+
+              int oftIdx3=GetoftIdx(cCoord3-current.cCoord_bg);
+
+              bool spread=true;
+              (double density,bool sleeping,double absorbing)newValue=(density-5d,false,0d);
+              if(newValue.density<30d){
+               return false;
+              }
+              bool blocked=current.neighbors_bg[oftIdx3-1].TryGetValue(vxlIdx3,out(bool hasDensity,MaterialId material)ngbvxl3)&&ngbvxl3.hasDensity;
+              if(blocked){
+               spread=false;
+               newValue.sleeping=true;
+              }
+              wcnk.voxels.AddOrUpdate(vxlIdx3,newValue,
+               (key,oldValue)=>{
+                if(oldValue.density>=newValue.density){
+                 spread=false;
+                 return oldValue;
+                }
+                newValue.absorbing=Math.Max(oldValue.absorbing,newValue.absorbing);
+                return newValue;
+               }
+              );
+              wcnk.HasPendingChanges=true;
+              return spread;
+             }
+            }
+           }
+           current.water_bg.spreading.AddOrUpdate(vCoord2,density,
+            (key,oldValue)=>{
+             return Math.Max(oldValue,density);
+            }
+           );
+           return true;
+          }
+          bool Spread(int h_vxlIdx){
+           bool spread=true;
+           (double density,bool sleeping,double absorbing)newValue=(density-5d,false,0d);
+           if(newValue.density<30d){
+            return false;
+           }
+           bool blocked=current.voxels_bg[h_vxlIdx].hasDensity;
+           if(blocked){
+            spread=false;
+            newValue.sleeping=true;
+           }
+           current.water_bg.voxels.AddOrUpdate(h_vxlIdx,newValue,
+            (key,oldValue)=>{
+             if(oldValue.density>=newValue.density){
+              spread=false;
+              return oldValue;
+             }
+             newValue.absorbing=Math.Max(oldValue.absorbing,newValue.absorbing);
+             return newValue;
+            }
+           );
+           return spread;
+          }
+         }
+        }
+       }
+
+       Debug.Log("MarchingCubesBackgroundContainer.ExecutionMode.water done!");
+     }
+    }
  }
 
 }
