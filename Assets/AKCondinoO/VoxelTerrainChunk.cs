@@ -1108,7 +1108,11 @@ namespace AKCondinoO.Voxels{
              }
             }
            }
-           current.water_bg.spreading.TryAdd(vCoord2,density);
+           current.water_bg.spreading.AddOrUpdate(vCoord2,density,
+            (key,oldValue)=>{
+             return Math.Max(oldValue,density);
+            }
+           );
            return true;
           }
           bool Spread(int h_vxlIdx){
