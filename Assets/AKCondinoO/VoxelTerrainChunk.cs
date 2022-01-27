@@ -1862,7 +1862,8 @@ namespace AKCondinoO.Voxels{
        }
       }
       internal NativeList< UInt32>TempWTri;
-
+            
+     internal bool initialization_bg=true;
      internal Vector2Int cCoord_bg;
      internal Vector2Int cnkRgn_bg;
      internal        int cnkIdx_bg;
@@ -1926,7 +1927,7 @@ namespace AKCondinoO.Voxels{
        for(int i=0;i<wverticesCache[2].Length;++i){Array.Clear(wverticesCache[2][i],0,wverticesCache[2][i].Length);}
      }
      protected override void Execute(){
-      if(current.water_bg.cnkIdx_bg!=current.cnkIdx_bg){
+      if(current.initialization_bg||current.water_bg.cnkIdx_bg!=current.cnkIdx_bg){
        lock(current.water_bg.syn){
         current.water_bg.cCoord_bg=current.cCoord_bg;
         current.water_bg.cnkRgn_bg=current.cnkRgn_bg;
@@ -1936,6 +1937,7 @@ namespace AKCondinoO.Voxels{
         current.water_bg.spreading.Clear();
        }
       }
+      current.initialization_bg=false;
        //Debug.Log("MarchingCubesBackgroundContainer.ExecutionMode.water");
 
        if      (current.water_bg.result_bg==2){
