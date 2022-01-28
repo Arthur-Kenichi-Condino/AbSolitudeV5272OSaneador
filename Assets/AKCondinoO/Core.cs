@@ -44,7 +44,7 @@ namespace AKCondinoO{
       GarbageCollector.GCMode=GarbageCollector.Mode.Enabled;
      #endif
      GarbageCollector.incrementalTimeSliceNanoseconds=1000000uL;
-     GCSettings.LatencyMode=GCLatencyMode.SustainedLowLatency;
+     GCSettings.LatencyMode=GCLatencyMode.Batch;
 
      QualitySettings.vSyncCount=0;
 
