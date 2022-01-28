@@ -16,8 +16,8 @@ namespace AKCondinoO.Sims{
     internal readonly Dictionary<NetcodePlayerPrefab,(Vector2Int cCoord,Vector2Int cCoord_Pre,bool worldBoundsMoved)>playersMovement=new Dictionary<NetcodePlayerPrefab,(Vector2Int,Vector2Int,bool)>();
      readonly List<NetcodePlayerPrefab>playersMoved=new List<NetcodePlayerPrefab>();
         
-    internal Dictionary<Type,ulong>ids;
-    internal Dictionary<Type,List<ulong>>releasedIds;
+    internal readonly Dictionary<Type,ulong>ids=new Dictionary<Type,ulong>();
+    internal readonly Dictionary<Type,List<ulong>>releasedIds=new Dictionary<Type,List<ulong>>();
 
     internal readonly Dictionary<(Type simType,ulong number),SimObject>active=new Dictionary<(Type,ulong),SimObject>();
      readonly Dictionary<SimObject,object>syn=new Dictionary<SimObject,object>();
@@ -31,8 +31,8 @@ namespace AKCondinoO.Sims{
       Save,
       Load,
      }
-     internal Dictionary<Type,ulong>ids_bg;
-     internal Dictionary<Type,List<ulong>>releasedIds_bg;
+     internal readonly Dictionary<Type,ulong>ids_bg=new Dictionary<Type,ulong>();
+     internal readonly Dictionary<Type,List<ulong>>releasedIds_bg=new Dictionary<Type,List<ulong>>();
     }
     internal PersistentUniqueIdsMultithreaded persistUniqueIdsBGThread;
     internal class PersistentUniqueIdsMultithreaded:BaseMultithreaded<PersistentUniqueIdsBackgroundContainer>{
@@ -47,10 +47,10 @@ namespace AKCondinoO.Sims{
        using(var file=new FileStream(uniqueIdsFile,FileMode.OpenOrCreate,FileAccess.ReadWrite,FileShare.None)){
         if(file.Length>0){
          using(var reader=new StreamReader(file)){using(var json=new JsonTextReader(reader)){
-          current.ids_bg=(Dictionary<Type,ulong>)jsonSerializer.Deserialize(json,typeof(Dictionary<Type,ulong>));
+          foreach(var kvp in(Dictionary<Type,ulong>)jsonSerializer.Deserialize(json,typeof(Dictionary<Type,ulong>))){
+           current.ids_bg.Add(kvp.Key,kvp.Value);
+          }
          }}
-        }else{
-         current.ids_bg=new Dictionary<Type,ulong>();
         }
        }
 
@@ -58,10 +58,10 @@ namespace AKCondinoO.Sims{
        using(var file=new FileStream(releasedIdsFile,FileMode.OpenOrCreate,FileAccess.ReadWrite,FileShare.None)){
         if(file.Length>0){
          using(var reader=new StreamReader(file)){using(var json=new JsonTextReader(reader)){
-          current.releasedIds_bg=(Dictionary<Type,List<ulong>>)jsonSerializer.Deserialize(json,typeof(Dictionary<Type,List<ulong>>));
+          foreach(var kvp in(Dictionary<Type,List<ulong>>)jsonSerializer.Deserialize(json,typeof(Dictionary<Type,List<ulong>>))){
+           current.releasedIds_bg.Add(kvp.Key,kvp.Value);
+          }
          }}
-        }else{
-         current.releasedIds_bg=new Dictionary<Type,List<ulong>>();
         }
        }
 
@@ -90,9 +90,9 @@ namespace AKCondinoO.Sims{
         
     internal GetPersistentDataFilesBackgroundContainer getPersistentDataFilesBG;
     internal class GetPersistentDataFilesBackgroundContainer:BackgroundContainer{
-     internal object[]syn_bg;
-     internal HashSet<Vector2Int>playersCoordChange_bg;
-     internal SpawnData toSpawn_bg;
+     internal readonly List<object>syn_bg=new List<object>();
+     internal readonly HashSet<Vector2Int>playersCoordChange_bg=new HashSet<Vector2Int>();
+     internal readonly List<(Vector3 position,Vector3 rotation,Vector3 scale,Type type,ulong?id)>at=new List<(Vector3,Vector3,Vector3,Type,ulong?)>();
     }
     internal GetPersistentDataFilesMultithreaded getPersistentDataFilesBGThread;
     internal class GetPersistentDataFilesMultithreaded:BaseMultithreaded<GetPersistentDataFilesBackgroundContainer>{
@@ -101,7 +101,7 @@ namespace AKCondinoO.Sims{
       foreach(var syn in current.syn_bg)Monitor.Enter(syn);
       try{
 
-       current.toSpawn_bg=new SpawnData();
+       current.at.Clear();
        foreach(Vector2Int pCoord in current.playersCoordChange_bg){
         for(Vector2Int iCoord=new Vector2Int(),cCoord1=new Vector2Int();iCoord.y<=instantiationDistance.y-1;iCoord.y++){for(cCoord1.y=-iCoord.y+pCoord.y;cCoord1.y<=iCoord.y+pCoord.y;cCoord1.y+=iCoord.y*2){
         for(           iCoord.x=0                                      ;iCoord.x<=instantiationDistance.x-1;iCoord.x++){for(cCoord1.x=-iCoord.x+pCoord.x;cCoord1.x<=iCoord.x+pCoord.x;cCoord1.x+=iCoord.x*2){
@@ -122,7 +122,7 @@ namespace AKCondinoO.Sims{
               string idString=typeAndIdSplit[1];
            Type simType=Type.GetType(typeString);
            ulong number=ulong.Parse(idString);
-           current.toSpawn_bg.at.Add((Vector3.zero,Vector3.zero,Vector3.one,simType,number));
+           current.at.Add((Vector3.zero,Vector3.zero,Vector3.one,simType,number));
           }
          }
          _skip:{}
@@ -222,7 +222,18 @@ namespace AKCondinoO.Sims{
      }else{
       persistUniqueIdsBG.IsCompleted(persistUniqueIdsBGThread.IsRunning,-1);
        persistUniqueIdsBG.executionMode_bg=PersistentUniqueIdsBackgroundContainer.ExecutionMode.Save;
-       persistUniqueIdsBG.ids_bg=new Dictionary<Type,ulong>(ids);
+       persistUniqueIdsBG.ids_bg.Clear();
+       foreach(var kvp in ids){
+        persistUniqueIdsBG.ids_bg.Add(kvp.Key,kvp.Value);
+       }
+       foreach(var kvp in releasedIds){
+        if(persistUniqueIdsBG.releasedIds_bg.TryGetValue(kvp.Key,out List<ulong>rids)){
+         rids.Clear();
+         rids.AddRange(kvp.Value);
+        }else{
+         persistUniqueIdsBG.releasedIds_bg.Add(kvp.Key,new List<ulong>(kvp.Value));
+        }
+       }
       PersistentUniqueIdsMultithreaded.Schedule(persistUniqueIdsBG);
       persistUniqueIdsBG.IsCompleted(persistUniqueIdsBGThread.IsRunning,-1);
       if(PersistentUniqueIdsMultithreaded.Clear()==0){
@@ -287,10 +298,16 @@ namespace AKCondinoO.Sims{
 
     }
 
+    internal readonly SpawnData toSpawn=new SpawnData();
+
     bool OnGetFiles(){
      if(getPersistentDataFilesBG.IsCompleted(getPersistentDataFilesBGThread.IsRunning)&&spawnCoroutineIdleWaiting){
-      getPersistentDataFilesBG.syn_bg=syn.Values.ToArray();
-      getPersistentDataFilesBG.playersCoordChange_bg=new HashSet<Vector2Int>(playersCoordChange,playersCoordChange.Comparer);
+      getPersistentDataFilesBG.syn_bg.Clear();
+      getPersistentDataFilesBG.syn_bg.AddRange(syn.Values);
+      getPersistentDataFilesBG.playersCoordChange_bg.Clear();
+      foreach(var p in playersCoordChange){
+       getPersistentDataFilesBG.playersCoordChange_bg.Add(p);
+      }
       GetPersistentDataFilesMultithreaded.Schedule(getPersistentDataFilesBG);
       return true;
      }
@@ -298,8 +315,10 @@ namespace AKCondinoO.Sims{
     }
     bool OnGotFiles(){
      if(getPersistentDataFilesBG.IsCompleted(getPersistentDataFilesBGThread.IsRunning)){
-      SpawnQueue.Enqueue(getPersistentDataFilesBG.toSpawn_bg);
-      getPersistentDataFilesBG.toSpawn_bg=null;
+      toSpawn.at.Clear();
+      toSpawn.dequeued=false;
+      toSpawn.at.AddRange(getPersistentDataFilesBG.at);
+      SpawnQueue.Enqueue(toSpawn);
       return true;
      }
      return false;
@@ -347,8 +366,18 @@ namespace AKCondinoO.Sims{
       yield return waitPersistentUniqueIdsBGIsCompleted;
       if(persistUniqueIdsBG.executionMode_bg==PersistentUniqueIdsBackgroundContainer.ExecutionMode.Load){
        //Debug.Log("register loaded ids");
-       ids=persistUniqueIdsBG.ids_bg;
-       releasedIds=persistUniqueIdsBG.releasedIds_bg;
+       ids.Clear();
+       foreach(var kvp in persistUniqueIdsBG.ids_bg){
+        ids.Add(kvp.Key,kvp.Value);
+       }
+       foreach(var kvp in persistUniqueIdsBG.releasedIds_bg){
+        if(releasedIds.TryGetValue(kvp.Key,out List<ulong>rids)){
+         rids.Clear();
+         rids.AddRange(kvp.Value);
+        }else{
+         releasedIds.Add(kvp.Key,new List<ulong>(kvp.Value));
+        }
+       }
       }
       stopwatch.Restart();
       while(SpawnQueue.Count>0){var toSpawn=SpawnQueue.Dequeue();
@@ -416,7 +445,18 @@ namespace AKCondinoO.Sims{
        toSpawn.dequeued=true;
       }
        persistUniqueIdsBG.executionMode_bg=PersistentUniqueIdsBackgroundContainer.ExecutionMode.Save;
-       persistUniqueIdsBG.ids_bg=new Dictionary<Type,ulong>(ids);
+       persistUniqueIdsBG.ids_bg.Clear();
+       foreach(var kvp in ids){
+        persistUniqueIdsBG.ids_bg.Add(kvp.Key,kvp.Value);
+       }
+       foreach(var kvp in releasedIds){
+        if(persistUniqueIdsBG.releasedIds_bg.TryGetValue(kvp.Key,out List<ulong>rids)){
+         rids.Clear();
+         rids.AddRange(kvp.Value);
+        }else{
+         persistUniqueIdsBG.releasedIds_bg.Add(kvp.Key,new List<ulong>(kvp.Value));
+        }
+       }
       PersistentUniqueIdsMultithreaded.Schedule(persistUniqueIdsBG);
       spawnCoroutineIdleWaiting=true;
      }
