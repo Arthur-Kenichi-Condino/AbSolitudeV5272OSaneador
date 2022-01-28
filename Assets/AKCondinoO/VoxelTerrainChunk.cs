@@ -27,8 +27,6 @@ using static AKCondinoO.Voxels.VoxelWaterChunk.WaterMarchingCubesBackgroundConta
 namespace AKCondinoO.Voxels{
  internal class VoxelTerrainChunk:MonoBehaviour{
     internal readonly object syn=new object();        
-        
-    internal readonly VoxelWaterChunk water=new VoxelWaterChunk();
 
     internal const ushort Height=(256);
     internal const ushort Width=(16);
@@ -78,6 +76,8 @@ namespace AKCondinoO.Voxels{
     internal Bounds worldBounds;
         
     [SerializeField]internal GameObject waterGameObject;
+        
+    internal readonly VoxelWaterChunk water_bg=new VoxelWaterChunk();
 
     internal new MeshRenderer renderer;
     internal new MeshCollider collider;
@@ -94,7 +94,7 @@ namespace AKCondinoO.Voxels{
 
     internal readonly Dictionary<int,(bool hasDensity,MaterialId material)>[]neighbors_bg=new Dictionary<int,(bool,MaterialId)>[8];
 
-     internal MarchingCubesBackgroundContainer(object syn,VoxelWaterChunk water){
+     internal MarchingCubesBackgroundContainer(object syn){
       syn_bg=syn;
      }
 
@@ -1381,8 +1381,8 @@ namespace AKCondinoO.Voxels{
     }
 
     void Awake(){
-     marchingCubesBG=new MarchingCubesBackgroundContainer(syn,water);
-      wmarchingCubesBG=new VoxelWaterChunk.WaterMarchingCubesBackgroundContainer(water);
+     marchingCubesBG=new MarchingCubesBackgroundContainer(syn);
+      wmarchingCubesBG=new VoxelWaterChunk.WaterMarchingCubesBackgroundContainer(water_bg);
 
      renderer=GetComponent<MeshRenderer>();
      collider=GetComponent<MeshCollider>();
@@ -1478,7 +1478,7 @@ namespace AKCondinoO.Voxels{
     }
 
     internal void OnPauseWater(){
-     Debug.Log("OnPauseWater");
+     //Debug.Log("OnPauseWater");
      waterUpdateFlag=false;
     }
 
@@ -1499,7 +1499,7 @@ namespace AKCondinoO.Voxels{
     bool rebuildRequired;
     bool moveRequired;
     internal bool ManualUpdate(){bool busy=true;
-     waterUpdateFlag=waterUpdateFlag||water.HasPendingChanges;
+     waterUpdateFlag=waterUpdateFlag||water_bg.HasPendingChanges;
      if(waterUpdateTimer>0f){
       waterUpdateTimer-=Time.deltaTime;
      }
@@ -1748,7 +1748,7 @@ namespace AKCondinoO.Voxels{
        wmarchingCubesBG.neighbors_bg[i]=new Dictionary<int,(bool hasDensity,MaterialId material)>(marchingCubesBG.neighbors_bg[i]);
       }
       wmarchingCubesCount++;
-      water.HasPendingChanges=false;
+      water_bg.HasPendingChanges=false;
       VoxelWaterChunk.WaterMarchingCubesMultithreaded.Schedule(wmarchingCubesBG);
       return true;
      }
@@ -1799,7 +1799,7 @@ namespace AKCondinoO.Voxels{
      }
     }
     void DrawVoxelsDensity(){
-     if(water.voxels.Count<=0){
+     if(water_bg.voxels.Count<=0){
       return;
      }
      Vector3Int vCoord1;
@@ -1808,7 +1808,7 @@ namespace AKCondinoO.Voxels{
      for(vCoord1.z=0             ;vCoord1.z<Depth ;vCoord1.z++){
       Vector3Int vCoord2=vCoord1;
       int vxlIdx2=GetvxlIdx(vCoord2.x,vCoord2.y,vCoord2.z);
-      if(water.voxels.TryGetValue(vxlIdx2,out(double density,bool sleeping,double absorbing)voxel)){double density=voxel.density;
+      if(water_bg.voxels.TryGetValue(vxlIdx2,out(double density,bool sleeping,double absorbing)voxel)){double density=voxel.density;
        //Debug.Log("debug draw water at voxel:"+vCoord2+";density:"+density);
        if(-density<IsoLevel){
         Gizmos.color=Color.white;
@@ -1825,19 +1825,20 @@ namespace AKCondinoO.Voxels{
 
  internal class VoxelWaterChunk{
   internal readonly object syn=new object();    
-   internal Vector2Int cCoord_bg;
-   internal Vector2Int cnkRgn_bg;
-   internal        int cnkIdx_bg;
-  internal int result_bg=0;
-
-  internal readonly ConcurrentDictionary<int,(double density,bool sleeping,double absorbing)>voxels=new ConcurrentDictionary<int,(double,bool,double)>();
-   internal readonly ConcurrentDictionary<Vector3Int,double>absorbing=new ConcurrentDictionary<Vector3Int,double>();
-   internal readonly ConcurrentDictionary<Vector3Int,double>spreading=new ConcurrentDictionary<Vector3Int,double>();
 
   internal bool HasPendingChanges{
    get{bool tmp;lock(HasPendingChanges_syn){tmp=HasPendingChanges_v;      }return tmp;}
    set{         lock(HasPendingChanges_syn){    HasPendingChanges_v=value;}           }
   }bool HasPendingChanges_v=false;readonly object HasPendingChanges_syn=new object();
+
+  internal readonly ConcurrentDictionary<int,(double density,bool sleeping,double absorbing)>voxels=new ConcurrentDictionary<int,(double,bool,double)>();
+   internal readonly ConcurrentDictionary<Vector3Int,double>absorbing=new ConcurrentDictionary<Vector3Int,double>();
+   internal readonly ConcurrentDictionary<Vector3Int,double>spreading=new ConcurrentDictionary<Vector3Int,double>();
+
+   internal Vector2Int cCoord_bg;
+   internal Vector2Int cnkRgn_bg;
+   internal        int cnkIdx_bg;
+  internal int result_bg=0;
         
     internal class WaterMarchingCubesBackgroundContainer:BackgroundContainer{
      internal readonly VoxelWaterChunk water_bg;
@@ -2312,7 +2313,7 @@ namespace AKCondinoO.Voxels{
         }
        }
 
-       Debug.Log("MarchingCubesBackgroundContainer.ExecutionMode.water done!");
+       //Debug.Log("MarchingCubesBackgroundContainer.ExecutionMode.water done!");
      }
     }
  }

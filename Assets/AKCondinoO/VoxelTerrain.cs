@@ -693,7 +693,7 @@ namespace AKCondinoO.Voxels{
 
          }
 
-         water[cnkIdx1]=cnk.water;
+         water[cnkIdx1]=cnk.water_bg;
 
          active.Add(cnkIdx1,cnk);
          cnk.cnkIdx=cnkIdx1;
