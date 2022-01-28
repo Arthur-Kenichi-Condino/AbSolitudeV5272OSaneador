@@ -1,0 +1,155 @@
+{
+  "Nodes": [
+    {
+      "Annotation": "all_tundra_nodes",
+      "Action": "",
+      "Inputs": [],
+      "Outputs": [],
+      "TargetDirectories": [],
+      "PassIndex": 0,
+      "ToBuildDependencies": [
+        1
+      ],
+      "ToUseDependencies": [],
+      "OverwriteOutputs": true,
+      "FrontendResponseFiles": [],
+      "AllowUnexpectedOutput": true,
+      "AllowedOutputSubstrings": [],
+      "DebugActionIndex": 0
+    },
+    {
+      "Annotation": "Il2Cpp E:/Users/Arthur/GitHub/AbSolitudeV5272OSaneador/Library/Il2cppBuildCache/Windows/x64/Native/GameAssembly.dll",
+      "Action": "\"C:\\Program Files\\Unity\\Hub\\Editor\\2020.3.25f1\\Editor\\Data\\il2cpp/build/deploy/netcoreapp3.1/il2cpp.exe\" --convert-to-cpp --emit-null-checks --enable-array-bounds-check --dotnetprofile=\"unityaot\" --compile-cpp --libil2cpp-static --platform=\"WindowsDesktop\" --architecture=\"x64\" --configuration=\"Release\" --outputpath=\"E:\\Users\\Arthur\\GitHub\\AbSolitudeV5272OSaneador\\Library/Il2cppBuildCache/Windows/x64\\Native\\GameAssembly.dll\" --cachedirectory=\"E:\\Users\\Arthur\\GitHub\\AbSolitudeV5272OSaneador\\Assets\\..\\Library/il2cpp_cache\" --baselib-directory=\"C:/Program Files/Unity/Hub/Editor/2020.3.25f1/Editor/Data/PlaybackEngines/WindowsStandaloneSupport\\Variations\\win64_nondevelopment_il2cpp\" --avoid-dynamic-library-copy --incremental-g-c-time-slice=3 --profiler-report --map-file-parser=\"C:/Program Files/Unity/Hub/Editor/2020.3.25f1/Editor/Data/Tools/MapFileParser/MapFileParser.exe\" --directory=E:/Users/Arthur/GitHub/AbSolitudeV5272OSaneador/Temp/StagingArea/Data/Managed --generatedcppdir=E:/Users/Arthur/GitHub/AbSolitudeV5272OSaneador/Library/Il2cppBuildCache/Windows/x64/il2cppOutput --stats-output-dir=E:/Users/Arthur/GitHub/AbSolitudeV5272OSaneador/Library/Il2cppBuildCache/Windows/x64/il2cppStats",
+      "Inputs": [
+        "E:/Users/Arthur/GitHub/AbSolitudeV5272OSaneador/Temp/StagingArea/Data/Managed",
+        "E:/Users/Arthur/GitHub/AbSolitudeV5272OSaneador/Temp/StagingArea/Data/Managed/Assembly-CSharp-firstpass.dll",
+        "E:/Users/Arthur/GitHub/AbSolitudeV5272OSaneador/Temp/StagingArea/Data/Managed/Assembly-CSharp.dll",
+        "E:/Users/Arthur/GitHub/AbSolitudeV5272OSaneador/Temp/StagingArea/Data/Managed/MessagePack.Annotations.dll",
+        "E:/Users/Arthur/GitHub/AbSolitudeV5272OSaneador/Temp/StagingArea/Data/Managed/MessagePack.dll",
+        "E:/Users/Arthur/GitHub/AbSolitudeV5272OSaneador/Temp/StagingArea/Data/Managed/Mono.Security.dll",
+        "E:/Users/Arthur/GitHub/AbSolitudeV5272OSaneador/Temp/StagingArea/Data/Managed/mscorlib.dll",
+        "E:/Users/Arthur/GitHub/AbSolitudeV5272OSaneador/Temp/StagingArea/Data/Managed/Newtonsoft.Json.dll",
+        "E:/Users/Arthur/GitHub/AbSolitudeV5272OSaneador/Temp/StagingArea/Data/Managed/System.Buffers.dll",
+        "E:/Users/Arthur/GitHub/AbSolitudeV5272OSaneador/Temp/StagingArea/Data/Managed/System.Configuration.dll",
+        "E:/Users/Arthur/GitHub/AbSolitudeV5272OSaneador/Temp/StagingArea/Data/Managed/System.Core.dll",
+        "E:/Users/Arthur/GitHub/AbSolitudeV5272OSaneador/Temp/StagingArea/Data/Managed/System.Data.dll",
+        "E:/Users/Arthur/GitHub/AbSolitudeV5272OSaneador/Temp/StagingArea/Data/Managed/System.dll",
+        "E:/Users/Arthur/GitHub/AbSolitudeV5272OSaneador/Temp/StagingArea/Data/Managed/System.Memory.dll",
+        "E:/Users/Arthur/GitHub/AbSolitudeV5272OSaneador/Temp/StagingArea/Data/Managed/System.Numerics.dll",
+        "E:/Users/Arthur/GitHub/AbSolitudeV5272OSaneador/Temp/StagingArea/Data/Managed/System.Numerics.Vectors.dll",
+        "E:/Users/Arthur/GitHub/AbSolitudeV5272OSaneador/Temp/StagingArea/Data/Managed/System.Runtime.CompilerServices.Unsafe.dll",
+        "E:/Users/Arthur/GitHub/AbSolitudeV5272OSaneador/Temp/StagingArea/Data/Managed/System.Runtime.Serialization.dll",
+        "E:/Users/Arthur/GitHub/AbSolitudeV5272OSaneador/Temp/StagingArea/Data/Managed/System.Threading.Tasks.Extensions.dll",
+        "E:/Users/Arthur/GitHub/AbSolitudeV5272OSaneador/Temp/StagingArea/Data/Managed/System.Xml.dll",
+        "E:/Users/Arthur/GitHub/AbSolitudeV5272OSaneador/Temp/StagingArea/Data/Managed/System.Xml.Linq.dll",
+        "E:/Users/Arthur/GitHub/AbSolitudeV5272OSaneador/Temp/StagingArea/Data/Managed/Unity.Burst.dll",
+        "E:/Users/Arthur/GitHub/AbSolitudeV5272OSaneador/Temp/StagingArea/Data/Managed/Unity.Burst.Unsafe.dll",
+        "E:/Users/Arthur/GitHub/AbSolitudeV5272OSaneador/Temp/StagingArea/Data/Managed/Unity.Collections.dll",
+        "E:/Users/Arthur/GitHub/AbSolitudeV5272OSaneador/Temp/StagingArea/Data/Managed/Unity.Collections.LowLevel.ILSupport.dll",
+        "E:/Users/Arthur/GitHub/AbSolitudeV5272OSaneador/Temp/StagingArea/Data/Managed/Unity.Mathematics.dll",
+        "E:/Users/Arthur/GitHub/AbSolitudeV5272OSaneador/Temp/StagingArea/Data/Managed/Unity.Netcode.Runtime.dll",
+        "E:/Users/Arthur/GitHub/AbSolitudeV5272OSaneador/Temp/StagingArea/Data/Managed/Unity.Postprocessing.Runtime.dll",
+        "E:/Users/Arthur/GitHub/AbSolitudeV5272OSaneador/Temp/StagingArea/Data/Managed/UnityEngine.AIModule.dll",
+        "E:/Users/Arthur/GitHub/AbSolitudeV5272OSaneador/Temp/StagingArea/Data/Managed/UnityEngine.AndroidJNIModule.dll",
+        "E:/Users/Arthur/GitHub/AbSolitudeV5272OSaneador/Temp/StagingArea/Data/Managed/UnityEngine.AnimationModule.dll",
+        "E:/Users/Arthur/GitHub/AbSolitudeV5272OSaneador/Temp/StagingArea/Data/Managed/UnityEngine.AssetBundleModule.dll",
+        "E:/Users/Arthur/GitHub/AbSolitudeV5272OSaneador/Temp/StagingArea/Data/Managed/UnityEngine.AudioModule.dll",
+        "E:/Users/Arthur/GitHub/AbSolitudeV5272OSaneador/Temp/StagingArea/Data/Managed/UnityEngine.CoreModule.dll",
+        "E:/Users/Arthur/GitHub/AbSolitudeV5272OSaneador/Temp/StagingArea/Data/Managed/UnityEngine.DirectorModule.dll",
+        "E:/Users/Arthur/GitHub/AbSolitudeV5272OSaneador/Temp/StagingArea/Data/Managed/UnityEngine.dll",
+        "E:/Users/Arthur/GitHub/AbSolitudeV5272OSaneador/Temp/StagingArea/Data/Managed/UnityEngine.GridModule.dll",
+        "E:/Users/Arthur/GitHub/AbSolitudeV5272OSaneador/Temp/StagingArea/Data/Managed/UnityEngine.IMGUIModule.dll",
+        "E:/Users/Arthur/GitHub/AbSolitudeV5272OSaneador/Temp/StagingArea/Data/Managed/UnityEngine.InputLegacyModule.dll",
+        "E:/Users/Arthur/GitHub/AbSolitudeV5272OSaneador/Temp/StagingArea/Data/Managed/UnityEngine.InputModule.dll",
+        "E:/Users/Arthur/GitHub/AbSolitudeV5272OSaneador/Temp/StagingArea/Data/Managed/UnityEngine.ParticleSystemModule.dll",
+        "E:/Users/Arthur/GitHub/AbSolitudeV5272OSaneador/Temp/StagingArea/Data/Managed/UnityEngine.Physics2DModule.dll",
+        "E:/Users/Arthur/GitHub/AbSolitudeV5272OSaneador/Temp/StagingArea/Data/Managed/UnityEngine.PhysicsModule.dll",
+        "E:/Users/Arthur/GitHub/AbSolitudeV5272OSaneador/Temp/StagingArea/Data/Managed/UnityEngine.SharedInternalsModule.dll",
+        "E:/Users/Arthur/GitHub/AbSolitudeV5272OSaneador/Temp/StagingArea/Data/Managed/UnityEngine.SubsystemsModule.dll",
+        "E:/Users/Arthur/GitHub/AbSolitudeV5272OSaneador/Temp/StagingArea/Data/Managed/UnityEngine.TerrainModule.dll",
+        "E:/Users/Arthur/GitHub/AbSolitudeV5272OSaneador/Temp/StagingArea/Data/Managed/UnityEngine.TextRenderingModule.dll",
+        "E:/Users/Arthur/GitHub/AbSolitudeV5272OSaneador/Temp/StagingArea/Data/Managed/UnityEngine.TilemapModule.dll",
+        "E:/Users/Arthur/GitHub/AbSolitudeV5272OSaneador/Temp/StagingArea/Data/Managed/UnityEngine.UIElementsNativeModule.dll",
+        "E:/Users/Arthur/GitHub/AbSolitudeV5272OSaneador/Temp/StagingArea/Data/Managed/UnityEngine.UIModule.dll",
+        "E:/Users/Arthur/GitHub/AbSolitudeV5272OSaneador/Temp/StagingArea/Data/Managed/UnityEngine.UNETModule.dll",
+        "E:/Users/Arthur/GitHub/AbSolitudeV5272OSaneador/Temp/StagingArea/Data/Managed/UnityEngine.UnityAnalyticsModule.dll",
+        "E:/Users/Arthur/GitHub/AbSolitudeV5272OSaneador/Temp/StagingArea/Data/Managed/UnityEngine.UnityWebRequestModule.dll",
+        "E:/Users/Arthur/GitHub/AbSolitudeV5272OSaneador/Temp/StagingArea/Data/Managed/UnityEngine.VFXModule.dll",
+        "E:/Users/Arthur/GitHub/AbSolitudeV5272OSaneador/Temp/StagingArea/Data/Managed/UnityEngine.VideoModule.dll",
+        "E:/Users/Arthur/GitHub/AbSolitudeV5272OSaneador/Temp/StagingArea/Data/Managed/UnityEngine.VRModule.dll",
+        "E:/Users/Arthur/GitHub/AbSolitudeV5272OSaneador/Temp/StagingArea/Data/Managed/UnityEngine.XRModule.dll",
+        "C:/Program Files/Unity/Hub/Editor/2020.3.25f1/Editor/Data/Tools/MapFileParser/MapFileParser.exe",
+        "C:/Program Files/Unity/Hub/Editor/2020.3.25f1/Editor/Data/PlaybackEngines/WindowsStandaloneSupport/Variations/win64_nondevelopment_il2cpp/baselib.dll.lib",
+        "\"C:/Program Files/Unity/Hub/Editor/2020.3.25f1/Editor/Data/il2cpp/build/deploy/netcoreapp3.1/il2cpp.exe\""
+      ],
+      "Outputs": [
+        "E:/Users/Arthur/GitHub/AbSolitudeV5272OSaneador/Library/Il2cppBuildCache/Windows/x64/Native/GameAssembly.dll"
+      ],
+      "TargetDirectories": [],
+      "PassIndex": 0,
+      "ToBuildDependencies": [],
+      "ToUseDependencies": [],
+      "OverwriteOutputs": false,
+      "FrontendResponseFiles": [],
+      "AllowUnexpectedOutput": true,
+      "AllowedOutputSubstrings": [],
+      "DebugActionIndex": 1
+    }
+  ],
+  "FileSignatures": [
+    {
+      "File": "../../../../Temp/StagingArea/Data/Managed"
+    },
+    {
+      "File": "artifacts/buildprogram/tundra_buildprogram.dag.json"
+    },
+    {
+      "File": "C:/Program Files/Unity/Hub/Editor/2020.3.25f1/Editor/Data/PlaybackEngines/WindowsStandaloneSupport/Variations/win64_nondevelopment_il2cpp"
+    },
+    {
+      "File": "il2cpp_settings.json"
+    },
+    {
+      "File": "unitylinker_settings.json"
+    }
+  ],
+  "GlobSignatures": [
+    {
+      "Path": "../../../../Temp/StagingArea/Data/Managed"
+    },
+    {
+      "Path": "C:/Program Files/Unity/Hub/Editor/2020.3.25f1/Editor/Data/PlaybackEngines/WindowsStandaloneSupport/Variations/win64_nondevelopment_il2cpp",
+      "Recurse": 1
+    }
+  ],
+  "ContentDigestExtensions": [
+    ".rsp",
+    ".dll",
+    ".exe",
+    ".txt",
+    ".c",
+    ".cpp",
+    ".h",
+    ".cs",
+    ".hpp"
+  ],
+  "StructuredLogFileName": "artifacts/tundra.log.json",
+  "StateFileName": "artifacts/TundraBuildState.state",
+  "StateFileNameTmp": "artifacts/TundraBuildState.state.tmp",
+  "ScanCacheFileName": "artifacts/tundra.scancache",
+  "ScanCacheFileNameTmp": "artifacts/tundra.scancache.tmp",
+  "DigestCacheFileName": "artifacts/tundra.digestcache",
+  "DigestCacheFileNameTmp": "artifacts/tundra.digestcache.tmp",
+  "DirectoriesCausingImplicitDependencies": [],
+        "NamedNodes": {
+          "all_tundra_nodes": 0
+        }
+,  "DefaultNodes": [
+    0
+  ],
+  "SharedResources": [],
+  "Scanners": [],
+  "Identifier": "artifacts/tundra.dag.json",
+  "BuildTitle": "Bee",
+  "RelativePathToRoot": ".."
+}

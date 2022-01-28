@@ -43,7 +43,7 @@ namespace AKCondinoO{
      #if !UNITY_EDITOR
       GarbageCollector.GCMode=GarbageCollector.Mode.Enabled;
      #endif
-     GarbageCollector.incrementalTimeSliceNanoseconds=1000000uL;
+     GarbageCollector.incrementalTimeSliceNanoseconds=4000000uL;
      GCSettings.LatencyMode=GCLatencyMode.Batch;
 
      QualitySettings.vSyncCount=0;
@@ -154,15 +154,9 @@ namespace AKCondinoO{
       GCSettings.LargeObjectHeapCompactionMode=GCLargeObjectHeapCompactionMode.CompactOnce;
       GC.Collect(GC.MaxGeneration,GCCollectionMode.Forced,true,true);
       GC.WaitForPendingFinalizers();
-
-      Resources.UnloadUnusedAssets();
-
      }
      void nonBlockingGC(){
-      GarbageCollector.CollectIncremental((ulong)collectDelay*1000000000uL);
-
-      Resources.UnloadUnusedAssets();
-
+      GarbageCollector.CollectIncremental();
      }
     }
         

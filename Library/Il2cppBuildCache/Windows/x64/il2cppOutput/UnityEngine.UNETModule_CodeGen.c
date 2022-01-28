@@ -1,0 +1,503 @@
+﻿#include "pch-c.h"
+#ifndef _MSC_VER
+# include <alloca.h>
+#else
+# include <malloc.h>
+#endif
+
+
+#include "codegen/il2cpp-codegen-metadata.h"
+
+
+
+
+
+// 0x00000001 System.Void UnityEngine.Networking.NetworkTransport::Init()
+extern void NetworkTransport_Init_m07410A194825D614DBE8A08B746E06EC6481AEF3 (void);
+// 0x00000002 System.Void UnityEngine.Networking.NetworkTransport::InitializeClass()
+extern void NetworkTransport_InitializeClass_m885F41697D3E728B618EE20A48B7F88BBF596891 (void);
+// 0x00000003 System.Void UnityEngine.Networking.NetworkTransport::Shutdown()
+extern void NetworkTransport_Shutdown_mCDADD01490BB0C9B0F5BAFB391E207C7B0298DC4 (void);
+// 0x00000004 System.Int32 UnityEngine.Networking.NetworkTransport::AddHostWithSimulator(UnityEngine.Networking.HostTopology,System.Int32,System.Int32,System.Int32,System.String)
+extern void NetworkTransport_AddHostWithSimulator_m7D2AA3190354AF70603B43E642EBABD8B014E2B8 (void);
+// 0x00000005 System.Int32 UnityEngine.Networking.NetworkTransport::AddHost(UnityEngine.Networking.HostTopology,System.Int32,System.String)
+extern void NetworkTransport_AddHost_m24D3C68D33504C5A83C47A701F7CDA20E814898D (void);
+// 0x00000006 System.Int32 UnityEngine.Networking.NetworkTransport::AddHostInternal(UnityEngine.Networking.HostTopologyInternal,System.String,System.Int32,System.Int32,System.Int32)
+extern void NetworkTransport_AddHostInternal_mE6C08100955EB6B0A84D2012C4539CCEFD21D78F (void);
+// 0x00000007 System.Int32 UnityEngine.Networking.NetworkTransport::GetCurrentRTT(System.Int32,System.Int32,System.Byte&)
+extern void NetworkTransport_GetCurrentRTT_mF6F860C6EE547DF877313DB56D7348F5101B0F9B (void);
+// 0x00000008 System.Int32 UnityEngine.Networking.NetworkTransport::GetMaxPacketSize()
+extern void NetworkTransport_GetMaxPacketSize_m98EE9A0A5FD4C30AEF12D0B7EE498B3043E929F1 (void);
+// 0x00000009 System.Boolean UnityEngine.Networking.NetworkTransport::get_IsStarted()
+extern void NetworkTransport_get_IsStarted_m16B139370CAED45416649D8D43AD059EF4CBE05E (void);
+// 0x0000000A System.Boolean UnityEngine.Networking.NetworkTransport::IsStartedInternal()
+extern void NetworkTransport_IsStartedInternal_m90ABBFFB0BAD69105ACFB91ABEA5D53345C1145A (void);
+// 0x0000000B System.Int32 UnityEngine.Networking.NetworkTransport::Connect(System.Int32,System.String,System.Int32,System.Int32,System.Byte&)
+extern void NetworkTransport_Connect_mAB9436F3762B46F3078AD6BC36AA49BD5E598588 (void);
+// 0x0000000C System.Boolean UnityEngine.Networking.NetworkTransport::Disconnect(System.Int32,System.Int32,System.Byte&)
+extern void NetworkTransport_Disconnect_mD0F2C28F6A7B17313F966C4D74FD84F7F4E3A015 (void);
+// 0x0000000D System.Boolean UnityEngine.Networking.NetworkTransport::Send(System.Int32,System.Int32,System.Int32,System.Byte[],System.Int32,System.Byte&)
+extern void NetworkTransport_Send_m8D6D448EDCA5A74B58C5DC9DE1AEA7658C9FC0A7 (void);
+// 0x0000000E System.Boolean UnityEngine.Networking.NetworkTransport::SendWrapper(System.Int32,System.Int32,System.Int32,System.Byte[],System.Int32,System.Byte&)
+extern void NetworkTransport_SendWrapper_m2BEDC12E5B2E0AADC4E602DDEDA16552C29EBB5D (void);
+// 0x0000000F System.Boolean UnityEngine.Networking.NetworkTransport::QueueMessageForSending(System.Int32,System.Int32,System.Int32,System.Byte[],System.Int32,System.Byte&)
+extern void NetworkTransport_QueueMessageForSending_mEECD5A40DCBA8EA3FBBE9EAEEA87F06964268DF9 (void);
+// 0x00000010 System.Boolean UnityEngine.Networking.NetworkTransport::QueueMessageForSendingWrapper(System.Int32,System.Int32,System.Int32,System.Byte[],System.Int32,System.Byte&)
+extern void NetworkTransport_QueueMessageForSendingWrapper_m17E065BB4A5BB0A9E9F60BF2E0777386CCD38C29 (void);
+// 0x00000011 System.Boolean UnityEngine.Networking.NetworkTransport::SendQueuedMessages(System.Int32,System.Int32,System.Byte&)
+extern void NetworkTransport_SendQueuedMessages_m5AFC17A2DA61C6F85E0C47AB4C3E706FA925A4F5 (void);
+// 0x00000012 UnityEngine.Networking.NetworkEventType UnityEngine.Networking.NetworkTransport::Receive(System.Int32&,System.Int32&,System.Int32&,System.Byte[],System.Int32,System.Int32&,System.Byte&)
+extern void NetworkTransport_Receive_mC6C0C2677D78E1D3DB7F0EE02A8AC913E978A850 (void);
+// 0x00000013 System.Int32 UnityEngine.Networking.NetworkTransport::PopData(System.Int32&,System.Int32&,System.Int32&,System.Byte[],System.Int32,System.Int32&,System.Byte&)
+extern void NetworkTransport_PopData_m9AE207175D69AA961E59A596031B6DC4C9E48E8C (void);
+// 0x00000014 System.Void UnityEngine.Networking.NetworkTransport::Cleanup()
+extern void NetworkTransport_Cleanup_m7BF767E0AB80E628379B2AF924E109666794B6F0 (void);
+// 0x00000015 System.Void UnityEngine.Networking.NetworkTransport::CheckTopology(UnityEngine.Networking.HostTopology)
+extern void NetworkTransport_CheckTopology_mCA4CDEBBD3AA34CE15D5110586307B01EAD7C1AA (void);
+// 0x00000016 System.Void UnityEngine.Networking.NetworkTransport::.cctor()
+extern void NetworkTransport__cctor_mDB08DB01C3DE3EDE771ACE7C805808E30E306F9E (void);
+// 0x00000017 System.Void UnityEngine.Networking.ChannelQOS::.ctor(UnityEngine.Networking.QosType)
+extern void ChannelQOS__ctor_m27A6808139CF080A838D4BEB5F0E10246017335A (void);
+// 0x00000018 System.Void UnityEngine.Networking.ChannelQOS::.ctor()
+extern void ChannelQOS__ctor_mC81B2299638594A864108C3B898944CA10F7B146 (void);
+// 0x00000019 System.Void UnityEngine.Networking.ChannelQOS::.ctor(UnityEngine.Networking.ChannelQOS)
+extern void ChannelQOS__ctor_m885E633D2A1D64E13E087DA039943C767E575DA8 (void);
+// 0x0000001A UnityEngine.Networking.QosType UnityEngine.Networking.ChannelQOS::get_QOS()
+extern void ChannelQOS_get_QOS_mF5244DCF956770207F0E45F59EE694FA0647917B (void);
+// 0x0000001B System.Void UnityEngine.Networking.ConnectionConfig::.ctor()
+extern void ConnectionConfig__ctor_mCB0E2B50103AB6B3917758DC5FC0E52AD153DED3 (void);
+// 0x0000001C System.Void UnityEngine.Networking.ConnectionConfig::.ctor(UnityEngine.Networking.ConnectionConfig)
+extern void ConnectionConfig__ctor_m1976654A083CE2C1858BECF7EED65005BFC16343 (void);
+// 0x0000001D System.Void UnityEngine.Networking.ConnectionConfig::Validate(UnityEngine.Networking.ConnectionConfig)
+extern void ConnectionConfig_Validate_m84787B66F366FDC5EF3D074316F7041E84AA735F (void);
+// 0x0000001E System.UInt16 UnityEngine.Networking.ConnectionConfig::get_PacketSize()
+extern void ConnectionConfig_get_PacketSize_mF111FD026B1D2B89D5254278F879E81B3700AD87 (void);
+// 0x0000001F System.UInt16 UnityEngine.Networking.ConnectionConfig::get_FragmentSize()
+extern void ConnectionConfig_get_FragmentSize_m484053C0601EC4C11376B231262171C4514D8B62 (void);
+// 0x00000020 System.UInt32 UnityEngine.Networking.ConnectionConfig::get_ResendTimeout()
+extern void ConnectionConfig_get_ResendTimeout_mDF1507B518A47887277E53F0930DC1CA5A973FCF (void);
+// 0x00000021 System.UInt32 UnityEngine.Networking.ConnectionConfig::get_DisconnectTimeout()
+extern void ConnectionConfig_get_DisconnectTimeout_m173B79C0C029B50A4250352F1219E8631D40586C (void);
+// 0x00000022 System.UInt32 UnityEngine.Networking.ConnectionConfig::get_ConnectTimeout()
+extern void ConnectionConfig_get_ConnectTimeout_mDCE83595DFC763E869D55FF4F120CFE7BE5E84DF (void);
+// 0x00000023 System.UInt32 UnityEngine.Networking.ConnectionConfig::get_MinUpdateTimeout()
+extern void ConnectionConfig_get_MinUpdateTimeout_mAF0AEE59A6FDED5C2B37111FC8BB7875A6E13F65 (void);
+// 0x00000024 System.UInt32 UnityEngine.Networking.ConnectionConfig::get_PingTimeout()
+extern void ConnectionConfig_get_PingTimeout_mC060D30B64D197917007D81E2DE93C3A85B2E601 (void);
+// 0x00000025 System.UInt32 UnityEngine.Networking.ConnectionConfig::get_ReducedPingTimeout()
+extern void ConnectionConfig_get_ReducedPingTimeout_m332075F8A61A51FBB2738BAE9DDD4313A507D979 (void);
+// 0x00000026 System.UInt32 UnityEngine.Networking.ConnectionConfig::get_AllCostTimeout()
+extern void ConnectionConfig_get_AllCostTimeout_m123FA29854A46EFE05048577E3B01FDB386472F9 (void);
+// 0x00000027 System.Byte UnityEngine.Networking.ConnectionConfig::get_NetworkDropThreshold()
+extern void ConnectionConfig_get_NetworkDropThreshold_m73408CF1E684E9331CAB60214C1A4202FE38162F (void);
+// 0x00000028 System.Byte UnityEngine.Networking.ConnectionConfig::get_OverflowDropThreshold()
+extern void ConnectionConfig_get_OverflowDropThreshold_m230A2787733CA84DC31F44330506F00E9F8B2833 (void);
+// 0x00000029 System.Byte UnityEngine.Networking.ConnectionConfig::get_MaxConnectionAttempt()
+extern void ConnectionConfig_get_MaxConnectionAttempt_m00AABC69DE80B89AB2710361768544F0D380787B (void);
+// 0x0000002A System.UInt32 UnityEngine.Networking.ConnectionConfig::get_AckDelay()
+extern void ConnectionConfig_get_AckDelay_m191F064DBF69779F634408012F65C838A823D7AA (void);
+// 0x0000002B System.UInt32 UnityEngine.Networking.ConnectionConfig::get_SendDelay()
+extern void ConnectionConfig_get_SendDelay_mBEEE56DA650F2C5EC85E72A6422A2CD2A2FAD228 (void);
+// 0x0000002C System.UInt16 UnityEngine.Networking.ConnectionConfig::get_MaxCombinedReliableMessageSize()
+extern void ConnectionConfig_get_MaxCombinedReliableMessageSize_m9165A4E3AE23CDADE7CAEFA3FAC29401A6449CD1 (void);
+// 0x0000002D System.UInt16 UnityEngine.Networking.ConnectionConfig::get_MaxCombinedReliableMessageCount()
+extern void ConnectionConfig_get_MaxCombinedReliableMessageCount_mEC5C1ABA687D86DC5FCD020FEEC6423860AE2EE9 (void);
+// 0x0000002E System.UInt16 UnityEngine.Networking.ConnectionConfig::get_MaxSentMessageQueueSize()
+extern void ConnectionConfig_get_MaxSentMessageQueueSize_m98D5D25BA1DD83103EDAEDBC8F11653CFFA8D848 (void);
+// 0x0000002F System.Void UnityEngine.Networking.ConnectionConfig::set_MaxSentMessageQueueSize(System.UInt16)
+extern void ConnectionConfig_set_MaxSentMessageQueueSize_m59FEBBA265404CE7AD03CCB255BCC186DA1CDFB8 (void);
+// 0x00000030 UnityEngine.Networking.ConnectionAcksType UnityEngine.Networking.ConnectionConfig::get_AcksType()
+extern void ConnectionConfig_get_AcksType_mE938983722B1EDBEB1ABD7D1292BDDA8847299FE (void);
+// 0x00000031 System.Boolean UnityEngine.Networking.ConnectionConfig::get_UsePlatformSpecificProtocols()
+extern void ConnectionConfig_get_UsePlatformSpecificProtocols_m4BE9E4483FAB5F015D560C2A31942F522B35AB85 (void);
+// 0x00000032 System.UInt32 UnityEngine.Networking.ConnectionConfig::get_InitialBandwidth()
+extern void ConnectionConfig_get_InitialBandwidth_m7616A3F25FE1459562849DA4EB0F12BA80CB420B (void);
+// 0x00000033 System.Single UnityEngine.Networking.ConnectionConfig::get_BandwidthPeakFactor()
+extern void ConnectionConfig_get_BandwidthPeakFactor_mA1E5982C49A375FA7E347CAA42B2C89FD08B8B51 (void);
+// 0x00000034 System.UInt16 UnityEngine.Networking.ConnectionConfig::get_WebSocketReceiveBufferMaxSize()
+extern void ConnectionConfig_get_WebSocketReceiveBufferMaxSize_m1B9EE2B09699C09651DF5DFEBB46199D33ADBC5B (void);
+// 0x00000035 System.UInt32 UnityEngine.Networking.ConnectionConfig::get_UdpSocketReceiveBufferMaxSize()
+extern void ConnectionConfig_get_UdpSocketReceiveBufferMaxSize_m55D6B396EA136644276C0752FA02B613F5915985 (void);
+// 0x00000036 System.String UnityEngine.Networking.ConnectionConfig::get_SSLCertFilePath()
+extern void ConnectionConfig_get_SSLCertFilePath_m6AAC33A8DDF7077A4AFFBDCE3688E7589EF77425 (void);
+// 0x00000037 System.String UnityEngine.Networking.ConnectionConfig::get_SSLPrivateKeyFilePath()
+extern void ConnectionConfig_get_SSLPrivateKeyFilePath_mAF3636A8502E6ADCCEB47FDDECC35C767E80118B (void);
+// 0x00000038 System.String UnityEngine.Networking.ConnectionConfig::get_SSLCAFilePath()
+extern void ConnectionConfig_get_SSLCAFilePath_m4C6D3C771C6E55B6789F03944B6A7DBDFCD4E9B8 (void);
+// 0x00000039 System.Int32 UnityEngine.Networking.ConnectionConfig::get_ChannelCount()
+extern void ConnectionConfig_get_ChannelCount_m932C1B881D3046BC18899207F5796698B7539C7C (void);
+// 0x0000003A System.Int32 UnityEngine.Networking.ConnectionConfig::get_SharedOrderChannelCount()
+extern void ConnectionConfig_get_SharedOrderChannelCount_m406DE1A3A83A15FCC644746D4C7A6180339A4853 (void);
+// 0x0000003B System.Byte UnityEngine.Networking.ConnectionConfig::AddChannel(UnityEngine.Networking.QosType)
+extern void ConnectionConfig_AddChannel_mED78D9A5780E5148E29F653CEB1CB0A54DA869E6 (void);
+// 0x0000003C UnityEngine.Networking.QosType UnityEngine.Networking.ConnectionConfig::GetChannel(System.Byte)
+extern void ConnectionConfig_GetChannel_m0473DB76B5FE9E1992A3500F37F3C88ACB6DA3D4 (void);
+// 0x0000003D System.Collections.Generic.IList`1<System.Byte> UnityEngine.Networking.ConnectionConfig::GetSharedOrderChannels(System.Byte)
+extern void ConnectionConfig_GetSharedOrderChannels_m7DB0D9738F33E044807142B8C2CBB50DDA42A9EC (void);
+// 0x0000003E System.Void UnityEngine.Networking.HostTopology::.ctor(UnityEngine.Networking.ConnectionConfig,System.Int32)
+extern void HostTopology__ctor_m402906F2EFF083571541B3EDED1729CA3FDB6244 (void);
+// 0x0000003F System.Void UnityEngine.Networking.HostTopology::.ctor()
+extern void HostTopology__ctor_mA0D7BC0F1CC6956ABFBDAC61941B38E75B00D87D (void);
+// 0x00000040 UnityEngine.Networking.ConnectionConfig UnityEngine.Networking.HostTopology::get_DefaultConfig()
+extern void HostTopology_get_DefaultConfig_m0E4C32CC256D7C901C1C91C86B38F33EBD03A0E3 (void);
+// 0x00000041 System.Int32 UnityEngine.Networking.HostTopology::get_MaxDefaultConnections()
+extern void HostTopology_get_MaxDefaultConnections_mBED404D3C504A13C5302198D237E509B664CFEAD (void);
+// 0x00000042 System.Int32 UnityEngine.Networking.HostTopology::get_SpecialConnectionConfigsCount()
+extern void HostTopology_get_SpecialConnectionConfigsCount_m34BCBF16F6499FF007E37C3C3657B1BAE8E8522C (void);
+// 0x00000043 System.Collections.Generic.List`1<UnityEngine.Networking.ConnectionConfig> UnityEngine.Networking.HostTopology::get_SpecialConnectionConfigs()
+extern void HostTopology_get_SpecialConnectionConfigs_m6FA6CF1CD59EBC0DBBB9454048EDDACE322C029C (void);
+// 0x00000044 UnityEngine.Networking.ConnectionConfig UnityEngine.Networking.HostTopology::GetSpecialConnectionConfig(System.Int32)
+extern void HostTopology_GetSpecialConnectionConfig_m52EB0C01DBCEFABCCA2999BA5AA4FC5200049BC1 (void);
+// 0x00000045 System.UInt16 UnityEngine.Networking.HostTopology::get_ReceivedMessagePoolSize()
+extern void HostTopology_get_ReceivedMessagePoolSize_m37EAF773FF7EB9CB306E0BC20FE9B132C16880FD (void);
+// 0x00000046 System.UInt16 UnityEngine.Networking.HostTopology::get_SentMessagePoolSize()
+extern void HostTopology_get_SentMessagePoolSize_m04C3CF4CEC53530BBB0CA64C753F9EFEAF6EB16A (void);
+// 0x00000047 System.Single UnityEngine.Networking.HostTopology::get_MessagePoolSizeGrowthFactor()
+extern void HostTopology_get_MessagePoolSizeGrowthFactor_m7A7ED02522613F0DB49B663F1F51B0104FC60FA0 (void);
+// 0x00000048 System.Void UnityEngine.Networking.ConnectionConfigInternal::.ctor(UnityEngine.Networking.ConnectionConfig)
+extern void ConnectionConfigInternal__ctor_m3159326166C18DBB931A215F34FDE777C78D2AC0 (void);
+// 0x00000049 System.Void UnityEngine.Networking.ConnectionConfigInternal::Dispose(System.Boolean)
+extern void ConnectionConfigInternal_Dispose_m4161119120EC3447F951143746AA3822B262C590 (void);
+// 0x0000004A System.Void UnityEngine.Networking.ConnectionConfigInternal::Finalize()
+extern void ConnectionConfigInternal_Finalize_m86CE7D1789FE804A8A655C1C5C81CFAE2097918D (void);
+// 0x0000004B System.Void UnityEngine.Networking.ConnectionConfigInternal::Dispose()
+extern void ConnectionConfigInternal_Dispose_m5105F829E0DD5CB86927351FC94BF5AE14B8493E (void);
+// 0x0000004C System.IntPtr UnityEngine.Networking.ConnectionConfigInternal::InternalCreate()
+extern void ConnectionConfigInternal_InternalCreate_m57E00EAD6FD85A7AEE88C4BABD2B76F028D26229 (void);
+// 0x0000004D System.Void UnityEngine.Networking.ConnectionConfigInternal::InternalDestroy(System.IntPtr)
+extern void ConnectionConfigInternal_InternalDestroy_mA5ED8454D97B55A9BF3FDDC6DDE09D31E6DF20E9 (void);
+// 0x0000004E System.Byte UnityEngine.Networking.ConnectionConfigInternal::AddChannel(System.Int32)
+extern void ConnectionConfigInternal_AddChannel_m6F0C7412C1B07FA22276ED59872E1B5280C07C14 (void);
+// 0x0000004F System.Boolean UnityEngine.Networking.ConnectionConfigInternal::SetPacketSize(System.UInt16)
+extern void ConnectionConfigInternal_SetPacketSize_m53D38ACE88594D14DFB61BF99B2109FA35F5E4B3 (void);
+// 0x00000050 System.Void UnityEngine.Networking.ConnectionConfigInternal::set_FragmentSize(System.UInt16)
+extern void ConnectionConfigInternal_set_FragmentSize_m81A3C2E79C8CA333D4901A34E253916986870678 (void);
+// 0x00000051 System.Void UnityEngine.Networking.ConnectionConfigInternal::set_ResendTimeout(System.UInt32)
+extern void ConnectionConfigInternal_set_ResendTimeout_m52B7443A4BF5D1DC15E41BC1E3EA4B0890D06413 (void);
+// 0x00000052 System.Void UnityEngine.Networking.ConnectionConfigInternal::set_DisconnectTimeout(System.UInt32)
+extern void ConnectionConfigInternal_set_DisconnectTimeout_m7B620F41E9B1F610CA2616939BBE5C636C073369 (void);
+// 0x00000053 System.Void UnityEngine.Networking.ConnectionConfigInternal::set_ConnectTimeout(System.UInt32)
+extern void ConnectionConfigInternal_set_ConnectTimeout_mC4F96B2E33DB75AB6CFB251E28816294F4D629F2 (void);
+// 0x00000054 System.Void UnityEngine.Networking.ConnectionConfigInternal::set_MinUpdateTimeout(System.UInt32)
+extern void ConnectionConfigInternal_set_MinUpdateTimeout_mF4DA20AA8EAF8A4E82DA4471483A5B8A3601B2F7 (void);
+// 0x00000055 System.Void UnityEngine.Networking.ConnectionConfigInternal::set_PingTimeout(System.UInt32)
+extern void ConnectionConfigInternal_set_PingTimeout_m882CF8571F3F466C026F84FB48FD7BCAFC41FBF3 (void);
+// 0x00000056 System.Void UnityEngine.Networking.ConnectionConfigInternal::set_ReducedPingTimeout(System.UInt32)
+extern void ConnectionConfigInternal_set_ReducedPingTimeout_m10956CD170C63491A8D04F4A95D048090831E8CE (void);
+// 0x00000057 System.Void UnityEngine.Networking.ConnectionConfigInternal::set_AllCostTimeout(System.UInt32)
+extern void ConnectionConfigInternal_set_AllCostTimeout_m37CC810E66808CDCFBDA2DA785169927C8FE5553 (void);
+// 0x00000058 System.Void UnityEngine.Networking.ConnectionConfigInternal::set_NetworkDropThreshold(System.Byte)
+extern void ConnectionConfigInternal_set_NetworkDropThreshold_m0E9A369B4625FDBE833B23D9A792E8CD111F5AF4 (void);
+// 0x00000059 System.Void UnityEngine.Networking.ConnectionConfigInternal::set_OverflowDropThreshold(System.Byte)
+extern void ConnectionConfigInternal_set_OverflowDropThreshold_m4AD127798D39BC9B8034EC35DA235EAC85D87B18 (void);
+// 0x0000005A System.Void UnityEngine.Networking.ConnectionConfigInternal::set_MaxConnectionAttempt(System.Byte)
+extern void ConnectionConfigInternal_set_MaxConnectionAttempt_m6A5DFC749DB71E05E4167E11ED8D1930D34A20A9 (void);
+// 0x0000005B System.Void UnityEngine.Networking.ConnectionConfigInternal::set_AckDelay(System.UInt32)
+extern void ConnectionConfigInternal_set_AckDelay_m39BC6D36B69AE86B8587FEDCA9B6232F7A9D1960 (void);
+// 0x0000005C System.Void UnityEngine.Networking.ConnectionConfigInternal::set_SendDelay(System.UInt32)
+extern void ConnectionConfigInternal_set_SendDelay_m6CDA97F9DB65D815562064D9FC5C6E92FDD735E3 (void);
+// 0x0000005D System.Void UnityEngine.Networking.ConnectionConfigInternal::set_MaxCombinedReliableMessageSize(System.UInt16)
+extern void ConnectionConfigInternal_set_MaxCombinedReliableMessageSize_mAD08AF5D34269E4648AA1630AE3524A0747433CC (void);
+// 0x0000005E System.Void UnityEngine.Networking.ConnectionConfigInternal::set_MaxCombinedReliableMessageCount(System.UInt16)
+extern void ConnectionConfigInternal_set_MaxCombinedReliableMessageCount_m477651B41F261E81BC43D3C854AA6664EBF7B541 (void);
+// 0x0000005F System.Void UnityEngine.Networking.ConnectionConfigInternal::set_MaxSentMessageQueueSize(System.UInt16)
+extern void ConnectionConfigInternal_set_MaxSentMessageQueueSize_m517343266C198505E7BD899AD4489AD6BD593AE1 (void);
+// 0x00000060 System.Void UnityEngine.Networking.ConnectionConfigInternal::set_AcksType(System.Byte)
+extern void ConnectionConfigInternal_set_AcksType_m9CB8EE193EE3AEDB5CC5E63D3DE5D768450523EE (void);
+// 0x00000061 System.Void UnityEngine.Networking.ConnectionConfigInternal::set_UsePlatformSpecificProtocols(System.Boolean)
+extern void ConnectionConfigInternal_set_UsePlatformSpecificProtocols_m65F8757AA1E47534DD74441D8325B7F33320985E (void);
+// 0x00000062 System.Void UnityEngine.Networking.ConnectionConfigInternal::set_InitialBandwidth(System.UInt32)
+extern void ConnectionConfigInternal_set_InitialBandwidth_mF6348D56F65CED75B5809F6AE996C2DDB8903244 (void);
+// 0x00000063 System.Void UnityEngine.Networking.ConnectionConfigInternal::set_BandwidthPeakFactor(System.Single)
+extern void ConnectionConfigInternal_set_BandwidthPeakFactor_m3C43D6BD419D87787D18860D3927E7E1ABE1F9B7 (void);
+// 0x00000064 System.Void UnityEngine.Networking.ConnectionConfigInternal::set_WebSocketReceiveBufferMaxSize(System.UInt16)
+extern void ConnectionConfigInternal_set_WebSocketReceiveBufferMaxSize_m02AD41DCF144B4EE187F705916F85BE3C1D5895F (void);
+// 0x00000065 System.Void UnityEngine.Networking.ConnectionConfigInternal::set_UdpSocketReceiveBufferMaxSize(System.UInt32)
+extern void ConnectionConfigInternal_set_UdpSocketReceiveBufferMaxSize_m04A8CBD90C0CD7F0E888BC09D78EA9378C74B019 (void);
+// 0x00000066 System.Int32 UnityEngine.Networking.ConnectionConfigInternal::SetSSLCertFilePath(System.String)
+extern void ConnectionConfigInternal_SetSSLCertFilePath_mE1BB6420E3CB9775AD1E55561D9973D7DA1794A4 (void);
+// 0x00000067 System.Int32 UnityEngine.Networking.ConnectionConfigInternal::SetSSLPrivateKeyFilePath(System.String)
+extern void ConnectionConfigInternal_SetSSLPrivateKeyFilePath_m97560CCDF198A876997E44D363018BA65C5929EB (void);
+// 0x00000068 System.Int32 UnityEngine.Networking.ConnectionConfigInternal::SetSSLCAFilePath(System.String)
+extern void ConnectionConfigInternal_SetSSLCAFilePath_mC553B8CCC370BFC28CC8D26437CC6B1F0FD60315 (void);
+// 0x00000069 System.Boolean UnityEngine.Networking.ConnectionConfigInternal::MakeChannelsSharedOrder(System.Byte[])
+extern void ConnectionConfigInternal_MakeChannelsSharedOrder_m386F46D817576653643A908AAAA1AB6DA136707E (void);
+// 0x0000006A System.Void UnityEngine.Networking.HostTopologyInternal::.ctor(UnityEngine.Networking.HostTopology)
+extern void HostTopologyInternal__ctor_m9DAA9FD8AC2102B55B9EB6E4F334C8B8555F5E43 (void);
+// 0x0000006B System.Void UnityEngine.Networking.HostTopologyInternal::Dispose(System.Boolean)
+extern void HostTopologyInternal_Dispose_m083CAFDDE99B9C65B901855E17687C86ED981E7F (void);
+// 0x0000006C System.Void UnityEngine.Networking.HostTopologyInternal::Finalize()
+extern void HostTopologyInternal_Finalize_mDB9371DF591F3F2EC5988C3E76ADDC3076F077BA (void);
+// 0x0000006D System.Void UnityEngine.Networking.HostTopologyInternal::Dispose()
+extern void HostTopologyInternal_Dispose_mC632F73CFD4F9D9558C4A6B19A1B594011A46D8E (void);
+// 0x0000006E System.IntPtr UnityEngine.Networking.HostTopologyInternal::InternalCreate(UnityEngine.Networking.ConnectionConfigInternal,System.Int32)
+extern void HostTopologyInternal_InternalCreate_m04CCA00F1B270054658A87CE635FB6E83ADD3551 (void);
+// 0x0000006F System.Void UnityEngine.Networking.HostTopologyInternal::InternalDestroy(System.IntPtr)
+extern void HostTopologyInternal_InternalDestroy_m71E5CC3F9775FC938F4B1397F87811AEF3FCFECF (void);
+// 0x00000070 System.UInt16 UnityEngine.Networking.HostTopologyInternal::AddSpecialConnectionConfig(UnityEngine.Networking.ConnectionConfigInternal)
+extern void HostTopologyInternal_AddSpecialConnectionConfig_m0A2F45F5745DC98599A7EE8359F3A17DBE66856C (void);
+// 0x00000071 System.Void UnityEngine.Networking.HostTopologyInternal::set_ReceivedMessagePoolSize(System.UInt16)
+extern void HostTopologyInternal_set_ReceivedMessagePoolSize_m058306E23591D771402037081DA32C2FE60B1464 (void);
+// 0x00000072 System.Void UnityEngine.Networking.HostTopologyInternal::set_SentMessagePoolSize(System.UInt16)
+extern void HostTopologyInternal_set_SentMessagePoolSize_mAB16B0D773E42DD470FBC0F2C79030B914DAABE1 (void);
+// 0x00000073 System.Void UnityEngine.Networking.HostTopologyInternal::set_MessagePoolSizeGrowthFactor(System.Single)
+extern void HostTopologyInternal_set_MessagePoolSizeGrowthFactor_mE735BFC3E80552A0BD0C125B06BD80973563020A (void);
+static Il2CppMethodPointer s_methodPointers[115] = 
+{
+	NetworkTransport_Init_m07410A194825D614DBE8A08B746E06EC6481AEF3,
+	NetworkTransport_InitializeClass_m885F41697D3E728B618EE20A48B7F88BBF596891,
+	NetworkTransport_Shutdown_mCDADD01490BB0C9B0F5BAFB391E207C7B0298DC4,
+	NetworkTransport_AddHostWithSimulator_m7D2AA3190354AF70603B43E642EBABD8B014E2B8,
+	NetworkTransport_AddHost_m24D3C68D33504C5A83C47A701F7CDA20E814898D,
+	NetworkTransport_AddHostInternal_mE6C08100955EB6B0A84D2012C4539CCEFD21D78F,
+	NetworkTransport_GetCurrentRTT_mF6F860C6EE547DF877313DB56D7348F5101B0F9B,
+	NetworkTransport_GetMaxPacketSize_m98EE9A0A5FD4C30AEF12D0B7EE498B3043E929F1,
+	NetworkTransport_get_IsStarted_m16B139370CAED45416649D8D43AD059EF4CBE05E,
+	NetworkTransport_IsStartedInternal_m90ABBFFB0BAD69105ACFB91ABEA5D53345C1145A,
+	NetworkTransport_Connect_mAB9436F3762B46F3078AD6BC36AA49BD5E598588,
+	NetworkTransport_Disconnect_mD0F2C28F6A7B17313F966C4D74FD84F7F4E3A015,
+	NetworkTransport_Send_m8D6D448EDCA5A74B58C5DC9DE1AEA7658C9FC0A7,
+	NetworkTransport_SendWrapper_m2BEDC12E5B2E0AADC4E602DDEDA16552C29EBB5D,
+	NetworkTransport_QueueMessageForSending_mEECD5A40DCBA8EA3FBBE9EAEEA87F06964268DF9,
+	NetworkTransport_QueueMessageForSendingWrapper_m17E065BB4A5BB0A9E9F60BF2E0777386CCD38C29,
+	NetworkTransport_SendQueuedMessages_m5AFC17A2DA61C6F85E0C47AB4C3E706FA925A4F5,
+	NetworkTransport_Receive_mC6C0C2677D78E1D3DB7F0EE02A8AC913E978A850,
+	NetworkTransport_PopData_m9AE207175D69AA961E59A596031B6DC4C9E48E8C,
+	NetworkTransport_Cleanup_m7BF767E0AB80E628379B2AF924E109666794B6F0,
+	NetworkTransport_CheckTopology_mCA4CDEBBD3AA34CE15D5110586307B01EAD7C1AA,
+	NetworkTransport__cctor_mDB08DB01C3DE3EDE771ACE7C805808E30E306F9E,
+	ChannelQOS__ctor_m27A6808139CF080A838D4BEB5F0E10246017335A,
+	ChannelQOS__ctor_mC81B2299638594A864108C3B898944CA10F7B146,
+	ChannelQOS__ctor_m885E633D2A1D64E13E087DA039943C767E575DA8,
+	ChannelQOS_get_QOS_mF5244DCF956770207F0E45F59EE694FA0647917B,
+	ConnectionConfig__ctor_mCB0E2B50103AB6B3917758DC5FC0E52AD153DED3,
+	ConnectionConfig__ctor_m1976654A083CE2C1858BECF7EED65005BFC16343,
+	ConnectionConfig_Validate_m84787B66F366FDC5EF3D074316F7041E84AA735F,
+	ConnectionConfig_get_PacketSize_mF111FD026B1D2B89D5254278F879E81B3700AD87,
+	ConnectionConfig_get_FragmentSize_m484053C0601EC4C11376B231262171C4514D8B62,
+	ConnectionConfig_get_ResendTimeout_mDF1507B518A47887277E53F0930DC1CA5A973FCF,
+	ConnectionConfig_get_DisconnectTimeout_m173B79C0C029B50A4250352F1219E8631D40586C,
+	ConnectionConfig_get_ConnectTimeout_mDCE83595DFC763E869D55FF4F120CFE7BE5E84DF,
+	ConnectionConfig_get_MinUpdateTimeout_mAF0AEE59A6FDED5C2B37111FC8BB7875A6E13F65,
+	ConnectionConfig_get_PingTimeout_mC060D30B64D197917007D81E2DE93C3A85B2E601,
+	ConnectionConfig_get_ReducedPingTimeout_m332075F8A61A51FBB2738BAE9DDD4313A507D979,
+	ConnectionConfig_get_AllCostTimeout_m123FA29854A46EFE05048577E3B01FDB386472F9,
+	ConnectionConfig_get_NetworkDropThreshold_m73408CF1E684E9331CAB60214C1A4202FE38162F,
+	ConnectionConfig_get_OverflowDropThreshold_m230A2787733CA84DC31F44330506F00E9F8B2833,
+	ConnectionConfig_get_MaxConnectionAttempt_m00AABC69DE80B89AB2710361768544F0D380787B,
+	ConnectionConfig_get_AckDelay_m191F064DBF69779F634408012F65C838A823D7AA,
+	ConnectionConfig_get_SendDelay_mBEEE56DA650F2C5EC85E72A6422A2CD2A2FAD228,
+	ConnectionConfig_get_MaxCombinedReliableMessageSize_m9165A4E3AE23CDADE7CAEFA3FAC29401A6449CD1,
+	ConnectionConfig_get_MaxCombinedReliableMessageCount_mEC5C1ABA687D86DC5FCD020FEEC6423860AE2EE9,
+	ConnectionConfig_get_MaxSentMessageQueueSize_m98D5D25BA1DD83103EDAEDBC8F11653CFFA8D848,
+	ConnectionConfig_set_MaxSentMessageQueueSize_m59FEBBA265404CE7AD03CCB255BCC186DA1CDFB8,
+	ConnectionConfig_get_AcksType_mE938983722B1EDBEB1ABD7D1292BDDA8847299FE,
+	ConnectionConfig_get_UsePlatformSpecificProtocols_m4BE9E4483FAB5F015D560C2A31942F522B35AB85,
+	ConnectionConfig_get_InitialBandwidth_m7616A3F25FE1459562849DA4EB0F12BA80CB420B,
+	ConnectionConfig_get_BandwidthPeakFactor_mA1E5982C49A375FA7E347CAA42B2C89FD08B8B51,
+	ConnectionConfig_get_WebSocketReceiveBufferMaxSize_m1B9EE2B09699C09651DF5DFEBB46199D33ADBC5B,
+	ConnectionConfig_get_UdpSocketReceiveBufferMaxSize_m55D6B396EA136644276C0752FA02B613F5915985,
+	ConnectionConfig_get_SSLCertFilePath_m6AAC33A8DDF7077A4AFFBDCE3688E7589EF77425,
+	ConnectionConfig_get_SSLPrivateKeyFilePath_mAF3636A8502E6ADCCEB47FDDECC35C767E80118B,
+	ConnectionConfig_get_SSLCAFilePath_m4C6D3C771C6E55B6789F03944B6A7DBDFCD4E9B8,
+	ConnectionConfig_get_ChannelCount_m932C1B881D3046BC18899207F5796698B7539C7C,
+	ConnectionConfig_get_SharedOrderChannelCount_m406DE1A3A83A15FCC644746D4C7A6180339A4853,
+	ConnectionConfig_AddChannel_mED78D9A5780E5148E29F653CEB1CB0A54DA869E6,
+	ConnectionConfig_GetChannel_m0473DB76B5FE9E1992A3500F37F3C88ACB6DA3D4,
+	ConnectionConfig_GetSharedOrderChannels_m7DB0D9738F33E044807142B8C2CBB50DDA42A9EC,
+	HostTopology__ctor_m402906F2EFF083571541B3EDED1729CA3FDB6244,
+	HostTopology__ctor_mA0D7BC0F1CC6956ABFBDAC61941B38E75B00D87D,
+	HostTopology_get_DefaultConfig_m0E4C32CC256D7C901C1C91C86B38F33EBD03A0E3,
+	HostTopology_get_MaxDefaultConnections_mBED404D3C504A13C5302198D237E509B664CFEAD,
+	HostTopology_get_SpecialConnectionConfigsCount_m34BCBF16F6499FF007E37C3C3657B1BAE8E8522C,
+	HostTopology_get_SpecialConnectionConfigs_m6FA6CF1CD59EBC0DBBB9454048EDDACE322C029C,
+	HostTopology_GetSpecialConnectionConfig_m52EB0C01DBCEFABCCA2999BA5AA4FC5200049BC1,
+	HostTopology_get_ReceivedMessagePoolSize_m37EAF773FF7EB9CB306E0BC20FE9B132C16880FD,
+	HostTopology_get_SentMessagePoolSize_m04C3CF4CEC53530BBB0CA64C753F9EFEAF6EB16A,
+	HostTopology_get_MessagePoolSizeGrowthFactor_m7A7ED02522613F0DB49B663F1F51B0104FC60FA0,
+	ConnectionConfigInternal__ctor_m3159326166C18DBB931A215F34FDE777C78D2AC0,
+	ConnectionConfigInternal_Dispose_m4161119120EC3447F951143746AA3822B262C590,
+	ConnectionConfigInternal_Finalize_m86CE7D1789FE804A8A655C1C5C81CFAE2097918D,
+	ConnectionConfigInternal_Dispose_m5105F829E0DD5CB86927351FC94BF5AE14B8493E,
+	ConnectionConfigInternal_InternalCreate_m57E00EAD6FD85A7AEE88C4BABD2B76F028D26229,
+	ConnectionConfigInternal_InternalDestroy_mA5ED8454D97B55A9BF3FDDC6DDE09D31E6DF20E9,
+	ConnectionConfigInternal_AddChannel_m6F0C7412C1B07FA22276ED59872E1B5280C07C14,
+	ConnectionConfigInternal_SetPacketSize_m53D38ACE88594D14DFB61BF99B2109FA35F5E4B3,
+	ConnectionConfigInternal_set_FragmentSize_m81A3C2E79C8CA333D4901A34E253916986870678,
+	ConnectionConfigInternal_set_ResendTimeout_m52B7443A4BF5D1DC15E41BC1E3EA4B0890D06413,
+	ConnectionConfigInternal_set_DisconnectTimeout_m7B620F41E9B1F610CA2616939BBE5C636C073369,
+	ConnectionConfigInternal_set_ConnectTimeout_mC4F96B2E33DB75AB6CFB251E28816294F4D629F2,
+	ConnectionConfigInternal_set_MinUpdateTimeout_mF4DA20AA8EAF8A4E82DA4471483A5B8A3601B2F7,
+	ConnectionConfigInternal_set_PingTimeout_m882CF8571F3F466C026F84FB48FD7BCAFC41FBF3,
+	ConnectionConfigInternal_set_ReducedPingTimeout_m10956CD170C63491A8D04F4A95D048090831E8CE,
+	ConnectionConfigInternal_set_AllCostTimeout_m37CC810E66808CDCFBDA2DA785169927C8FE5553,
+	ConnectionConfigInternal_set_NetworkDropThreshold_m0E9A369B4625FDBE833B23D9A792E8CD111F5AF4,
+	ConnectionConfigInternal_set_OverflowDropThreshold_m4AD127798D39BC9B8034EC35DA235EAC85D87B18,
+	ConnectionConfigInternal_set_MaxConnectionAttempt_m6A5DFC749DB71E05E4167E11ED8D1930D34A20A9,
+	ConnectionConfigInternal_set_AckDelay_m39BC6D36B69AE86B8587FEDCA9B6232F7A9D1960,
+	ConnectionConfigInternal_set_SendDelay_m6CDA97F9DB65D815562064D9FC5C6E92FDD735E3,
+	ConnectionConfigInternal_set_MaxCombinedReliableMessageSize_mAD08AF5D34269E4648AA1630AE3524A0747433CC,
+	ConnectionConfigInternal_set_MaxCombinedReliableMessageCount_m477651B41F261E81BC43D3C854AA6664EBF7B541,
+	ConnectionConfigInternal_set_MaxSentMessageQueueSize_m517343266C198505E7BD899AD4489AD6BD593AE1,
+	ConnectionConfigInternal_set_AcksType_m9CB8EE193EE3AEDB5CC5E63D3DE5D768450523EE,
+	ConnectionConfigInternal_set_UsePlatformSpecificProtocols_m65F8757AA1E47534DD74441D8325B7F33320985E,
+	ConnectionConfigInternal_set_InitialBandwidth_mF6348D56F65CED75B5809F6AE996C2DDB8903244,
+	ConnectionConfigInternal_set_BandwidthPeakFactor_m3C43D6BD419D87787D18860D3927E7E1ABE1F9B7,
+	ConnectionConfigInternal_set_WebSocketReceiveBufferMaxSize_m02AD41DCF144B4EE187F705916F85BE3C1D5895F,
+	ConnectionConfigInternal_set_UdpSocketReceiveBufferMaxSize_m04A8CBD90C0CD7F0E888BC09D78EA9378C74B019,
+	ConnectionConfigInternal_SetSSLCertFilePath_mE1BB6420E3CB9775AD1E55561D9973D7DA1794A4,
+	ConnectionConfigInternal_SetSSLPrivateKeyFilePath_m97560CCDF198A876997E44D363018BA65C5929EB,
+	ConnectionConfigInternal_SetSSLCAFilePath_mC553B8CCC370BFC28CC8D26437CC6B1F0FD60315,
+	ConnectionConfigInternal_MakeChannelsSharedOrder_m386F46D817576653643A908AAAA1AB6DA136707E,
+	HostTopologyInternal__ctor_m9DAA9FD8AC2102B55B9EB6E4F334C8B8555F5E43,
+	HostTopologyInternal_Dispose_m083CAFDDE99B9C65B901855E17687C86ED981E7F,
+	HostTopologyInternal_Finalize_mDB9371DF591F3F2EC5988C3E76ADDC3076F077BA,
+	HostTopologyInternal_Dispose_mC632F73CFD4F9D9558C4A6B19A1B594011A46D8E,
+	HostTopologyInternal_InternalCreate_m04CCA00F1B270054658A87CE635FB6E83ADD3551,
+	HostTopologyInternal_InternalDestroy_m71E5CC3F9775FC938F4B1397F87811AEF3FCFECF,
+	HostTopologyInternal_AddSpecialConnectionConfig_m0A2F45F5745DC98599A7EE8359F3A17DBE66856C,
+	HostTopologyInternal_set_ReceivedMessagePoolSize_m058306E23591D771402037081DA32C2FE60B1464,
+	HostTopologyInternal_set_SentMessagePoolSize_mAB16B0D773E42DD470FBC0F2C79030B914DAABE1,
+	HostTopologyInternal_set_MessagePoolSizeGrowthFactor_mE735BFC3E80552A0BD0C125B06BD80973563020A,
+};
+static const int32_t s_InvokerIndices[115] = 
+{
+	8561,
+	8561,
+	8561,
+	6719,
+	7285,
+	6758,
+	7271,
+	8537,
+	8552,
+	8552,
+	6672,
+	7382,
+	6626,
+	6626,
+	6626,
+	6626,
+	7382,
+	6534,
+	6534,
+	8561,
+	8488,
+	8561,
+	5149,
+	6421,
+	5168,
+	6343,
+	6421,
+	5168,
+	8488,
+	6342,
+	6342,
+	6343,
+	6343,
+	6343,
+	6343,
+	6343,
+	6343,
+	6343,
+	6390,
+	6390,
+	6390,
+	6343,
+	6343,
+	6342,
+	6342,
+	6342,
+	5148,
+	6343,
+	6390,
+	6343,
+	6395,
+	6342,
+	6343,
+	6363,
+	6363,
+	6363,
+	6343,
+	6343,
+	4503,
+	3750,
+	3947,
+	2681,
+	6421,
+	6363,
+	6343,
+	6343,
+	6363,
+	3935,
+	6342,
+	6342,
+	6395,
+	5168,
+	5195,
+	6421,
+	6421,
+	8539,
+	8485,
+	4503,
+	4502,
+	5148,
+	5149,
+	5149,
+	5149,
+	5149,
+	5149,
+	5149,
+	5149,
+	5195,
+	5195,
+	5195,
+	5149,
+	5149,
+	5148,
+	5148,
+	5148,
+	5195,
+	5195,
+	5149,
+	5199,
+	5148,
+	5149,
+	3730,
+	3730,
+	3730,
+	4525,
+	5168,
+	5195,
+	6421,
+	6421,
+	7644,
+	8485,
+	3321,
+	5148,
+	5148,
+	5199,
+};
+extern const CustomAttributesCacheGenerator g_UnityEngine_UNETModule_AttributeGenerators[];
+IL2CPP_EXTERN_C const Il2CppCodeGenModule g_UnityEngine_UNETModule_CodeGenModule;
+const Il2CppCodeGenModule g_UnityEngine_UNETModule_CodeGenModule = 
+{
+	"UnityEngine.UNETModule.dll",
+	115,
+	s_methodPointers,
+	0,
+	NULL,
+	s_InvokerIndices,
+	0,
+	NULL,
+	0,
+	NULL,
+	0,
+	NULL,
+	NULL,
+	g_UnityEngine_UNETModule_AttributeGenerators,
+	NULL, // module initializer,
+	NULL,
+	NULL,
+	NULL,
+};
