@@ -90,12 +90,16 @@ namespace AKCondinoO.Voxels{
     internal class MarchingCubesBackgroundContainer:BackgroundContainer{
      internal readonly object syn_bg;
 
-    internal(bool hasDensity,MaterialId material)[]voxels_bg;
+    internal readonly(bool hasDensity,MaterialId material)[]voxels_bg=new(bool hasDensity,MaterialId material)[VoxelsPerChunk];
 
     internal readonly Dictionary<int,(bool hasDensity,MaterialId material)>[]neighbors_bg=new Dictionary<int,(bool,MaterialId)>[8];
 
      internal MarchingCubesBackgroundContainer(object syn){
       syn_bg=syn;
+
+      for(int i=0;i<neighbors_bg.Length;++i){
+       neighbors_bg[i]=new Dictionary<int,(bool hasDensity,MaterialId material)>();
+      }
      }
 
      internal ExecutionMode executionMode_bg=ExecutionMode.terrain;
@@ -773,10 +777,15 @@ namespace AKCondinoO.Voxels{
            }
           }
 
-          current.voxels_bg=Array.ConvertAll<Voxel,(bool,MaterialId)>(voxels,(voxel)=>{return(-voxel.Density<IsoLevel,voxel.Material);});
+          for(int i=0;i<voxels.Length;++i){var voxel=voxels[i];
+           current.voxels_bg[i]=(-voxel.Density<IsoLevel,voxel.Material);
+          }
 
           for(int i=0;i<neighbors.Length;++i){
-           current.neighbors_bg[i]=neighbors[i].ToDictionary(item=>item.Key,item=>(-item.Value.Density<IsoLevel,item.Value.Material));
+           current.neighbors_bg[i].Clear();
+           foreach(var item in neighbors[i]){
+            current.neighbors_bg[i][item.Key]=(-item.Value.Density<IsoLevel,item.Value.Material);
+           }
           }
 
       }
@@ -1398,7 +1407,9 @@ namespace AKCondinoO.Voxels{
       };
 
      filter=GetComponent<MeshFilter>();
+     filter.mesh=mesh;
       wfilter=waterGameObject.GetComponent<MeshFilter>();
+      wfilter.mesh=wmesh;
 
      bakeJob=new BakerJob(){
       meshId=mesh.GetInstanceID(),
@@ -1566,13 +1577,9 @@ namespace AKCondinoO.Voxels{
  
            }else{
             if(keepMeshColliderAssigned){
-             if(collider.sharedMesh==null&&meshBuilt){
-              collider.sharedMesh=mesh;
-             }
+             collider.enabled=true;
             }else{
-             if(collider.sharedMesh!=null){
-              collider.sharedMesh=null;
-             }
+             collider.enabled=false;
             }
   
             busy=false;
@@ -1602,8 +1609,6 @@ namespace AKCondinoO.Voxels{
      if(marchingCubesBG.IsCompleted(VoxelTerrain.Singleton.marchingCubesBGThreads[0].IsRunning)){
       waterUpdateFlag=true;
       collider.sharedMesh=null;
-      filter.mesh=null;
-       wfilter.mesh=null;
       collider.enabled=false;
       renderer.enabled=false;
       worldBounds.center=transform.position=new Vector3(cnkRgn.x,0,cnkRgn.y);
@@ -1653,7 +1658,6 @@ namespace AKCondinoO.Voxels{
       mesh.subMeshCount=1;
       mesh.SetSubMesh(0,new SubMeshDescriptor(0,marchingCubesBG.TempTri.Length){firstVertex=0,vertexCount=marchingCubesBG.TempVer.Length},meshFlags);
       renderer.enabled=true;
-      filter.mesh=mesh;
 
       meshBuilt=true;
 
@@ -1745,7 +1749,7 @@ namespace AKCondinoO.Voxels{
       wmarchingCubesBG.cnkIdx_bg=cnkIdx.Value;
       wmarchingCubesBG.voxels_bg=marchingCubesBG.voxels_bg;
       for(int i=0;i<marchingCubesBG.neighbors_bg.Length;++i){
-       wmarchingCubesBG.neighbors_bg[i]=new Dictionary<int,(bool hasDensity,MaterialId material)>(marchingCubesBG.neighbors_bg[i]);
+       wmarchingCubesBG.neighbors_bg[i]=marchingCubesBG.neighbors_bg[i];
       }
       wmarchingCubesCount++;
       water_bg.HasPendingChanges=false;
@@ -1775,7 +1779,6 @@ namespace AKCondinoO.Voxels{
       wmesh.SetIndexBufferData(wmarchingCubesBG.TempWTri.AsArray(),0,0,wmarchingCubesBG.TempWTri.Length,wmeshFlags);
       wmesh.subMeshCount=1;
       wmesh.SetSubMesh(0,new SubMeshDescriptor(0,wmarchingCubesBG.TempWTri.Length){firstVertex=0,vertexCount=wmarchingCubesBG.TempWVer.Length},wmeshFlags);
-      wfilter.mesh=wmesh;
       wmarchingCubesCount--;
       return true;
      }

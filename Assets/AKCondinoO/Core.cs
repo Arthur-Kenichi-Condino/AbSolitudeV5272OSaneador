@@ -41,8 +41,9 @@ namespace AKCondinoO{
 
     void Awake(){if(Singleton==null){Singleton=this;}else{DestroyImmediate(this);return;}
      #if !UNITY_EDITOR
-      GarbageCollector.GCMode=GarbageCollector.Mode.Manual;
+      GarbageCollector.GCMode=GarbageCollector.Mode.Enabled;
      #endif
+     GarbageCollector.incrementalTimeSliceNanoseconds=1000000uL;
      GCSettings.LatencyMode=GCLatencyMode.SustainedLowLatency;
 
      QualitySettings.vSyncCount=0;
@@ -97,13 +98,15 @@ namespace AKCondinoO{
      }
     }
         
-    internal const long maxMemoryUsage=32*1024L*1024L*1024L;
+    internal const long maxMemoryUsage=8*1024L*1024L*1024L;
 
-    internal const long forcedGCThreshold=16L*1024L*1024L*1024L;
+    internal const long forcedGCThreshold=4L*1024L*1024L*1024L;
      internal const float forcedGCDelay=30f;
       internal float forcedGCTimer=0f;
 
-    internal const long collectAfterAllocating=160L*1024L*1024L;
+    internal const long softGCThreshold=2L*1024L*1024L*1024L;
+
+    internal const long collectAfterAllocating=64L*1024L*1024L;
      internal const float collectDelay=10f;
       internal float collectTimer=0f;
      internal long nextCollectAt;
@@ -137,7 +140,7 @@ namespace AKCondinoO{
        nextCollectAt=(currentFrameMemory=Profiler.GetMonoUsedSizeLong())+collectAfterAllocating;
        Debug.Log("immediate GC done: currentFrameMemory.."+currentFrameMemory+"..;non blocking GC nextCollectAt.."+nextCollectAt);
       }else{
-       if(currentFrameMemory>=nextCollectAt&&collectTimer<=0f){//  Trigger non blocking GC
+       if((currentFrameMemory>softGCThreshold||currentFrameMemory>=nextCollectAt)&&collectTimer<=0f){//  Trigger non blocking GC
         Debug.Log("Trigger non blocking GC: currentFrameMemory.."+currentFrameMemory+"..>=..nextCollectAt.."+nextCollectAt);
         nonBlockingGC();
         collectTimer=collectDelay;
@@ -151,9 +154,15 @@ namespace AKCondinoO{
       GCSettings.LargeObjectHeapCompactionMode=GCLargeObjectHeapCompactionMode.CompactOnce;
       GC.Collect(GC.MaxGeneration,GCCollectionMode.Forced,true,true);
       GC.WaitForPendingFinalizers();
+
+      Resources.UnloadUnusedAssets();
+
      }
      void nonBlockingGC(){
-      GarbageCollector.CollectIncremental();
+      GarbageCollector.CollectIncremental((ulong)collectDelay*1000000000uL);
+
+      Resources.UnloadUnusedAssets();
+
      }
     }
         

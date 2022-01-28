@@ -122,8 +122,8 @@ MonoBehaviour:
   cnksManualUpdateSleepingLimit: 10000
   totalMillisecondsLimit: 5
   bakeJobsLimit: 1000
-  marchingCubesLimit: 5
-  wmarchingCubesLimit: 3
+  marchingCubesLimit: 8
+  wmarchingCubesLimit: 4
   addTreesBGLimit: 6
   instantiationMaxExecutionTime: 15
 --- !u!114 &5296139000763584891
