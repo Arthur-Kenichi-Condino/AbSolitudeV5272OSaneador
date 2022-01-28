@@ -1657,6 +1657,10 @@ namespace AKCondinoO.Voxels{
       mesh.SetIndexBufferData(marchingCubesBG.TempTri.AsArray(),0,0,marchingCubesBG.TempTri.Length,meshFlags);
       mesh.subMeshCount=1;
       mesh.SetSubMesh(0,new SubMeshDescriptor(0,marchingCubesBG.TempTri.Length){firstVertex=0,vertexCount=marchingCubesBG.TempVer.Length},meshFlags);
+
+      mesh.OptimizeIndexBuffers();
+      mesh.OptimizeReorderVertexBuffer();
+
       renderer.enabled=true;
 
       meshBuilt=true;
@@ -1779,6 +1783,10 @@ namespace AKCondinoO.Voxels{
       wmesh.SetIndexBufferData(wmarchingCubesBG.TempWTri.AsArray(),0,0,wmarchingCubesBG.TempWTri.Length,wmeshFlags);
       wmesh.subMeshCount=1;
       wmesh.SetSubMesh(0,new SubMeshDescriptor(0,wmarchingCubesBG.TempWTri.Length){firstVertex=0,vertexCount=wmarchingCubesBG.TempWVer.Length},wmeshFlags);
+                
+      wmesh.OptimizeIndexBuffers();
+      wmesh.OptimizeReorderVertexBuffer();
+
       wmarchingCubesCount--;
       return true;
      }
